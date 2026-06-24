@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestione Ordini — Centro Laser</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --surface: #ffffff;
+      --surface-soft: #f9fafb;
+      --text: #17202a;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --primary: #1f5f9f;
+      --primary-dark: #174b80;
+      --success: #15803d;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; border: none; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 270px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: #111827;
+      color: #fff;
+      padding: 28px 20px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 34px;
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #60a5fa, #1f5f9f);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.35);
+    }
+
+    .brand h1 { font-size: 18px; margin: 0; line-height: 1.2; }
+    .brand span { color: #9ca3af; font-size: 13px; }
+
+    .nav { display: grid; gap: 8px; }
+
+    .nav button {
+      width: 100%;
+      text-align: left;
+      padding: 13px 14px;
+      border-radius: 12px;
+      background: transparent;
+      color: #d1d5db;
+      transition: 0.2s;
+    }
+
+    .nav button:hover, .nav button.active {
+      background: #1f2937;
+      color: #fff;
+    }
+
+    .main { padding: 28px; overflow: hidden; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .topbar h2 { margin: 0; font-size: 28px; letter-spacing: -0.03em; }
+    .topbar p { margin: 6px 0 0; color: var(--muted); }
+
+    .btn {
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 650;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn.secondary { background: #eaf2fb; color: var(--primary); }
+    .btn.secondary:hover { background: #d8e9f8; }
+    .btn.danger { background: #fee2e2; color: var(--danger); }
+    .btn.small { padding: 8px 10px; border-radius: 10px; font-size: 13px; }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-pill.success { background: #dcfce7; color: #166534; }
+    .status-pill.warning { background: #fef3c7; color: #92400e; }
+    .status-pill.neutral { background: #f3f4f6; color: #374151; }
+
+    .quick-templates {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .template-chip {
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .template-chip:hover { background: #eef2ff; border-color: #c7d2fe; }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: min(360px, calc(100vw - 24px));
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #111827;
+      color: #fff;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.24);
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: 0.2s ease;
+      z-index: 40;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: #166534; }
+    .toast.warning { background: #92400e; }
+
+    .view { display: none; animation: fadeIn 0.25s ease; }
+    .view.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card, .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card { padding: 22px; }
+    .stat-label { color: var(--muted); font-size: 14px; margin-bottom: 10px; }
+    .stat-value { font-size: 32px; font-weight: 800; letter-spacing: -0.04em; }
+    .card { padding: 20px; }
+    .card h3 { margin: 0 0 16px; font-size: 18px; }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr 0.9fr 0.9fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .field { display: grid; gap: 7px; }
+    .field label { color: var(--muted); font-size: 13px; font-weight: 600; }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(31, 95, 159, 0.12);
+    }
+
+    textarea { min-height: 92px; resize: vertical; }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+
+    th, td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 14px;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--surface-soft);
+    }
+
+    tr:last-child td { border-bottom: 0; }
+    .order-main { font-weight: 750; }
+    .muted { color: var(--muted); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .badge.preventivo { background: #dbeafe; color: #1d4ed8; }
+    .badge.bozza { background: #ede9fe; color: #6d28d9; }
+    .badge.lavorazione { background: #fef3c7; color: #92400e; }
+    .badge.pronto { background: #dcfce7; color: #166534; }
+    .badge.consegnato { background: #e5e7eb; color: #374151; }
+    .badge.no { background: #fee2e2; color: #991b1b; }
+    .badge.si { background: #dcfce7; color: #166534; }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+    }
+
+    .mini-list { display: grid; gap: 10px; }
+
+    .mini-item {
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--surface-soft);
+    }
+
+    .kanban {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(235px, 1fr));
+      gap: 16px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .column {
+      background: #eef1f5;
+      border-radius: var(--radius);
+      padding: 14px;
+      min-height: 540px;
+    }
+
+    .column-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      font-weight: 800;
+    }
+
+    .deal-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+    }
+
+    .deal-card h4 { margin: 0 0 8px; font-size: 15px; }
+    .deal-card p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+    .deal-move { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 20;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      width: min(920px, 100%);
+      max-height: 92vh;
+      overflow-y: auto;
+      background: #fff;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
+      animation: modalIn 0.22s ease;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .modal-head h3 { margin: 0; font-size: 22px; }
+
+    .close {
+      background: #f3f4f6;
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+
+    .full { grid-column: 1 / -1; }
+    .span-2 { grid-column: span 2; }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .detail-row {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .detail-row:last-child { border-bottom: 0; }
+    .detail-row span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 3px; }
+
+    .empty {
+      padding: 26px;
+      color: var(--muted);
+      text-align: center;
+      border: 1px dashed #cbd5e1;
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .mobile-menu {
+      display: none;
+      background: #111827;
+      color: #fff;
+      padding: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .mobile-menu-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .mobile-menu button {
+      background: #1f2937;
+      color: #fff;
+      border-radius: 10px;
+      padding: 9px 12px;
+    }
+
+    @media (max-width: 1180px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .filters { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      .mobile-menu { display: block; }
+      .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        width: 270px;
+        z-index: 30;
+        transition: 0.25s;
+      }
+      .sidebar.open { left: 0; }
+      .main { padding: 20px; }
+      .dashboard-grid, .detail-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr 1fr; }
+      .span-2 { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 620px) {
+      .topbar { align-items: stretch; flex-direction: column; }
+      .topbar h2 { font-size: 24px; }
+      .stats, .filters, .form-grid { grid-template-columns: 1fr; }
+      .modal-actions { flex-direction: column-reverse; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-menu">
+    <div class="mobile-menu-row">
+      <strong>Gestione Ordini</strong>
+      <button id="openSidebarBtn">Menu</button>
+    </div>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-logo">CL</div>
+        <div>
+          <h1>Gestione Ordini</h1>
+          <span>Centro Laser vt</span>
+        </div>
+      </div>
+      <nav class="nav">
+        <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+        <button class="nav-btn" data-view="orders">Ordini</button>
+        <button class="nav-btn" data-view="kanban">Stati lavoro</button>
+        <button class="nav-btn" data-view="reviews">Recensioni</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h2 id="pageTitle">Dashboard</h2>
+          <p id="pageSubtitle">Situazione veloce di ordini, consegne e incassi</p>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; align-items:center;">
+          <div class="status-pill neutral" id="syncStatus">Salvato locale</div>
+          <button class="btn secondary" id="syncBtn">↻ Sincronizza</button>
+          <button class="btn secondary" id="addQuickOrderBtn">+ Ordine rapido</button>
+          <button class="btn" id="addOrderBtn">+ Nuovo ordine</button>
+        </div>
+      </div>
+
+      <section class="view active" id="dashboardView">
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-label">Ordini aperti</div>
+            <div class="stat-value" id="statOpenOrders">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Da consegnare oggi</div>
+            <div class="stat-value" id="statTodayDelivery">0</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-label">Recensioni da chiedere</div>
+            <div class="stat-value" id="statReviews">0</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card">
+            <h3>Ordini urgenti</h3>
+            <div class="mini-list" id="urgentOrders"></div>
+          </div>
+          <div class="card">
+            <h3>Riepilogo stati</h3>
+            <div class="mini-list" id="statusSummary"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="ordersView">
+        <div class="card">
+          <div class="filters">
+            <div class="field">
+              <label>Cerca cliente o ordine</label>
+              <input type="search" id="searchInput" placeholder="Nome, cognome, telefono, cosa ordinato" />
+            </div>
+            <div class="field">
+              <label>Stato</label>
+              <select id="statusFilter">
+                <option value="all">Tutti</option>
+                <option value="preventivo">Preventivo</option>
+                <option value="bozza grafica">Bozza grafica</option>
+                <option value="in lavorazione">In lavorazione</option>
+                <option value="pronto">Pronto</option>
+                <option value="consegnato">Consegnato</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Data ordine</label>
+              <input type="date" id="orderDateFilter" />
+            </div>
+            <div class="field">
+              <label>Data consegna</label>
+              <input type="date" id="deliveryDateFilter" />
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>N. ordine</th>
+                  <th>Stato</th>
+                  <th>Cliente</th>
+                  <th>Telefono</th>
+                  <th>Canale</th>
+                  <th>Ordine</th>
+                  <th>Consegna</th>
+                  <th>Cosa ordinato</th>
+                  <th>Testo da scrivere</th>
+                  <th>Prezzo</th>
+                  <th>Saldo</th>
+                  <th>Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="kanbanView">
+        <div class="kanban" id="kanbanBoard"></div>
+      </section>
+
+      <section class="view" id="reviewsView">
+        <div class="card">
+          <h3>Ordini consegnati con recensione da gestire</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Telefono</th>
+                  <th>Data consegnato</th>
+                  <th>Cosa ordinato</th>
+                  <th>Chiedere recensione</th>
+                  <th>Recensione richiesta?</th>
+                  <th>Recensione ricevuta</th>
+                  <th>Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="reviewsTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="quickOrderModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h3>Ordine rapido</h3>
+          <p class="muted">Per segnare subito una richiesta arrivata da WhatsApp, telefono, mail o banco</p>
+        </div>
+        <button class="close" data-close-modal="quickOrderModal">×</button>
+      </div>
+
+      <div class="helper-row">
+        <span class="muted">Modelli veloci</span>
+        <div class="quick-templates">
+          <button type="button" class="template-chip" data-template="targa">Targa</button>
+          <button type="button" class="template-chip" data-template="timbro">Timbro</button>
+          <button type="button" class="template-chip" data-template="portachiavi">Portachiavi</button>
+          <button type="button" class="template-chip" data-template="regalo">Regalo inciso</button>
+        </div>
+      </div>
+
+      <form id="quickOrderForm">
+        <div class="form-grid">
+          <div class="field">
+            <label>Nome *</label>
+            <input id="quickName" required placeholder="Nome cliente" />
+          </div>
+          <div class="field">
+            <label>Cognome</label>
+            <input id="quickSurname" placeholder="Cognome" />
+          </div>
+          <div class="field">
+            <label>Telefono</label>
+            <input id="quickPhone" placeholder="Telefono" />
+          </div>
+          <div class="field">
+            <label>Stato iniziale</label>
+            <select id="quickStatus">
+              <option value="preventivo">Preventivo</option>
+              <option value="da fare">Da fare</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Canale d'ingresso</label>
+            <select id="quickChannel">
+              <option>WhatsApp</option>
+              <option>telefono</option>
+              <option>mail</option>
+              <option>negozio</option>
+              <option>sito</option>
+              <option>altro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Data consegna</label>
+            <input id="quickDeliveryDate" type="date" />
+          </div>
+          <div class="field">
+            <label>Prezzo indicativo</label>
+            <input id="quickPrice" type="number" min="0" step="0.01" value="0" />
+          </div>
+          <div class="field span-2">
+            <label>Cosa chiede *</label>
+            <textarea id="quickItem" required placeholder="Es. targa pensionamento, timbro, regalo inciso..."></textarea>
+          </div>
+          <div class="field">
+            <label>Tipo lavorazione</label>
+            <input id="quickWorkType" placeholder="Incisione, stampa UV, timbro..." />
+          </div>
+          <div class="field">
+            <label>Bozza grafica</label>
+            <select id="quickGraphicDraft">
+              <option value="no">Non serve</option>
+              <option value="da fare">Serve / da fare</option>
+              <option value="inviata">Inviata</option>
+              <option value="approvata">Approvata</option>
+            </select>
+          </div>
+          <div class="field span-2">
+            <label>File inviato dal cliente</label>
+            <input id="quickClientFiles" placeholder="Nome file, logo, foto, allegato WhatsApp/mail..." />
+          </div>
+          <div class="field full">
+            <label>Testo da scrivere / incidere / stampare</label>
+            <textarea id="quickTextToWrite" placeholder="Frase, nome, data, testo targa, testo timbro..."></textarea>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" data-close-modal="quickOrderModal">Annulla</button>
+          <button type="submit" class="btn">Crea card</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="orderModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h3 id="orderModalTitle">Nuovo ordine</h3>
+          <p class="muted">Campi basati sul tuo foglio di raccolta ordini</p>
+        </div>
+        <button class="close" data-close-modal="orderModal">×</button>
+      </div>
+
+      <form id="orderForm">
+        <input type="hidden" id="orderId" />
+        <div class="form-grid">
+          <div class="field">
+            <label>Stato d'ordine *</label>
+            <select id="status" required>
+              <option value="preventivo">Preventivo</option>
+              <option value="bozza grafica">Bozza grafica</option>
+              <option value="in lavorazione">In lavorazione</option>
+              <option value="pronto">Pronto</option>
+              <option value="consegnato">Consegnato</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Nome *</label>
+            <input id="name" required placeholder="Nome" />
+          </div>
+          <div class="field">
+            <label>Cognome</label>
+            <input id="surname" placeholder="Cognome" />
+          </div>
+          <div class="field">
+            <label>Telefono</label>
+            <input id="phone" placeholder="Telefono" />
+          </div>
+          <div class="field">
+            <label>E-mail</label>
+            <input id="email" type="email" placeholder="email@esempio.it" />
+          </div>
+          <div class="field">
+            <label>Canale d'ingresso</label>
+            <select id="channel">
+              <option>negozio</option>
+              <option>WhatsApp</option>
+              <option>mail</option>
+              <option>telefono</option>
+              <option>sito</option>
+              <option>altro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Data ordine</label>
+            <input id="orderDate" type="date" />
+          </div>
+          <div class="field">
+            <label>Data consegna</label>
+            <input id="deliveryDate" type="date" />
+          </div>
+          <div class="field">
+            <label>Data consegnato</label>
+            <input id="deliveredDate" type="date" />
+          </div>
+          <div class="field span-2">
+            <label>Cosa ordinato *</label>
+            <input id="item" required placeholder="Es. targa plexiglass, timbro, regalo inciso" />
+          </div>
+          <div class="field full">
+            <label>Testo da scrivere / incidere / stampare</label>
+            <textarea id="textToWrite" placeholder="Inserire qui la frase, il nome, la data, il testo della targa o del timbro..."></textarea>
+          </div>
+          <div class="field">
+            <label>Quantità</label>
+            <input id="quantity" type="number" min="1" step="1" value="1" />
+          </div>
+          <div class="field span-2">
+            <label>Tipo lavorazione</label>
+            <input id="workType" placeholder="Incisione laser, stampa UV, taglio, timbro..." />
+          </div>
+          <div class="field">
+            <label>Bozza grafica</label>
+            <select id="graphicDraft">
+              <option value="no">No</option>
+              <option value="da fare">Da fare</option>
+              <option value="inviata">Inviata</option>
+              <option value="approvata">Approvata</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Foto oggetto scelto</label>
+            <input id="objectPhoto" placeholder="Nome file o link" />
+          </div>
+          <div class="field span-2">
+            <label>File inviati dal cliente</label>
+            <input id="clientFiles" placeholder="Nome file, link Drive, logo, foto..." />
+          </div>
+          <div class="field">
+            <label>Prezzo</label>
+            <input id="price" type="number" min="0" step="0.01" value="0" />
+          </div>
+          <div class="field">
+            <label>Acconto</label>
+            <input id="deposit" type="number" min="0" step="0.01" value="0" />
+          </div>
+          <div class="field">
+            <label>Saldo</label>
+            <input id="balance" type="number" min="0" step="0.01" value="0" />
+          </div>
+          <div class="field">
+            <label>Chiedere recensione</label>
+            <select id="askReview">
+              <option value="no">No</option>
+              <option value="si">Sì</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Recensione richiesta?</label>
+            <select id="reviewAsked">
+              <option value="no">No</option>
+              <option value="si">Sì</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Recensione ricevuta</label>
+            <select id="reviewReceived">
+              <option value="no">No</option>
+              <option value="si">Sì</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Msg PRONTO inviato</label>
+            <select id="readyMsgSent">
+              <option value="no">No</option>
+              <option value="si">Sì</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" data-close-modal="orderModal">Annulla</button>
+          <button type="submit" class="btn">Salva ordine</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h3 id="detailTitle">Scheda ordine</h3>
+          <p class="muted">Dettagli completi dell'ordine</p>
+        </div>
+        <button class="close" data-close-modal="detailModal">×</button>
+      </div>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const STORAGE_KEY = 'centro_laser_ordini_v1';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwWWYwLownIUYmQO9QTpu4Lq58BGlRR_mrjcOzjM0up3m-NA_QqGiGT5TxfQc8wEblP6w/exec';
+    const statuses = ['preventivo', 'bozza grafica', 'in lavorazione', 'pronto', 'consegnato'];
+    const statusLabels = {
+      'preventivo': 'Preventivo',
+      'bozza grafica': 'Bozza grafica',
+      'in lavorazione': 'In lavorazione',
+      'pronto': 'Pronto',
+      'consegnato': 'Consegnato'
+    };
+    const statusClass = {
+      'preventivo': 'preventivo',
+      'bozza grafica': 'bozza',
+      'in lavorazione': 'lavorazione',
+      'pronto': 'pronto',
+      'consegnato': 'consegnato'
+    };
+
+    let orders = loadOrders();
+    syncFromGoogleSheet();
+
+    const els = {
+      sidebar: document.getElementById('sidebar'),
+      openSidebarBtn: document.getElementById('openSidebarBtn'),
+      pageTitle: document.getElementById('pageTitle'),
+      pageSubtitle: document.getElementById('pageSubtitle'),
+      syncBtn: document.getElementById('syncBtn'),
+      syncStatus: document.getElementById('syncStatus'),
+      addOrderBtn: document.getElementById('addOrderBtn'),
+      addQuickOrderBtn: document.getElementById('addQuickOrderBtn'),
+      quickOrderModal: document.getElementById('quickOrderModal'),
+      quickOrderForm: document.getElementById('quickOrderForm'),
+      orderModal: document.getElementById('orderModal'),
+      detailModal: document.getElementById('detailModal'),
+      orderForm: document.getElementById('orderForm'),
+      orderModalTitle: document.getElementById('orderModalTitle'),
+      ordersTable: document.getElementById('ordersTable'),
+      reviewsTable: document.getElementById('reviewsTable'),
+      kanbanBoard: document.getElementById('kanbanBoard'),
+      detailTitle: document.getElementById('detailTitle'),
+      detailContent: document.getElementById('detailContent'),
+      searchInput: document.getElementById('searchInput'),
+      statusFilter: document.getElementById('statusFilter'),
+      orderDateFilter: document.getElementById('orderDateFilter'),
+      deliveryDateFilter: document.getElementById('deliveryDateFilter'),
+      statOpenOrders: document.getElementById('statOpenOrders'),
+      statTodayDelivery: document.getElementById('statTodayDelivery'),
+      
+      statReviews: document.getElementById('statReviews'),
+      urgentOrders: document.getElementById('urgentOrders'),
+      statusSummary: document.getElementById('statusSummary')
+    };
+
+    const fields = [
+      'orderId','status','name','surname','phone','email','channel','orderDate','deliveryDate','deliveredDate','item','textToWrite','quantity','workType','graphicDraft','objectPhoto','clientFiles','price','deposit','balance','askReview','reviewAsked','reviewReceived','readyMsgSent'
+    ];
+
+    function loadOrders() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+      const demo = [
+        {
+          id: crypto.randomUUID(), createdAtInfo: new Date().toLocaleString('it-IT'), status: 'preventivo',
+          name: 'Laura', surname: 'Rossi', phone: '333 1234567', email: 'laura@email.it', channel: 'WhatsApp',
+          orderDate: today(-3), deliveryDate: today(2), deliveredDate: '', item: 'Targa in plexiglass per studio', textToWrite: 'Studio Rossi - Consulenza del lavoro',
+          objectPhoto: '', workType: 'incisione + taglio', quantity: 1, graphicDraft: 'da fare', clientFiles: 'logo studio',
+          price: 68, deposit: 20, balance: 48, askReview: 'no', reviewReceived: 'no', reviewAsked: 'no', readyMsgSent: 'no'
+        },
+        {
+          id: crypto.randomUUID(), createdAtInfo: new Date().toLocaleString('it-IT'), status: 'in lavorazione',
+          name: 'Marco', surname: 'Bianchi', phone: '339 7654321', email: '', channel: 'negozio',
+          orderDate: today(-2), deliveryDate: today(0), deliveredDate: '', item: 'Timbro autoinchiostrante', textToWrite: 'Marco Bianchi - P.IVA...',
+          objectPhoto: '', workType: 'timbro', quantity: 2, graphicDraft: 'approvata', clientFiles: '',
+          price: 56, deposit: 0, balance: 56, askReview: 'no', reviewReceived: 'no', reviewAsked: 'no', readyMsgSent: 'no'
+        },
+        {
+          id: crypto.randomUUID(), createdAtInfo: new Date().toLocaleString('it-IT'), status: 'consegnato',
+          name: 'Giulia', surname: 'Conti', phone: '347 2223344', email: '', channel: 'sito',
+          orderDate: today(-8), deliveryDate: today(-2), deliveredDate: today(-1), item: 'Portachiavi inciso per laurea', textToWrite: 'Dottoressa Giulia - 2026',
+          objectPhoto: '', workType: 'incisione laser', quantity: 3, graphicDraft: 'no', clientFiles: '',
+          price: 45, deposit: 45, balance: 0, askReview: 'si', reviewReceived: 'no', reviewAsked: 'no', readyMsgSent: 'si'
+        }
+      ];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(demo));
+      return demo;
+    }
+
+    function saveOrders() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+      setSyncStatus('Salvato locale', 'neutral');
+    }
+
+    function setSyncStatus(text, kind = 'neutral') {
+      if (!els.syncStatus) return;
+      els.syncStatus.textContent = text;
+      els.syncStatus.className = `status-pill ${kind}`;
+    }
+
+    function showToast(message, kind = 'success') {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.className = `toast show ${kind}`;
+      clearTimeout(showToast.timeout);
+      showToast.timeout = setTimeout(() => {
+        toast.className = 'toast';
+      }, 2400);
+    }
+
+    function sheetIsConnected() {
+      return API_URL && !API_URL.includes('INCOLLA_QUI') && API_URL.includes('/exec');
+    }
+
+    function getCell(row, possibleNames) {
+      const keys = Object.keys(row || {});
+      for (const name of possibleNames) {
+        const found = keys.find(k => String(k).trim().toLowerCase() === String(name).trim().toLowerCase());
+        if (found !== undefined) return row[found];
+      }
+      return '';
+    }
+
+    function normalizeStatus(value) {
+      const v = String(value || '').trim().toLowerCase();
+      if (v.includes('bozza')) return 'bozza grafica';
+      if (v.includes('lavorazione')) return 'in lavorazione';
+      if (v.includes('pronto')) return 'pronto';
+      if (v.includes('consegnato')) return 'consegnato';
+      return 'preventivo';
+    }
+
+    function normalizeYesNo(value) {
+      const v = String(value || '').toLowerCase().trim();
+      return v === 'sì' || v === 'si' || v === 'yes' || v === 'true' ? 'si' : 'no';
+    }
+
+    function normalizeSheetDate(value) {
+      if (!value) return '';
+      const text = String(value);
+      if (text.length === 10 && text[4] === '-' && text[7] === '-') return text;
+      const d = new Date(value);
+      if (isNaN(d)) return '';
+      return d.toISOString().slice(0, 10);
+    }
+
+    function mapSheetRowToOrder(row) {
+      return {
+        id: String(getCell(row, ['Numero Ordine']) || crypto.randomUUID()),
+        orderNumber: getCell(row, ['Numero Ordine']) || '',
+        createdAtInfo: getCell(row, ['Informazioni cronologiche']) || '',
+        status: normalizeStatus(getCell(row, ["Stato d'ordine", 'Stato ordine', 'Stato'])),
+        name: getCell(row, ['NOME', 'Nome']) || '',
+        surname: getCell(row, ['COGNOME', 'Cognome']) || '',
+        phone: getCell(row, ['TELEFONO', 'Telefono']) || '',
+        email: getCell(row, ['E-MAIL', 'Email', 'E-mail']) || '',
+        channel: getCell(row, ["Canale d'ingresso", 'Canale ingresso', 'Canale']) || '',
+        orderDate: normalizeSheetDate(getCell(row, ['Data Ordine', 'Data ordine'])),
+        deliveryDate: normalizeSheetDate(getCell(row, ['Data Consegna', 'Data consegna'])),
+        deliveredDate: normalizeSheetDate(getCell(row, ['Data consegnato', 'Data Consegnato'])),
+        item: getCell(row, ['Cosa ordinato']) || '',
+        textToWrite: getCell(row, ['Testo da scrivere']) || '',
+        objectPhoto: getCell(row, ['Foto oggetto scelto']) || '',
+        workType: getCell(row, ['Tipo lavorazione']) || '',
+        quantity: getCell(row, ['Quantità', 'Quantita']) || 1,
+        graphicDraft: getCell(row, ['Bozza grafica']) || 'no',
+        clientFiles: getCell(row, ['File inviati dal cliente']) || '',
+        price: Number(getCell(row, ['Prezzo']) || 0),
+        deposit: Number(getCell(row, ['Acconto']) || 0),
+        balance: Number(getCell(row, ['Saldo']) || 0),
+        askReview: normalizeYesNo(getCell(row, ['Chiedere recensione'])),
+        reviewReceived: normalizeYesNo(getCell(row, ['Recensione ricevuta'])),
+        reviewAsked: normalizeYesNo(getCell(row, ['Recensione richiesta?'])),
+        readyMsgSent: normalizeYesNo(getCell(row, ['Msg PRONTO inviato']))
+      };
+    }
+
+    function mapOrderToSheetRow(o) {
+      return {
+        'Numero Ordine': o.orderNumber || o.id || '',
+        'Informazioni cronologiche': o.createdAtInfo || new Date().toLocaleString('it-IT'),
+        "Stato d'ordine": normalizeStatus(o.status || 'preventivo'),
+        'NOME': o.name || '',
+        'COGNOME': o.surname || '',
+        'TELEFONO': o.phone || '',
+        'E-MAIL': o.email || '',
+        "Canale d'ingresso": o.channel || '',
+        'Data Ordine': o.orderDate || '',
+        'Data Consegna': o.deliveryDate || '',
+        'Data consegnato': o.deliveredDate || '',
+        'Cosa ordinato': o.item || '',
+        'Testo da scrivere': o.textToWrite || '',
+        'Foto oggetto scelto': o.objectPhoto || '',
+        'Tipo lavorazione': o.workType || '',
+        'Quantità': o.quantity || 1,
+        'Bozza grafica': o.graphicDraft || 'no',
+        'File inviati dal cliente': o.clientFiles || '',
+        'Prezzo': o.price || 0,
+        'Acconto': o.deposit || 0,
+        'Saldo': o.balance || 0,
+        'Chiedere recensione': o.askReview || 'no',
+        'Recensione ricevuta': o.reviewReceived || 'no',
+        'Recensione richiesta?': o.reviewAsked || 'no',
+        'Msg PRONTO inviato': o.readyMsgSent || 'no'
+      };
+    }
+
+    async function syncFromGoogleSheet() {
+      if (!sheetIsConnected()) return;
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        if (data.success && Array.isArray(data.orders)) {
+          orders = data.orders.map(mapSheetRowToOrder);
+          saveOrders();
+          render();
+        }
+      } catch (error) {
+        console.warn('Google Sheet non raggiungibile. Uso copia locale.', error);
+      }
+    }
+
+    async function sendToGoogleSheet(action, order) {
+      if (!sheetIsConnected()) return null;
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action, order: mapOrderToSheetRow(order) })
+        });
+        return await response.json();
+      } catch (error) {
+        console.warn('Salvataggio su Google Sheet non riuscito.', error);
+        return null;
+      }
+    }
+    function today(offset = 0) { const d = new Date(); d.setDate(d.getDate() + offset); return d.toISOString().slice(0, 10); }
+    function formatDate(date) { return date ? new Date(date + 'T00:00:00').toLocaleDateString('it-IT') : '—'; }
+    function formatMoney(value) { return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(Number(value || 0)); }
+    function fullName(o) { return `${o.name || ''} ${o.surname || ''}`.trim(); }
+    function escapeHtml(str = '') { return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'); }
+    function yesNoBadge(value) { return `<span class="badge ${value === 'si' ? 'si' : 'no'}">${value === 'si' ? 'Sì' : 'No'}</span>`; }
+
+    function setView(view) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(view + 'View').classList.add('active');
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.view === view));
+      const titles = {
+        dashboard: ['Dashboard', 'Situazione veloce di ordini, consegne e incassi'],
+        orders: ['Ordini', 'Elenco completo con ricerca e filtri'],
+        kanban: ['Stati lavoro', 'Ordini divisi per fase di lavorazione'],
+        reviews: ['Recensioni', 'Controllo delle recensioni da chiedere e ricevute']
+      };
+      els.pageTitle.textContent = titles[view][0];
+      els.pageSubtitle.textContent = titles[view][1];
+      els.sidebar.classList.remove('open');
+      render();
+    }
+
+    function getFilteredOrders() {
+      const search = els.searchInput.value.trim().toLowerCase();
+      const status = els.statusFilter.value;
+      const orderDate = els.orderDateFilter.value;
+      const deliveryDate = els.deliveryDateFilter.value;
+      return orders.filter(o => {
+        const haystack = [fullName(o), o.phone, o.email, o.item, o.workType, o.channel].join(' ').toLowerCase();
+        return (!search || haystack.includes(search)) &&
+          (status === 'all' || o.status === status) &&
+          (!orderDate || o.orderDate === orderDate) &&
+          (!deliveryDate || o.deliveryDate === deliveryDate);
+      });
+    }
+
+    function render() {
+      renderDashboard();
+      renderOrdersTable();
+      renderKanban();
+      renderReviews();
+    }
+
+    function renderDashboard() {
+      const open = orders.filter(o => o.status !== 'consegnato');
+      const todayDeliveries = orders.filter(o => o.deliveryDate === today() && o.status !== 'consegnato');
+      const reviews = orders.filter(o => o.status === 'consegnato' && o.askReview === 'si' && o.reviewReceived !== 'si');
+
+      els.statOpenOrders.textContent = open.length;
+      els.statTodayDelivery.textContent = todayDeliveries.length;
+      
+      els.statReviews.textContent = reviews.length;
+
+      const urgent = [...orders]
+        .filter(o => o.status !== 'consegnato')
+        .sort((a, b) => (a.deliveryDate || '9999-12-31').localeCompare(b.deliveryDate || '9999-12-31'))
+        .slice(0, 7);
+
+      els.urgentOrders.innerHTML = urgent.length ? urgent.map(o => `
+        <div class="mini-item">
+          <div>
+            <strong>${escapeHtml(fullName(o))}</strong><br>
+            <span class="muted">${escapeHtml(o.item)} · consegna ${formatDate(o.deliveryDate)}</span>
+          </div>
+          <span class="badge ${statusClass[o.status]}">${statusLabels[o.status]}</span>
+        </div>
+      `).join('') : '<div class="empty">Nessun ordine aperto</div>';
+
+      els.statusSummary.innerHTML = statuses.map(status => {
+        const list = orders.filter(o => o.status === status);
+        return `
+          <div class="mini-item">
+            <div>
+              <strong>${statusLabels[status]}</strong><br>
+              <span class="muted">${formatMoney(list.reduce((s, o) => s + Number(o.price || 0), 0))}</span>
+            </div>
+            <span class="badge ${statusClass[status]}">${list.length}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderOrdersTable() {
+      const filtered = getFilteredOrders();
+      if (!filtered.length) {
+        els.ordersTable.innerHTML = `<tr><td colspan="12"><div class="empty">Nessun ordine trovato</div></td></tr>`;
+        return;
+      }
+      els.ordersTable.innerHTML = filtered.map(o => `
+        <tr>
+          <td><strong>${escapeHtml(o.orderNumber || o.id || '—')}</strong></td>
+          <td><span class="badge ${statusClass[o.status]}">${statusLabels[o.status]}</span></td>
+          <td><span class="order-main">${escapeHtml(fullName(o))}</span><br><span class="muted">${escapeHtml(o.email || '')}</span></td>
+          <td>${escapeHtml(o.phone || '—')}</td>
+          <td>${escapeHtml(o.channel || '—')}</td>
+          <td>${formatDate(o.orderDate)}</td>
+          <td>${formatDate(o.deliveryDate)}</td>
+          <td>${escapeHtml(o.item || '—')}</td>
+          <td>${escapeHtml(o.textToWrite || '—')}</td>
+          <td>${formatMoney(o.price)}</td>
+          <td>${formatMoney(o.balance)}</td>
+          <td>
+            <div class="actions">
+              <button class="btn small secondary" onclick="openDetail('${o.id}')">Apri</button>
+              <button class="btn small secondary" onclick="openEditOrder('${o.id}')">Modifica</button>
+              <button class="btn small secondary" onclick="duplicateOrder('${o.id}')">Duplica</button>
+              <button class="btn small danger" onclick="deleteOrder('${o.id}')">Elimina</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderKanban() {
+      els.kanbanBoard.innerHTML = statuses.map(status => {
+        const list = orders.filter(o => o.status === status);
+        return `
+          <div class="column">
+            <div class="column-header">
+              <span>${statusLabels[status]}</span>
+              <span class="badge ${statusClass[status]}">${list.length}</span>
+            </div>
+            ${list.length ? list.map(o => renderOrderCard(o)).join('') : '<div class="empty">Vuoto</div>'}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderOrderCard(o) {
+      return `
+        <div class="deal-card">
+          <h4>${o.orderNumber ? '#' + escapeHtml(o.orderNumber) + ' — ' : ''}${escapeHtml(fullName(o))}</h4>
+          <p>${escapeHtml(o.item || '')}</p>
+          ${o.textToWrite ? `<p>Testo: <strong>${escapeHtml(o.textToWrite)}</strong></p>` : ''}
+          <p>Consegna: <strong>${formatDate(o.deliveryDate)}</strong></p>
+          <p>Saldo: <strong>${formatMoney(o.balance)}</strong></p>
+          <div class="deal-move">
+            <select onchange="changeStatus('${o.id}', this.value)">
+              ${statuses.map(s => `<option value="${s}" ${s === o.status ? 'selected' : ''}>${statusLabels[s]}</option>`).join('')}
+            </select>
+            <button class="btn small secondary" onclick="openDetail('${o.id}')">Scheda</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderReviews() {
+      const list = orders.filter(o => o.status === 'consegnato' && (o.askReview === 'si' || o.reviewAsked === 'si' || o.reviewReceived === 'si'));
+      if (!list.length) {
+        els.reviewsTable.innerHTML = `<tr><td colspan="8"><div class="empty">Nessuna recensione da gestire</div></td></tr>`;
+        return;
+      }
+      els.reviewsTable.innerHTML = list.map(o => `
+        <tr>
+          <td><span class="order-main">${escapeHtml(fullName(o))}</span></td>
+          <td>${escapeHtml(o.phone || '—')}</td>
+          <td>${formatDate(o.deliveredDate)}</td>
+          <td>${escapeHtml(o.item || '—')}</td>
+          <td>${yesNoBadge(o.askReview)}</td>
+          <td>${yesNoBadge(o.reviewAsked)}</td>
+          <td>${yesNoBadge(o.reviewReceived)}</td>
+          <td>
+            <div class="actions">
+              <button class="btn small secondary" onclick="markReviewAsked('${o.id}')">Segna richiesta</button>
+              <button class="btn small secondary" onclick="markReviewReceived('${o.id}')">Segna ricevuta</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    const quickTemplates = {
+      targa: { item: 'Targa', workType: 'Incisione laser', text: 'Nome e cognome', price: 35, graphicDraft: 'da fare', channel: 'WhatsApp' },
+      timbro: { item: 'Timbro', workType: 'Timbro autoinchiostrante', text: 'Dati azienda', price: 25, graphicDraft: 'no', channel: 'telefono' },
+      portachiavi: { item: 'Portachiavi inciso', workType: 'Incisione laser', text: 'Nome e cognome', price: 12, graphicDraft: 'no', channel: 'negozio' },
+      regalo: { item: 'Regalo inciso', workType: 'Incisione laser', text: 'Messaggio personalizzato', price: 20, graphicDraft: 'da fare', channel: 'WhatsApp' }
+    };
+
+    function applyQuickTemplate(type) {
+      const tpl = quickTemplates[type];
+      if (!tpl) return;
+      document.getElementById('quickItem').value = tpl.item;
+      document.getElementById('quickWorkType').value = tpl.workType;
+      document.getElementById('quickTextToWrite').value = tpl.text;
+      document.getElementById('quickPrice').value = tpl.price;
+      document.getElementById('quickGraphicDraft').value = tpl.graphicDraft;
+      document.getElementById('quickChannel').value = tpl.channel;
+      document.getElementById('quickStatus').value = 'preventivo';
+    }
+
+    function openQuickOrder() {
+      document.getElementById('quickOrderForm').reset();
+      document.getElementById('quickStatus').value = 'preventivo';
+      document.getElementById('quickChannel').value = 'WhatsApp';
+      document.getElementById('quickPrice').value = 0;
+      openModal('quickOrderModal');
+    }
+
+    function submitQuickOrderForm(event) {
+      event.preventDefault();
+      const price = Number(document.getElementById('quickPrice').value || 0);
+      const order = {
+        id: crypto.randomUUID(),
+        createdAtInfo: new Date().toLocaleString('it-IT'),
+        status: document.getElementById('quickStatus').value,
+        name: document.getElementById('quickName').value.trim(),
+        surname: document.getElementById('quickSurname').value.trim(),
+        phone: document.getElementById('quickPhone').value.trim(),
+        email: '',
+        channel: document.getElementById('quickChannel').value,
+        orderDate: today(),
+        deliveryDate: document.getElementById('quickDeliveryDate').value,
+        deliveredDate: '',
+        item: document.getElementById('quickItem').value.trim(),
+        textToWrite: document.getElementById('quickTextToWrite').value.trim(),
+        objectPhoto: '',
+        workType: document.getElementById('quickWorkType').value.trim(),
+        quantity: 1,
+        graphicDraft: document.getElementById('quickGraphicDraft').value,
+        clientFiles: document.getElementById('quickClientFiles').value.trim(),
+        price: price,
+        deposit: 0,
+        balance: price,
+        askReview: 'no',
+        reviewReceived: 'no',
+        reviewAsked: 'no',
+        readyMsgSent: 'no'
+      };
+      orders.unshift(order);
+      saveOrders();
+      sendToGoogleSheet('add', order).then(result => {
+        if (result && result.success && result.orderNumber) {
+          order.orderNumber = result.orderNumber;
+          order.id = String(result.orderNumber);
+          saveOrders();
+          render();
+        }
+      });
+      closeModal('quickOrderModal');
+      showToast('Ordine rapido salvato', 'success');
+      render();
+    }
+
+    function openAddOrder() {
+      els.orderModalTitle.textContent = 'Nuovo ordine';
+      els.orderForm.reset();
+      document.getElementById('orderId').value = '';
+      document.getElementById('orderDate').value = today();
+      document.getElementById('quantity').value = 1;
+      document.getElementById('status').value = 'preventivo';
+      document.getElementById('balance').value = 0;
+      openModal('orderModal');
+    }
+
+    function openEditOrder(id) {
+      const o = orders.find(x => x.id === id);
+      if (!o) return;
+      els.orderModalTitle.textContent = 'Modifica ordine';
+      fields.forEach(f => {
+        const el = document.getElementById(f);
+        if (!el) return;
+        if (f === 'orderId') el.value = o.id;
+        else el.value = o[f] ?? '';
+      });
+      openModal('orderModal');
+    }
+
+    function submitOrderForm(event) {
+      event.preventDefault();
+      const id = document.getElementById('orderId').value;
+      const price = Number(document.getElementById('price').value || 0);
+      const deposit = Number(document.getElementById('deposit').value || 0);
+      let balance = Number(document.getElementById('balance').value || 0);
+      if (!document.getElementById('balance').value || balance === 0) balance = Math.max(price - deposit, 0);
+
+      const payload = {
+        status: document.getElementById('status').value,
+        name: document.getElementById('name').value.trim(),
+        surname: document.getElementById('surname').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        channel: document.getElementById('channel').value,
+        orderDate: document.getElementById('orderDate').value,
+        deliveryDate: document.getElementById('deliveryDate').value,
+        deliveredDate: document.getElementById('deliveredDate').value,
+        item: document.getElementById('item').value.trim(),
+        textToWrite: document.getElementById('textToWrite').value.trim(),
+        objectPhoto: document.getElementById('objectPhoto').value.trim(),
+        workType: document.getElementById('workType').value.trim(),
+        quantity: Number(document.getElementById('quantity').value || 1),
+        graphicDraft: document.getElementById('graphicDraft').value,
+        clientFiles: document.getElementById('clientFiles').value.trim(),
+        price, deposit, balance,
+        askReview: document.getElementById('askReview').value,
+        reviewReceived: document.getElementById('reviewReceived').value,
+        reviewAsked: document.getElementById('reviewAsked').value,
+        readyMsgSent: document.getElementById('readyMsgSent').value
+      };
+
+      if (payload.status === 'consegnato' && !payload.deliveredDate) payload.deliveredDate = today();
+
+      if (id) {
+        orders = orders.map(o => {
+          if (o.id !== id) return o;
+          const updated = { ...o, ...payload };
+          sendToGoogleSheet('update', updated);
+          return updated;
+        });
+      } else {
+        const newOrder = { id: crypto.randomUUID(), createdAtInfo: new Date().toLocaleString('it-IT'), ...payload };
+        orders.unshift(newOrder);
+        sendToGoogleSheet('add', newOrder).then(result => {
+          if (result && result.success && result.orderNumber) {
+            newOrder.orderNumber = result.orderNumber;
+            newOrder.id = String(result.orderNumber);
+            saveOrders();
+            render();
+          }
+        });
+      }
+      saveOrders();
+      closeModal('orderModal');
+      render();
+    }
+
+    function duplicateOrder(id) {
+      const o = orders.find(x => x.id === id);
+      if (!o) return;
+      const duplicated = {
+        ...o,
+        id: crypto.randomUUID(),
+        createdAtInfo: new Date().toLocaleString('it-IT'),
+        orderNumber: '',
+        status: 'preventivo',
+        orderDate: today(),
+        deliveryDate: '',
+        deliveredDate: '',
+        reviewAsked: 'no',
+        reviewReceived: 'no',
+        askReview: 'no',
+        readyMsgSent: 'no',
+        deposit: 0,
+        balance: Number(o.price || 0)
+      };
+      orders.unshift(duplicated);
+      saveOrders();
+      showToast('Ordine duplicato pronto da modificare', 'success');
+      openEditOrder(duplicated.id);
+      render();
+    }
+
+    function deleteOrder(id) {
+      const o = orders.find(x => x.id === id);
+      if (!o) return;
+      if (!confirm(`Eliminare l'ordine di ${fullName(o)}?`)) return;
+      orders = orders.filter(x => x.id !== id);
+      saveOrders();
+      showToast('Ordine eliminato', 'warning');
+      render();
+    }
+
+    function changeStatus(id, status) {
+      orders = orders.map(o => {
+        if (o.id !== id) return o;
+        const updated = { ...o, status };
+        if (status === 'consegnato' && !updated.deliveredDate) updated.deliveredDate = today();
+        if (!updated.orderNumber && updated.id) updated.orderNumber = updated.id;
+        sendToGoogleSheet('update', updated);
+        return updated;
+      });
+      saveOrders();
+      render();
+    }
+
+    function markReviewAsked(id) {
+      orders = orders.map(o => {
+        if (o.id !== id) return o;
+        const updated = { ...o, reviewAsked: 'si' };
+        sendToGoogleSheet('update', updated);
+        return updated;
+      });
+      saveOrders();
+      render();
+    }
+
+    function markReviewReceived(id) {
+      orders = orders.map(o => {
+        if (o.id !== id) return o;
+        const updated = { ...o, reviewReceived: 'si' };
+        sendToGoogleSheet('update', updated);
+        return updated;
+      });
+      saveOrders();
+      render();
+    }
+
+    function openDetail(id) {
+      const o = orders.find(x => x.id === id);
+      if (!o) return;
+      els.detailTitle.textContent = `${fullName(o)} — ${o.item}`;
+      els.detailContent.innerHTML = `
+        <div class="detail-grid">
+          <div class="card">
+            <h3>Cliente</h3>
+            <div class="detail-row"><span>Nome</span>${escapeHtml(fullName(o))}</div>
+            <div class="detail-row"><span>Telefono</span>${escapeHtml(o.phone || '—')}</div>
+            <div class="detail-row"><span>E-mail</span>${escapeHtml(o.email || '—')}</div>
+            <div class="detail-row"><span>Canale d'ingresso</span>${escapeHtml(o.channel || '—')}</div>
+            <div class="detail-row"><span>Informazioni cronologiche</span>${escapeHtml(o.createdAtInfo || '—')}</div>
+          </div>
+          <div class="card">
+            <h3>Ordine</h3>
+            <div class="detail-row"><span>Stato</span><span class="badge ${statusClass[o.status]}">${statusLabels[o.status]}</span></div>
+            <div class="detail-row"><span>Data ordine</span>${formatDate(o.orderDate)}</div>
+            <div class="detail-row"><span>Data consegna</span>${formatDate(o.deliveryDate)}</div>
+            <div class="detail-row"><span>Data consegnato</span>${formatDate(o.deliveredDate)}</div>
+            <div class="detail-row"><span>Cosa ordinato</span>${escapeHtml(o.item || '—')}</div>
+            <div class="detail-row"><span>Testo da scrivere / incidere / stampare</span>${escapeHtml(o.textToWrite || '—')}</div>
+            <div class="detail-row"><span>Tipo lavorazione</span>${escapeHtml(o.workType || '—')}</div>
+            <div class="detail-row"><span>Quantità</span>${escapeHtml(o.quantity || '—')}</div>
+          </div>
+          <div class="card">
+            <h3>File e bozza</h3>
+            <div class="detail-row"><span>Foto oggetto scelto</span>${escapeHtml(o.objectPhoto || '—')}</div>
+            <div class="detail-row"><span>Bozza grafica</span>${escapeHtml(o.graphicDraft || '—')}</div>
+            <div class="detail-row"><span>File inviati dal cliente</span>${escapeHtml(o.clientFiles || '—')}</div>
+            <div class="detail-row"><span>Msg PRONTO inviato</span>${yesNoBadge(o.readyMsgSent)}</div>
+          </div>
+          <div class="card">
+            <h3>Pagamento e recensione</h3>
+            <div class="detail-row"><span>Prezzo</span>${formatMoney(o.price)}</div>
+            <div class="detail-row"><span>Acconto</span>${formatMoney(o.deposit)}</div>
+            <div class="detail-row"><span>Saldo</span>${formatMoney(o.balance)}</div>
+            <div class="detail-row"><span>Chiedere recensione</span>${yesNoBadge(o.askReview)}</div>
+            <div class="detail-row"><span>Recensione richiesta?</span>${yesNoBadge(o.reviewAsked)}</div>
+            <div class="detail-row"><span>Recensione ricevuta</span>${yesNoBadge(o.reviewReceived)}</div>
+          </div>
+        </div>
+        <div style="margin-top: 18px; display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+          <button class="btn secondary" onclick="closeModal('detailModal'); openEditOrder('${o.id}')">Modifica</button>
+          <button class="btn secondary" onclick="closeModal('detailModal'); duplicateOrder('${o.id}')">Duplica</button>
+          <button class="btn danger" onclick="closeModal('detailModal'); deleteOrder('${o.id}')">Elimina</button>
+        </div>
+      `;
+      openModal('detailModal');
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', () => setView(btn.dataset.view)));
+    document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.dataset.closeModal)));
+    document.querySelectorAll('.modal-overlay').forEach(overlay => overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); }));
+    document.querySelectorAll('.template-chip').forEach(btn => btn.addEventListener('click', () => applyQuickTemplate(btn.dataset.template)));
+    els.openSidebarBtn.addEventListener('click', () => els.sidebar.classList.toggle('open'));
+    els.syncBtn.addEventListener('click', () => {
+      setSyncStatus('Sincronizzazione...', 'warning');
+      syncFromGoogleSheet();
+    });
+    els.addQuickOrderBtn.addEventListener('click', openQuickOrder);
+    els.addOrderBtn.addEventListener('click', openAddOrder);
+    els.quickOrderForm.addEventListener('submit', submitQuickOrderForm);
+    els.orderForm.addEventListener('submit', submitOrderForm);
+    [els.searchInput, els.statusFilter, els.orderDateFilter, els.deliveryDateFilter].forEach(el => el.addEventListener('input', renderOrdersTable));
+    [els.statusFilter, els.orderDateFilter, els.deliveryDateFilter].forEach(el => el.addEventListener('change', renderOrdersTable));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal('quickOrderModal'); closeModal('orderModal'); closeModal('detailModal'); els.sidebar.classList.remove('open'); } });
+
+    render();
+  </script>
+</body>
+</html>
