@@ -38,7 +38,7 @@ export default async function AgendaPage() {
           <CardTitle className="text-base">Nuovo promemoria</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={addReminder} className="flex gap-3 flex-wrap">
+          <form action={addReminder} className="flex flex-col sm:flex-row gap-3 flex-wrap">
             <div className="flex-1 min-w-40">
               <Input name="title" required placeholder="Cosa ricordare…" />
             </div>
@@ -46,9 +46,9 @@ export default async function AgendaPage() {
               name="due_at"
               type="datetime-local"
               required
-              className="w-52"
+              className="w-full sm:w-52"
             />
-            <Button type="submit">Aggiungi</Button>
+            <Button type="submit" className="w-full sm:w-auto">Aggiungi</Button>
           </form>
         </CardContent>
       </Card>

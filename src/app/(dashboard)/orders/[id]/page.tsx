@@ -87,7 +87,7 @@ export default async function OrderDetailPage({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
         {order.due_date && (
           <div>
             <span className="text-slate-500">Consegna: </span>
@@ -115,9 +115,9 @@ export default async function OrderDetailPage({
           <CardTitle className="text-base">Stato ordine</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={changeStatus} className="flex gap-3">
+          <form action={changeStatus} className="flex flex-col sm:flex-row gap-3">
             <Select name="status" defaultValue={order.status}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -138,9 +138,9 @@ export default async function OrderDetailPage({
           <CardTitle className="text-base">Pagamento</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={changePayment} className="flex gap-3">
+          <form action={changePayment} className="flex flex-col sm:flex-row gap-3">
             <Select name="payment_status" defaultValue={order.payment_status}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

@@ -85,7 +85,7 @@ export function OrderForm({ customers }: { customers: CustomerOption[] }) {
         </Select>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="due_date">Data consegna</Label>
           <Input id="due_date" name="due_date" type="date" />
