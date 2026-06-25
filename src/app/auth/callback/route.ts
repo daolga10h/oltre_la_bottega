@@ -9,6 +9,12 @@ export async function GET(request: Request) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      const { data: { user } } = await supabase.auth.getUser()
+      // If user has no PIN set yet, redirect to PIN setup
+      const pinSet = user?.user_metadata?.pin_set === true
+      if (!pinSet) {
+        return NextResponse.redirect(`${origin}/setup-pin`)
+      }
       return NextResponse.redirect(`${origin}/dashboard`)
     }
   }
