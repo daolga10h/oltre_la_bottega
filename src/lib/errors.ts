@@ -10,12 +10,12 @@ export class AppError extends Error {
 }
 
 export const USER_MESSAGES = {
-  generic: "Si è verificato un errore. Riprova tra qualche secondo.",
-  saveFailed: "Impossibile salvare i dati. Controlla la connessione e riprova.",
-  notFound: "Record non trovato. Potrebbe essere stato eliminato.",
-  authRequired: "Devi effettuare l'accesso per continuare.",
-  validationError: "Verifica i campi del modulo e riprova.",
-  featureUnavailable: "Funzione temporaneamente non disponibile. Riprova più tardi.",
+  generic: "Произошла ошибка. Попробуйте ещё раз через несколько секунд.",
+  saveFailed: "Не удалось сохранить данные. Проверьте соединение и попробуйте снова.",
+  notFound: "Запись не найдена. Возможно, она была удалена.",
+  authRequired: "Для доступа необходимо войти в систему.",
+  validationError: "Проверьте правильность заполнения формы.",
+  featureUnavailable: "Функция временно недоступна. Попробуйте позже.",
 } as const
 
 export function toUserMessage(error: unknown): string {
