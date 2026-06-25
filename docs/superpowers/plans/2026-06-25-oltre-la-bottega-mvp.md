@@ -4,7 +4,7 @@
 
 **Goal:** Build a focused operational dashboard with mini-CRM for artisan shops — letting the owner answer "What do I need to do today?" in under 60 seconds.
 
-**Architecture:** Next.js App Router with Server Actions for mutations (no separate API layer in MVP), Supabase for PostgreSQL + Auth + Storage. Every data record is scoped to `shop_id` with Row Level Security enforcing tenant isolation. Error handling follows a two-layer pattern: human-readable messages (in Russian, as the target user language) shown in the UI; detailed technical logs written to the server console and a `logs` table.
+**Architecture:** Next.js App Router with Server Actions for mutations (no separate API layer in MVP), Supabase for PostgreSQL + Auth + Storage. Every data record is scoped to `shop_id` with Row Level Security enforcing tenant isolation. Error handling follows a two-layer pattern: human-readable messages (in Italian) shown in the UI; detailed technical logs written to the server console.
 
 **Tech Stack:** Next.js 14 + TypeScript, Tailwind CSS, shadcn/ui, Supabase (PostgreSQL + Auth + Storage), Vercel
 
@@ -12,17 +12,17 @@
 
 ## Error Handling Strategy (required in every task)
 
-### UI Layer (user-facing, in Russian)
+### UI Layer (user-facing, in Italian)
 All errors shown to users must be clear and non-technical:
 
-| Scenario | Message to user (Russian) |
+| Scenario | Message to user (Italian) |
 |---|---|
-| Network/server error | «Произошла ошибка. Попробуйте ещё раз через несколько секунд.» |
-| Save failed | «Не удалось сохранить данные. Проверьте соединение и попробуйте снова.» |
-| Not found | «Запись не найдена. Возможно, она была удалена.» |
-| Auth required | «Для доступа необходимо войти в систему.» |
-| Validation error | «Проверьте правильность заполнения формы.» |
-| Generic AI/LLM error | «Функция временно недоступна. Попробуйте позже.» |
+| Network/server error | «Si è verificato un errore. Riprova tra qualche secondo.» |
+| Save failed | «Impossibile salvare i dati. Controlla la connessione e riprova.» |
+| Not found | «Elemento non trovato. Potrebbe essere stato eliminato.» |
+| Auth required | «Per accedere è necessario effettuare il login.» |
+| Validation error | «Controlla i campi del modulo prima di continuare.» |
+| Generic AI/LLM error | «Funzione temporaneamente non disponibile. Riprova più tardi.» |
 
 ### Developer Layer (technical logs)
 ```typescript
@@ -71,7 +71,7 @@ src/
 │   ├── ReminderList.tsx                    # Reminders widget
 │   ├── SearchBar.tsx                       # Global search
 │   ├── StatusBadge.tsx                     # Order status chip
-│   ├── ErrorMessage.tsx                    # Standard user-facing error (Russian)
+│   ├── ErrorMessage.tsx                    # Standard user-facing error (Italian)
 │   └── nav/
 │       ├── Sidebar.tsx                     # Desktop nav
 │       └── BottomNav.tsx                   # Mobile bottom nav
@@ -621,9 +621,9 @@ export default function LoginPage() {
       options: { emailRedirectTo: `${location.origin}/auth/callback` },
     })
     if (error) {
-      setMessage("Произошла ошибка. Попробуйте ещё раз.")
+      setMessage("Si è verificato un errore. Riprova tra qualche secondo.")
     } else {
-      setMessage("Проверьте почту — мы отправили вам ссылку для входа.")
+      setMessage("Controlla la tua email — ti abbiamo inviato un link per accedere.")
     }
     setLoading(false)
   }
@@ -752,12 +752,12 @@ export class AppError extends Error {
 }
 
 export const USER_MESSAGES = {
-  generic: "Произошла ошибка. Попробуйте ещё раз через несколько секунд.",
-  saveFailed: "Не удалось сохранить данные. Проверьте соединение и попробуйте снова.",
-  notFound: "Запись не найдена. Возможно, она была удалена.",
-  authRequired: "Для доступа необходимо войти в систему.",
-  validationError: "Проверьте правильность заполнения формы.",
-  featureUnavailable: "Функция временно недоступна. Попробуйте позже.",
+  generic: "Si è verificato un errore. Riprova tra qualche secondo.",
+  saveFailed: "Impossibile salvare i dati. Controlla la connessione e riprova.",
+  notFound: "Elemento non trovato. Potrebbe essere stato eliminato.",
+  authRequired: "Per accedere è necessario effettuare il login.",
+  validationError: "Controlla i campi del modulo prima di continuare.",
+  featureUnavailable: "Funzione temporaneamente non disponibile. Riprova più tardi.",
 } as const
 
 export function toUserMessage(error: unknown): string {
@@ -823,7 +823,7 @@ Expected: 2 tests pass.
 
 ```bash
 git add src/lib/errors.ts src/lib/logger.ts src/components/ErrorMessage.tsx src/lib/__tests__/
-git commit -m "feat: error handling foundation with Russian user messages"
+git commit -m "feat: error handling foundation with Italian user messages"
 ```
 
 **Completion criteria:** Both tests pass. `ErrorMessage` component renders without TypeScript errors.
@@ -1593,7 +1593,7 @@ git add src/
 git commit -m "feat: order creation form with validation and error feedback"
 ```
 
-**Completion criteria:** Submitting the form creates a record in Supabase. Errors show Russian message. Empty title is blocked by HTML `required`.
+**Completion criteria:** Submitting the form creates a record in Supabase. Errors show Italian message. Empty title is blocked by HTML `required`.
 
 ---
 
