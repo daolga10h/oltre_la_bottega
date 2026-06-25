@@ -1,16 +1,18 @@
 {
-  "name": "oltre-la-bottega",
+  "name": "oltre_la_bottega",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "next lint",
     "test": "jest"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.108.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
@@ -31,6 +33,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "jest": "^30.4.2",
+    "supabase": "^2.108.0",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.11",
     "typescript": "^5"

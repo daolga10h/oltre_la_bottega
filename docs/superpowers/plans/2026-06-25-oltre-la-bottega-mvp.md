@@ -214,7 +214,7 @@ git commit -m "feat: scaffold Next.js 14 + Tailwind + shadcn/ui"
 - [ ] **Step 1: Create Supabase project**
 
 Go to https://supabase.com/dashboard → New project.
-Name: `oltre-la-bottega`. Region: EU (West). Note the project URL and anon key.
+Name: `oltre_la_bottega`. Region: EU (West). Note the project URL and anon key.
 
 - [ ] **Step 2: Install Supabase client**
 
@@ -2850,7 +2850,7 @@ All must exit 0.
 
 ```bash
 npx vercel link
-# Follow prompts: link to Vercel account, create new project "oltre-la-bottega"
+# Follow prompts: link to Vercel account, create new project "oltre_la_bottega"
 ```
 
 - [ ] **Step 3: Set environment variables in Vercel**
