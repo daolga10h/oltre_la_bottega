@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Il prodotto NON è un CRM generico né un gestionale aziendale. È una "cabina di comando" operativa centrata sulla domanda: **"Cosa devo fare oggi?"**. L'AI, se introdotta, è un acceleratore secondario, non il centro dell'esperienza.
 
-**Stato attuale**: specifiche tecniche complete, MVP pronto per lo sviluppo. Il codice non è ancora stato scaffoldato. Il file `mini_crm_freelancer_single_html.html` è il prototipo HTML di riferimento per la UI.
+**Stato attuale**: MVP implementato su branch `feat/mvp`. Fase 0 (scaffold + auth + schema) e Fase 1+2 (dashboard, ordini, clienti, agenda, inventario, ricerca, mobile QA, test E2E) completate. Pronto per test locali e deploy su Vercel. Il file `mini_crm_freelancer_single_html.html` è il prototipo HTML di riferimento per la UI.
 
 ---
 
@@ -61,8 +61,8 @@ src/
 | Frontend      | Next.js + TypeScript    | App Router, server actions, tipi sicuri          |
 | Styling       | Tailwind CSS            | Design rapido, responsivo, coerente              |
 | UI Components | shadcn/ui               | Componenti puliti senza overhead                 |
-| Database      | Supabase (PostgreSQL)   | CRUD semplice, RLS per isolamento bottega        |
-| Auth          | Supabase Auth           | Sessioni sicure, multi-tenant ready              |
+| Database      | Supabase (PostgreSQL)   | CRUD semplice, zero infrastruttura               |
+| Auth          | Supabase Auth           | Sessioni sicure per accesso singola bottega      |
 | Storage       | Supabase Storage        | Allegati foto/PDF a ordini                       |
 | Hosting       | Vercel                  | Deploy automatico da main                        |
 
@@ -86,7 +86,7 @@ Data Access Layer   →  Repository functions (Supabase client)
 Persistence Layer   →  PostgreSQL (Supabase) + Storage
 ```
 
-**Multi-tenancy**: ogni record operativo è legato a `shop_id`. Le Row Level Security (RLS) policies di Supabase garantiscono l'isolamento dati tra botteghe.
+**Modello single-tenant**: ogni installazione serve una sola bottega. Niente `shop_id`, niente RLS multi-tenant. Chi compra il prodotto riceve la propria istanza Supabase + Vercel separata e la gestisce in autonomia (modello simile a Danea).
 
 **API interne minime:**
 - `POST /api/orders` · `PATCH /api/orders/:id` · `GET /api/orders`
@@ -97,10 +97,10 @@ Persistence Layer   →  PostgreSQL (Supabase) + Storage
 
 ## Modello dati (v1)
 
-Tabelle principali in PostgreSQL: `users`, `shops`, `customers`, `orders`, `order_events`, `reminders`, `inventory_items`, `reviews`, `attachments`.
+Tabelle principali in PostgreSQL: `customers`, `orders`, `order_events`, `reminders`, `inventory_items`, `attachments`.
 
 Vincoli critici:
-- Ogni record ha `shop_id` (isolamento tenant)
+- Niente `shop_id` — installazione dedicata per bottega
 - Indici su `due_date`, `status`, `priority`, `customer_id`
 - `order_events` traccia la timeline di ogni ordine (audit log leggero)
 
@@ -111,7 +111,8 @@ Vincoli critici:
 | Decisione | Motivazione |
 |---|---|
 | Next.js Server Actions per mutation | Evita un layer API separato nell'MVP |
-| Supabase invece di backend custom | Zero infrastruttura da gestire, auth + RLS inclusi |
+| Supabase invece di backend custom | Zero infrastruttura da gestire, auth inclusa |
+| Single-tenant (un'istanza per bottega) | Nessuna complessità multi-tenant; modello Danea — chi compra gestisce la propria istanza in autonomia |
 | shadcn/ui invece di libreria full | Componenti copiabili e personalizzabili, nessun lock-in |
 | Scope MVP stretto (ordini + clienti + dashboard + reminder) | Il rischio principale è lo scope creep; funzioni come parsing PDF e WhatsApp sono post-MVP |
 | Layout card-based con colori di stato | Gli utenti devono leggere le priorità in meno di 30 secondi |
@@ -132,7 +133,6 @@ Vincoli critici:
 - [ ] Dashboard mostra KPI corretti (ordini aperti, urgenti, in ritardo, consegne oggi)
 - [ ] Creazione ordine funziona su mobile (bottom nav visibile)
 - [ ] Filtri e ricerca restituiscono risultati corretti
-- [ ] RLS: un utente non vede i dati di un'altra bottega
 - [ ] Tempo risposta UI < 300 ms per operazioni locali
 - [ ] Query liste principali < 1 secondo
 
