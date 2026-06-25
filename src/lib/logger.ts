@@ -7,5 +7,10 @@ export function logError(context: string, error: unknown, meta?: Record<string, 
 }
 
 export function logInfo(context: string, message: string, meta?: Record<string, unknown>) {
-  console.log(`[${new Date().toISOString()}] [INFO] [${context}] ${message}`, meta ?? "")
+  const prefix = `[${new Date().toISOString()}] [INFO] [${context}] ${message}`
+  if (meta !== undefined) {
+    console.log(prefix, meta)
+  } else {
+    console.log(prefix)
+  }
 }

@@ -11,7 +11,8 @@ export function formatDate(date: string | Date): string {
 }
 
 export function isOverdue(dueDate: string): boolean {
-  return isPast(new Date(dueDate)) && !isToday(new Date(dueDate))
+  const d = new Date(dueDate)
+  return isPast(d) && !isToday(d)
 }
 
 export function dueDateLabel(dueDate: string): string {
