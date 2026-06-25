@@ -4,7 +4,7 @@
 
 **Goal:** Build a focused operational dashboard with mini-CRM for artisan shops — letting the owner answer "What do I need to do today?" in under 60 seconds.
 
-**Architecture:** Next.js App Router with Server Actions for mutations (no separate API layer in MVP), Supabase for PostgreSQL + Auth + Storage. Every data record is scoped to `shop_id` with Row Level Security enforcing tenant isolation. Error handling follows a two-layer pattern: human-readable messages (in Italian) shown in the UI; detailed technical logs written to the server console.
+**Architecture:** Next.js App Router with Server Actions for mutations (no separate API layer in MVP), Supabase for PostgreSQL + Auth + Storage. **Single-tenant**: one Supabase + Vercel instance per shop — no `shop_id`, no multi-tenant RLS. Each customer receives their own isolated deployment and manages it independently (Danea model). Error handling follows a two-layer pattern: human-readable messages (in Italian) shown in the UI; detailed technical logs written to the server console.
 
 **Tech Stack:** Next.js 14 + TypeScript, Tailwind CSS, shadcn/ui, Supabase (PostgreSQL + Auth + Storage), Vercel
 
@@ -93,7 +93,7 @@ src/
 └── middleware.ts                           # Auth redirect middleware
 supabase/
 ├── migrations/
-│   └── 0001_initial_schema.sql             # All tables + RLS policies
+│   └── 0001_initial_schema.sql             # All tables (no shop_id, no multi-tenant RLS)
 └── seed.sql                                # Dev seed data
 ```
 
@@ -273,22 +273,15 @@ npx supabase link --project-ref <your-ref>
 
 - [ ] **Step 2: Write `supabase/migrations/0001_initial_schema.sql`**
 
+Single-tenant model — no `shops` table, no `shop_id`, RLS only requires authenticated user.
+
 ```sql
 -- Enable UUID generation
 create extension if not exists "pgcrypto";
 
--- USERS (managed by Supabase Auth, extend with profile)
-create table if not exists public.shops (
-  id uuid primary key default gen_random_uuid(),
-  owner_user_id uuid not null references auth.users(id) on delete cascade,
-  name text not null,
-  timezone text not null default 'Europe/Rome',
-  created_at timestamptz not null default now()
-);
-
+-- CUSTOMERS
 create table if not exists public.customers (
   id uuid primary key default gen_random_uuid(),
-  shop_id uuid not null references public.shops(id) on delete cascade,
   name text not null,
   phone text,
   email text,
@@ -297,17 +290,16 @@ create table if not exists public.customers (
   created_at timestamptz not null default now()
 );
 
+-- ENUMS
 create type public.order_status as enum (
   'nuovo', 'in_lavorazione', 'pronto', 'consegnato', 'annullato'
 );
-
 create type public.order_priority as enum ('normale', 'alta', 'urgente');
-
 create type public.payment_status as enum ('non_pagato', 'acconto', 'saldato');
 
+-- ORDERS
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
-  shop_id uuid not null references public.shops(id) on delete cascade,
   customer_id uuid references public.customers(id) on delete set null,
   title text not null,
   description text,
@@ -320,20 +312,20 @@ create table if not exists public.orders (
   updated_at timestamptz not null default now()
 );
 
+-- ORDER EVENTS (timeline / audit log)
 create table if not exists public.order_events (
   id uuid primary key default gen_random_uuid(),
   order_id uuid not null references public.orders(id) on delete cascade,
   event_type text not null,
   note text,
-  created_at timestamptz not null default now(),
-  created_by uuid references auth.users(id) on delete set null
+  created_at timestamptz not null default now()
 );
 
+-- REMINDERS
 create type public.reminder_status as enum ('attivo', 'completato', 'saltato');
 
 create table if not exists public.reminders (
   id uuid primary key default gen_random_uuid(),
-  shop_id uuid not null references public.shops(id) on delete cascade,
   order_id uuid references public.orders(id) on delete cascade,
   customer_id uuid references public.customers(id) on delete cascade,
   title text not null,
@@ -342,9 +334,9 @@ create table if not exists public.reminders (
   created_at timestamptz not null default now()
 );
 
+-- INVENTORY
 create table if not exists public.inventory_items (
   id uuid primary key default gen_random_uuid(),
-  shop_id uuid not null references public.shops(id) on delete cascade,
   name text not null,
   unit text default 'pz',
   quantity_available numeric(10,2) not null default 0,
@@ -352,23 +344,12 @@ create table if not exists public.inventory_items (
   updated_at timestamptz not null default now()
 );
 
-create table if not exists public.reviews (
-  id uuid primary key default gen_random_uuid(),
-  shop_id uuid not null references public.shops(id) on delete cascade,
-  order_id uuid not null references public.orders(id) on delete cascade,
-  requested_at timestamptz not null default now(),
-  received_at timestamptz,
-  rating smallint check (rating between 1 and 5),
-  note text
-);
-
 -- INDEXES
-create index on public.orders (shop_id, due_date);
-create index on public.orders (shop_id, status);
-create index on public.orders (shop_id, priority);
+create index on public.orders (due_date);
+create index on public.orders (status);
+create index on public.orders (priority);
 create index on public.orders (customer_id);
-create index on public.reminders (shop_id, due_at) where status = 'attivo';
-create index on public.customers (shop_id);
+create index on public.reminders (due_at) where status = 'attivo';
 
 -- AUTO-UPDATE updated_at
 create or replace function public.handle_updated_at()
@@ -381,94 +362,52 @@ create trigger orders_updated_at before update on public.orders
 create trigger inventory_updated_at before update on public.inventory_items
   for each row execute function public.handle_updated_at();
 
--- AUTO-CREATE shop for new users
-create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer as $$
-begin
-  insert into public.shops (owner_user_id, name)
-  values (new.id, coalesce(new.raw_user_meta_data->>'shop_name', 'La mia bottega'));
-  return new;
-end;
-$$;
-
-create trigger on_auth_user_created after insert on auth.users
-  for each row execute function public.handle_new_user();
-
--- ROW LEVEL SECURITY
-alter table public.shops enable row level security;
+-- ROW LEVEL SECURITY (single-tenant: only require authenticated user)
 alter table public.customers enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_events enable row level security;
 alter table public.reminders enable row level security;
 alter table public.inventory_items enable row level security;
-alter table public.reviews enable row level security;
 
--- Helper: get current user's shop_id
-create or replace function public.my_shop_id()
-returns uuid language sql stable as $$
-  select id from public.shops where owner_user_id = auth.uid() limit 1;
-$$;
-
--- RLS POLICIES
-create policy "shop_owner_all" on public.shops
-  for all using (owner_user_id = auth.uid());
-
-create policy "shop_data_all" on public.customers
-  for all using (shop_id = public.my_shop_id());
-
-create policy "shop_data_all" on public.orders
-  for all using (shop_id = public.my_shop_id());
-
-create policy "shop_data_all" on public.order_events
-  for all using (
-    order_id in (select id from public.orders where shop_id = public.my_shop_id())
-  );
-
-create policy "shop_data_all" on public.reminders
-  for all using (shop_id = public.my_shop_id());
-
-create policy "shop_data_all" on public.inventory_items
-  for all using (shop_id = public.my_shop_id());
-
-create policy "shop_data_all" on public.reviews
-  for all using (shop_id = public.my_shop_id());
+create policy "authenticated_all" on public.customers
+  for all using (auth.uid() is not null);
+create policy "authenticated_all" on public.orders
+  for all using (auth.uid() is not null);
+create policy "authenticated_all" on public.order_events
+  for all using (auth.uid() is not null);
+create policy "authenticated_all" on public.reminders
+  for all using (auth.uid() is not null);
+create policy "authenticated_all" on public.inventory_items
+  for all using (auth.uid() is not null);
 ```
 
 - [ ] **Step 3: Write `supabase/seed.sql`** (dev data only)
 
 ```sql
--- Run after auth: replace 'YOUR-USER-UUID' with a real auth.users id from Supabase dashboard
--- This seed is for local development only
-
+-- Run in Supabase Dashboard SQL editor after first login
 do $$
 declare
-  v_shop_id uuid;
   v_customer1 uuid;
   v_customer2 uuid;
-  v_order1 uuid;
 begin
-  select id into v_shop_id from public.shops limit 1;
-
-  insert into public.customers (shop_id, name, phone, tags)
+  insert into public.customers (name, phone, tags)
   values
-    (v_shop_id, 'Marco Ferretti', '+39 333 1234567', '{ricorrente}'),
-    (v_shop_id, 'Giulia Neri', '+39 345 9876543', '{}')
-  returning id into v_customer1;
+    ('Marco Ferretti', '+39 333 1234567', '{ricorrente}'),
+    ('Giulia Neri', '+39 345 9876543', '{}');
 
-  select id into v_customer2 from public.customers where name = 'Giulia Neri';
   select id into v_customer1 from public.customers where name = 'Marco Ferretti';
+  select id into v_customer2 from public.customers where name = 'Giulia Neri';
 
-  insert into public.orders (shop_id, customer_id, title, status, priority, due_date, amount_estimated, payment_status)
+  insert into public.orders (customer_id, title, status, priority, due_date, amount_estimated, payment_status)
   values
-    (v_shop_id, v_customer1, 'Riparazione borsa pelle', 'in_lavorazione', 'alta', current_date + 2, 80, 'acconto'),
-    (v_shop_id, v_customer2, 'Cintura su misura', 'nuovo', 'normale', current_date + 7, 120, 'non_pagato'),
-    (v_shop_id, v_customer1, 'Portafoglio personalizzato', 'pronto', 'urgente', current_date, 60, 'saldato')
-  returning id into v_order1;
+    (v_customer1, 'Riparazione borsa pelle', 'in_lavorazione', 'alta', current_date + 2, 80, 'acconto'),
+    (v_customer2, 'Cintura su misura', 'nuovo', 'normale', current_date + 7, 120, 'non_pagato'),
+    (v_customer1, 'Portafoglio personalizzato', 'pronto', 'urgente', current_date, 60, 'saldato');
 
-  insert into public.reminders (shop_id, title, due_at)
+  insert into public.reminders (title, due_at)
   values
-    (v_shop_id, 'Chiamare fornitore pelle', now() + interval '2 hours'),
-    (v_shop_id, 'Controllare magazzino fili', now() + interval '1 day');
+    ('Chiamare fornitore pelle', now() + interval '2 hours'),
+    ('Controllare magazzino fili', now() + interval '1 day');
 end;
 $$;
 ```
