@@ -20,5 +20,10 @@ export const USER_MESSAGES = {
 
 export function toUserMessage(error: unknown): string {
   if (error instanceof AppError) return error.userMessage
+  // Server Actions serialize errors as plain Error — check if message is a known user message
+  if (error instanceof Error) {
+    const known = Object.values(USER_MESSAGES) as string[]
+    if (known.includes(error.message)) return error.message
+  }
   return USER_MESSAGES.generic
 }

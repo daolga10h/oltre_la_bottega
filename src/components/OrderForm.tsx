@@ -52,9 +52,10 @@ export function OrderForm({ order }: Props) {
       telefono: v("telefono"),
       email_cliente: v("email_cliente"),
       canale,
-      data_ordine: v("data_ordine"),
+      // data_ordine: set automatically by DB default on create, shown only in edit
+      data_ordine: isEdit ? (order.data_ordine ?? null) : undefined,
       data_consegna: v("data_consegna"),
-      data_consegnato: v("data_consegnato"),
+      data_consegnato: isEdit ? v("data_consegnato") : undefined,
       cosa_ordinato: (fd.get("cosa_ordinato") as string).trim(),
       testo_da_scrivere: v("testo_da_scrivere"),
       tipo_lavorazione: v("tipo_lavorazione"),
@@ -167,18 +168,22 @@ export function OrderForm({ order }: Props) {
       <section className="space-y-4">
         <h2 className="font-semibold text-slate-700 border-b pb-1">Date</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <Label htmlFor="data_ordine">Data ordine</Label>
-            <Input id="data_ordine" name="data_ordine" type="date" defaultValue={order?.data_ordine ?? new Date().toISOString().split("T")[0]} />
-          </div>
+          {isEdit && (
+            <div>
+              <Label htmlFor="data_ordine">Data ordine</Label>
+              <Input id="data_ordine" name="data_ordine" type="date" defaultValue={order?.data_ordine ?? ""} />
+            </div>
+          )}
           <div>
             <Label htmlFor="data_consegna">Data consegna prevista</Label>
             <Input id="data_consegna" name="data_consegna" type="date" defaultValue={order?.data_consegna ?? ""} />
           </div>
-          <div>
-            <Label htmlFor="data_consegnato">Data consegnato</Label>
-            <Input id="data_consegnato" name="data_consegnato" type="date" defaultValue={order?.data_consegnato ?? ""} />
-          </div>
+          {isEdit && (
+            <div>
+              <Label htmlFor="data_consegnato">Data consegnato</Label>
+              <Input id="data_consegnato" name="data_consegnato" type="date" defaultValue={order?.data_consegnato ?? ""} />
+            </div>
+          )}
         </div>
       </section>
 
@@ -203,11 +208,12 @@ export function OrderForm({ order }: Props) {
 
       {/* VARIE */}
       <section className="space-y-4">
-        <h2 className="font-semibold text-slate-700 border-b pb-1">Note e follow-up</h2>
+        <h2 className="font-semibold text-slate-700 border-b pb-1">Note</h2>
         <div>
-          <Label htmlFor="note">Note</Label>
+          <Label htmlFor="note">Note interne</Label>
           <Textarea id="note" name="note" rows={2} defaultValue={order?.note ?? ""} placeholder="Note interne..." />
         </div>
+        {isEdit && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: "Msg PRONTO inviato", state: msgPronto, set: setMsgPronto },
@@ -229,6 +235,7 @@ export function OrderForm({ order }: Props) {
             </button>
           ))}
         </div>
+        )}
       </section>
 
       <div className="flex gap-3 pt-2">

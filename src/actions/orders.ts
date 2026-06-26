@@ -97,64 +97,58 @@ export async function getOrder(id: string): Promise<OrderDetail | null> {
 }
 
 export async function createOrder(input: Partial<CreateOrderInput> & { nome: string; cosa_ordinato: string }): Promise<{ id: string }> {
-  try {
-    const supabase = await createClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any)
-      .from("orders")
-      .insert(input)
-      .select("id")
-      .single()
-    if (error) throw new AppError(error.message, USER_MESSAGES.saveFailed)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from("order_events").insert({
-      order_id: data.id,
-      event_type: "created",
-      note: "Ordine creato",
-    })
-    return { id: data.id }
-  } catch (err) {
-    logError("createOrder", err)
-    throw err instanceof AppError ? err : new AppError(String(err), USER_MESSAGES.saveFailed)
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from("orders")
+    .insert(input)
+    .select("id")
+    .single()
+  if (error) {
+    logError("createOrder", error, { input })
+    throw new Error(USER_MESSAGES.saveFailed)
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from("order_events").insert({
+    order_id: data.id,
+    event_type: "created",
+    note: "Ordine creato",
+  })
+  return { id: data.id }
 }
 
 export async function updateOrder(id: string, input: Partial<CreateOrderInput>): Promise<void> {
-  try {
-    const supabase = await createClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from("orders").update(input).eq("id", id)
-    if (error) throw new AppError(error.message, USER_MESSAGES.saveFailed)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from("order_events").insert({
-      order_id: id,
-      event_type: "updated",
-      note: "Ordine aggiornato",
-    })
-  } catch (err) {
-    logError("updateOrder", err, { id })
-    throw err instanceof AppError ? err : new AppError(String(err), USER_MESSAGES.saveFailed)
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from("orders").update(input).eq("id", id)
+  if (error) {
+    logError("updateOrder", error, { id })
+    throw new Error(USER_MESSAGES.saveFailed)
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from("order_events").insert({
+    order_id: id,
+    event_type: "updated",
+    note: "Ordine aggiornato",
+  })
 }
 
 export async function updateOrderStatus(id: string, status: string): Promise<void> {
-  try {
-    const supabase = await createClient()
-    const updates: Record<string, unknown> = { status }
-    if (status === "consegnato") updates.data_consegnato = new Date().toISOString().split("T")[0]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from("orders").update(updates).eq("id", id)
-    if (error) throw new AppError(error.message, USER_MESSAGES.saveFailed)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from("order_events").insert({
-      order_id: id,
-      event_type: "status_change",
-      note: `Stato: ${STATUS_LABELS[status] ?? status}`,
-    })
-  } catch (err) {
-    logError("updateOrderStatus", err, { id, status })
-    throw err instanceof AppError ? err : new AppError(String(err), USER_MESSAGES.saveFailed)
+  const supabase = await createClient()
+  const updates: Record<string, unknown> = { status }
+  if (status === "consegnato") updates.data_consegnato = new Date().toISOString().split("T")[0]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from("orders").update(updates).eq("id", id)
+  if (error) {
+    logError("updateOrderStatus", error, { id, status })
+    throw new Error(USER_MESSAGES.saveFailed)
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from("order_events").insert({
+    order_id: id,
+    event_type: "status_change",
+    note: `Stato: ${STATUS_LABELS[status] ?? status}`,
+  })
 }
 
 export async function deleteOrder(id: string): Promise<void> {
