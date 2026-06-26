@@ -8,9 +8,8 @@ export type ReminderItem = {
   id: string
   title: string
   due_at: string
-  status: "attivo" | "completato" | "saltato"
+  status: string
   order_id: string | null
-  customer_id: string | null
 }
 
 export async function getActiveReminders(): Promise<ReminderItem[]> {
@@ -19,7 +18,7 @@ export async function getActiveReminders(): Promise<ReminderItem[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
       .from("reminders")
-      .select("id, title, due_at, status, order_id, customer_id")
+      .select("id, title, due_at, status, order_id")
       .eq("status", "attivo")
       .order("due_at")
 
@@ -35,7 +34,6 @@ export async function createReminder(input: {
   title: string
   due_at: string
   order_id?: string | null
-  customer_id?: string | null
 }): Promise<void> {
   try {
     const supabase = await createClient()

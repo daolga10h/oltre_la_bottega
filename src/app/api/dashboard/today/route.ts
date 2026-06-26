@@ -11,32 +11,16 @@ export async function GET() {
     const today = new Date().toISOString().split("T")[0]
 
     const [openRes, urgentRes, overdueRes, todayRes, remindersRes] = await Promise.all([
-      supabase
-        .from("orders")
-        .select("id", { count: "exact", head: true })
-        .not("status", "in", '("consegnato","annullato")'),
-      supabase
-        .from("orders")
-        .select("id", { count: "exact", head: true })
-        .eq("priority", "urgente")
-        .not("status", "in", '("consegnato","annullato")'),
-      supabase
-        .from("orders")
-        .select("id", { count: "exact", head: true })
-        .lt("due_date", today)
-        .not("status", "in", '("consegnato","annullato")'),
-      supabase
-        .from("orders")
-        .select("id, title, status, priority, due_date, customers(name)")
-        .eq("due_date", today)
-        .not("status", "in", '("consegnato","annullato")')
-        .order("priority"),
-      supabase
-        .from("reminders")
-        .select("id, title, due_at")
-        .eq("status", "attivo")
-        .lte("due_at", `${today}T23:59:59Z`)
-        .order("due_at"),
+      supabase.from("orders").select("id", { count: "exact", head: true })
+        .not("status", "in", '("consegnato")'),
+      supabase.from("orders").select("id", { count: "exact", head: true })
+        .eq("status", "in_lavorazione"),
+      supabase.from("orders").select("id", { count: "exact", head: true })
+        .lt("data_consegna", today).not("status", "in", '("consegnato")'),
+      supabase.from("orders").select("id, cosa_ordinato, nome, cognome, status, data_consegna")
+        .eq("data_consegna", today).not("status", "in", '("consegnato")'),
+      supabase.from("reminders").select("id, title, due_at")
+        .eq("status", "attivo").lte("due_at", `${today}T23:59:59Z`).order("due_at"),
     ])
 
     return NextResponse.json({

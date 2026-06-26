@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
 import { AlertTriangle, Clock, Package, Truck } from "lucide-react"
@@ -17,10 +16,11 @@ interface KPI {
 
 interface TodayOrder {
   id: string
-  title: string
-  priority: string
-  due_date: string | null
-  customers: { name: string } | null
+  cosa_ordinato: string
+  nome: string
+  cognome: string | null
+  status: string
+  data_consegna: string | null
 }
 
 interface Reminder {
@@ -70,7 +70,7 @@ export function TodayBoard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard label="Ordini aperti" value={kpi.open} icon={<Package className="w-4 h-4" />} />
         <KpiCard
-          label="Urgenti"
+          label="In lavorazione"
           value={kpi.urgent}
           icon={<AlertTriangle className="w-4 h-4" />}
           variant={kpi.urgent > 0 ? "urgent" : "default"}
@@ -102,14 +102,11 @@ export function TodayBoard() {
                 className="flex items-center justify-between py-2 border-b last:border-0 hover:bg-slate-50 rounded px-2 -mx-2"
               >
                 <div>
-                  <p className="font-medium text-sm">{o.title}</p>
+                  <p className="font-medium text-sm">{o.cosa_ordinato}</p>
                   <p className="text-xs text-slate-500">
-                    {o.customers?.name ?? "Cliente non indicato"}
+                    {[o.nome, o.cognome].filter(Boolean).join(" ")}
                   </p>
                 </div>
-                {o.priority === "urgente" && (
-                  <Badge variant="destructive">Urgente</Badge>
-                )}
               </Link>
             ))}
           </CardContent>

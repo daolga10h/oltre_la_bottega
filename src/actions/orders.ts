@@ -3,107 +3,75 @@
 import { createClient } from "@/lib/supabase/server"
 import { logError } from "@/lib/logger"
 import { AppError, USER_MESSAGES } from "@/lib/errors"
-import type { Database } from "@/types/supabase"
+import { STATUS_LABELS } from "@/lib/orderConstants"
 
-type OrderStatus = Database["public"]["Enums"]["order_status"]
-type OrderPriority = Database["public"]["Enums"]["order_priority"]
-type PaymentStatus = Database["public"]["Enums"]["payment_status"]
+// Re-exported for convenience — consumers can also import directly from @/lib/orderConstants
+// NOTE: cannot export non-async values from "use server" files, so pages import from orderConstants directly
 
-export type OrderWithCustomer = {
+export type OrderRow = {
   id: string
-  title: string
-  status: OrderStatus
-  priority: OrderPriority
-  due_date: string | null
-  payment_status: PaymentStatus
+  nome: string
+  cognome: string | null
+  telefono: string | null
+  email_cliente: string | null
+  canale: string
+  data_ordine: string | null
+  data_consegna: string | null
+  data_consegnato: string | null
+  cosa_ordinato: string
+  testo_da_scrivere: string | null
+  tipo_lavorazione: string | null
+  quantita: number
+  bozza_grafica: string
+  foto_oggetto: string | null
+  file_cliente: string | null
+  note: string | null
+  status: string
+  prezzo: number
+  acconto: number
+  saldo: number
+  chiedere_recensione: boolean
+  recensione_richiesta: boolean
+  recensione_ricevuta: boolean
+  msg_pronto_inviato: boolean
   created_at: string
-  customers: { id: string; name: string } | null
+  updated_at: string
 }
+
+export type OrderDetail = OrderRow & {
+  events: Array<{ id: string; event_type: string; note: string | null; created_at: string }>
+}
+
+export type CreateOrderInput = Omit<OrderRow, "id" | "created_at" | "updated_at">
 
 export async function getOrders(filters?: {
   status?: string
-  priority?: string
   search?: string
-}): Promise<OrderWithCustomer[]> {
+}): Promise<OrderRow[]> {
   try {
     const supabase = await createClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let query = (supabase as any)
       .from("orders")
-      .select("id, title, status, priority, due_date, payment_status, created_at, customers(id, name)")
-      .order("due_date", { ascending: true, nullsFirst: false })
+      .select("*")
+      .order("data_consegna", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false })
 
     if (filters?.status && filters.status !== "tutti") {
       query = query.eq("status", filters.status)
     }
-    if (filters?.priority && filters.priority !== "tutti") {
-      query = query.eq("priority", filters.priority)
-    }
     if (filters?.search) {
-      query = query.ilike("title", `%${filters.search}%`)
+      query = query.or(
+        `nome.ilike.%${filters.search}%,cognome.ilike.%${filters.search}%,cosa_ordinato.ilike.%${filters.search}%,telefono.ilike.%${filters.search}%`
+      )
     }
-
     const { data, error } = await query
-    if (error) throw new AppError(String(error.message), USER_MESSAGES.generic, { query: "getOrders" })
-    return (data ?? []) as OrderWithCustomer[]
+    if (error) throw new AppError(error.message, USER_MESSAGES.generic)
+    return (data ?? []) as OrderRow[]
   } catch (err) {
     logError("getOrders", err)
     throw err instanceof AppError ? err : new AppError(String(err), USER_MESSAGES.generic)
   }
-}
-
-export type CreateOrderInput = {
-  title: string
-  customer_id?: string | null
-  description?: string | null
-  status?: OrderStatus
-  priority?: OrderPriority
-  due_date?: string | null
-  amount_estimated?: number | null
-  payment_status?: PaymentStatus
-}
-
-export async function createOrder(input: CreateOrderInput): Promise<{ id: string }> {
-  try {
-    const supabase = await createClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any)
-      .from("orders")
-      .insert({
-        title: input.title,
-        customer_id: input.customer_id ?? null,
-        description: input.description ?? null,
-        status: input.status,
-        priority: input.priority,
-        due_date: input.due_date ?? null,
-        amount_estimated: input.amount_estimated ?? null,
-        payment_status: input.payment_status,
-      })
-      .select("id")
-      .single()
-
-    if (error) throw new AppError(String(error.message), USER_MESSAGES.saveFailed, { action: "createOrder" })
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from("order_events").insert({
-      order_id: (data as { id: string }).id,
-      event_type: "created",
-      note: "Ordine creato",
-    })
-
-    return { id: (data as { id: string }).id }
-  } catch (err) {
-    logError("createOrder", err, { input })
-    throw err instanceof AppError ? err : new AppError(String(err), USER_MESSAGES.saveFailed)
-  }
-}
-
-export type OrderDetail = OrderWithCustomer & {
-  description: string | null
-  amount_estimated: number | null
-  updated_at: string
-  events: Array<{ id: string; event_type: string; note: string | null; created_at: string }>
 }
 
 export async function getOrder(id: string): Promise<OrderDetail | null> {
@@ -111,74 +79,92 @@ export async function getOrder(id: string): Promise<OrderDetail | null> {
     const supabase = await createClient()
     const { data, error } = await supabase
       .from("orders")
-      .select(`
-        id, title, description, status, priority, due_date,
-        amount_estimated, payment_status, created_at, updated_at,
-        customers(id, name),
-        order_events(id, event_type, note, created_at)
-      `)
+      .select("*, order_events(id, event_type, note, created_at)")
       .eq("id", id)
       .order("created_at", { referencedTable: "order_events", ascending: false })
       .single()
-
     if (error) {
       if (error.code === "PGRST116") return null
       throw new AppError(error.message, USER_MESSAGES.notFound)
     }
-    return data as unknown as OrderDetail
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const row = data as any
+    return { ...row, events: row.order_events ?? [] } as OrderDetail
   } catch (err) {
     logError("getOrder", err, { id })
     throw err instanceof AppError ? err : new AppError(String(err), USER_MESSAGES.generic)
   }
 }
 
-export async function updateOrderStatus(
-  orderId: string,
-  status: OrderStatus,
-  note?: string
-): Promise<void> {
+export async function createOrder(input: Partial<CreateOrderInput> & { nome: string; cosa_ordinato: string }): Promise<{ id: string }> {
   try {
     const supabase = await createClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from("orders")
-      .update({ status })
-      .eq("id", orderId)
-    if (error) throw new AppError(String(error.message), USER_MESSAGES.saveFailed)
-
+      .insert(input)
+      .select("id")
+      .single()
+    if (error) throw new AppError(error.message, USER_MESSAGES.saveFailed)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any).from("order_events").insert({
-      order_id: orderId,
-      event_type: "status_change",
-      note: note ?? `Stato: ${status.replace("_", " ")}`,
+      order_id: data.id,
+      event_type: "created",
+      note: "Ordine creato",
     })
+    return { id: data.id }
   } catch (err) {
-    logError("updateOrderStatus", err, { orderId, status })
+    logError("createOrder", err)
     throw err instanceof AppError ? err : new AppError(String(err), USER_MESSAGES.saveFailed)
   }
 }
 
-export async function updatePaymentStatus(
-  orderId: string,
-  paymentStatus: PaymentStatus
-): Promise<void> {
+export async function updateOrder(id: string, input: Partial<CreateOrderInput>): Promise<void> {
   try {
     const supabase = await createClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
-      .from("orders")
-      .update({ payment_status: paymentStatus })
-      .eq("id", orderId)
-    if (error) throw new AppError(String(error.message), USER_MESSAGES.saveFailed)
-
+    const { error } = await (supabase as any).from("orders").update(input).eq("id", id)
+    if (error) throw new AppError(error.message, USER_MESSAGES.saveFailed)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any).from("order_events").insert({
-      order_id: orderId,
-      event_type: "payment_update",
-      note: `Pagamento: ${paymentStatus.replace("_", " ")}`,
+      order_id: id,
+      event_type: "updated",
+      note: "Ordine aggiornato",
     })
   } catch (err) {
-    logError("updatePaymentStatus", err, { orderId, paymentStatus })
+    logError("updateOrder", err, { id })
+    throw err instanceof AppError ? err : new AppError(String(err), USER_MESSAGES.saveFailed)
+  }
+}
+
+export async function updateOrderStatus(id: string, status: string): Promise<void> {
+  try {
+    const supabase = await createClient()
+    const updates: Record<string, unknown> = { status }
+    if (status === "consegnato") updates.data_consegnato = new Date().toISOString().split("T")[0]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).from("orders").update(updates).eq("id", id)
+    if (error) throw new AppError(error.message, USER_MESSAGES.saveFailed)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from("order_events").insert({
+      order_id: id,
+      event_type: "status_change",
+      note: `Stato: ${STATUS_LABELS[status] ?? status}`,
+    })
+  } catch (err) {
+    logError("updateOrderStatus", err, { id, status })
+    throw err instanceof AppError ? err : new AppError(String(err), USER_MESSAGES.saveFailed)
+  }
+}
+
+export async function deleteOrder(id: string): Promise<void> {
+  try {
+    const supabase = await createClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).from("orders").delete().eq("id", id)
+    if (error) throw new AppError(error.message, USER_MESSAGES.saveFailed)
+  } catch (err) {
+    logError("deleteOrder", err, { id })
     throw err instanceof AppError ? err : new AppError(String(err), USER_MESSAGES.saveFailed)
   }
 }

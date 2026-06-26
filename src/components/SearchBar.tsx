@@ -7,8 +7,7 @@ import { Search } from "lucide-react"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 
 interface SearchResult {
-  orders: Array<{ id: string; title: string; status: string }>
-  customers: Array<{ id: string; name: string; phone: string | null }>
+  orders: Array<{ id: string; cosa_ordinato: string; nome: string; cognome: string | null; status: string }>
 }
 
 export function SearchBar() {
@@ -40,8 +39,7 @@ export function SearchBar() {
     return () => document.removeEventListener("mousedown", handleClick)
   }, [])
 
-  const hasResults =
-    results && (results.orders.length > 0 || results.customers.length > 0)
+  const hasResults = results && results.orders.length > 0
 
   function navigate(href: string) {
     router.push(href)
@@ -64,41 +62,21 @@ export function SearchBar() {
       />
       {open && hasResults && (
         <div className="absolute top-full mt-1 w-full bg-white border rounded-lg shadow-lg z-50 overflow-hidden">
-          {results!.orders.length > 0 && (
-            <>
-              <p className="px-3 py-1.5 text-xs font-medium text-slate-500 bg-slate-50">
-                Ordini
-              </p>
-              {results!.orders.map((o) => (
-                <button
-                  key={o.id}
-                  className="w-full px-3 py-2 text-sm text-left hover:bg-slate-50"
-                  onClick={() => navigate(`/orders/${o.id}`)}
-                >
-                  {o.title}
-                </button>
-              ))}
-            </>
-          )}
-          {results!.customers.length > 0 && (
-            <>
-              <p className="px-3 py-1.5 text-xs font-medium text-slate-500 bg-slate-50">
-                Clienti
-              </p>
-              {results!.customers.map((c) => (
-                <button
-                  key={c.id}
-                  className="w-full px-3 py-2 text-sm text-left hover:bg-slate-50"
-                  onClick={() => navigate(`/customers/${c.id}`)}
-                >
-                  {c.name}
-                  {c.phone && (
-                    <span className="text-slate-400 ml-2 text-xs">{c.phone}</span>
-                  )}
-                </button>
-              ))}
-            </>
-          )}
+          <p className="px-3 py-1.5 text-xs font-medium text-slate-500 bg-slate-50">
+            Ordini
+          </p>
+          {results!.orders.map((o) => (
+            <button
+              key={o.id}
+              className="w-full px-3 py-2 text-sm text-left hover:bg-slate-50"
+              onClick={() => navigate(`/orders/${o.id}`)}
+            >
+              <span className="font-medium">{o.cosa_ordinato}</span>
+              <span className="text-slate-400 ml-2 text-xs">
+                {[o.nome, o.cognome].filter(Boolean).join(" ")}
+              </span>
+            </button>
+          ))}
         </div>
       )}
     </div>
