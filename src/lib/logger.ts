@@ -1,7 +1,8 @@
 export function logError(context: string, error: unknown, meta?: Record<string, unknown>) {
   console.error(`[${new Date().toISOString()}] [ERROR] [${context}]`, {
-    message: error instanceof Error ? error.message : String(error),
+    message: error instanceof Error ? error.message : JSON.stringify(error),
     stack: error instanceof Error ? error.stack : undefined,
+    raw: !(error instanceof Error) ? error : undefined,
     ...meta,
   })
 }

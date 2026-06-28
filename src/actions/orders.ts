@@ -106,7 +106,7 @@ export async function createOrder(input: Partial<CreateOrderInput> & { nome: str
     .single()
   if (error) {
     logError("createOrder", error, { input })
-    throw new Error(USER_MESSAGES.saveFailed)
+    throw new AppError(`[DEBUG] ${error.code}: ${error.message}`, USER_MESSAGES.saveFailed)
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase as any).from("order_events").insert({
