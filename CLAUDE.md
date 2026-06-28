@@ -198,3 +198,4 @@ supabase gen types typescript --local > src/types/supabase.ts
 - **Fase 1** (2–4 sett): dashboard oggi/7 giorni, CRUD ordini, CRUD clienti, reminder, ricerca/filtri
 - **Fase 2** (1–2 sett): timeline ordini, pagamento base, inventario base, UX mobile
 - **Fase 3** (opzionale): recensioni, template messaggi, integrazioni canali esterni
+- **Fase 4** (opzionale): Supabase Realtime — aggiornamenti automatici tra più tablet senza ricaricare la pagina

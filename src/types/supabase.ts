@@ -30,6 +30,7 @@ export type Database = {
           recensione_richiesta: boolean
           recensione_ricevuta: boolean
           msg_pronto_inviato: boolean
+          consenso_marketing: boolean
           created_at: string
           updated_at: string
         }
@@ -59,6 +60,7 @@ export type Database = {
           recensione_richiesta?: boolean
           recensione_ricevuta?: boolean
           msg_pronto_inviato?: boolean
+          consenso_marketing?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -88,6 +90,7 @@ export type Database = {
           recensione_richiesta?: boolean
           recensione_ricevuta?: boolean
           msg_pronto_inviato?: boolean
+          consenso_marketing?: boolean
           created_at?: string
           updated_at?: string
         }

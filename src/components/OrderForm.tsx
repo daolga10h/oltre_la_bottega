@@ -33,6 +33,7 @@ export function OrderForm({ order }: Props) {
   const [canale, setCanale] = useState(order?.canale ?? "negozio")
   const [bozza, setBozza] = useState(order?.bozza_grafica ?? "non_serve")
   const [fileCliente, setFileCliente] = useState(order?.file_cliente ?? "")
+  const [consensoMarketing, setConsensoMarketing] = useState(order?.consenso_marketing ?? false)
   const [chiedereRec, setChiedereRec] = useState(order?.chiedere_recensione ?? false)
   const [recRichiesta, setRecRichiesta] = useState(order?.recensione_richiesta ?? false)
   const [recRicevuta, setRecRicevuta] = useState(order?.recensione_ricevuta ?? false)
@@ -68,6 +69,7 @@ export function OrderForm({ order }: Props) {
       prezzo: n("prezzo"),
       acconto: n("acconto"),
       saldo: n("saldo"),
+      consenso_marketing: consensoMarketing,
       chiedere_recensione: chiedereRec,
       recensione_richiesta: recRichiesta,
       recensione_ricevuta: recRicevuta,
@@ -124,6 +126,18 @@ export function OrderForm({ order }: Props) {
               {CANALI.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
+        </div>
+        <div className="flex items-center gap-2 pt-1">
+          <input
+            id="consenso_marketing"
+            type="checkbox"
+            checked={consensoMarketing}
+            onChange={(e) => setConsensoMarketing(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300"
+          />
+          <Label htmlFor="consenso_marketing" className="font-normal text-sm cursor-pointer">
+            Il cliente ha dato consenso per recensioni e comunicazioni commerciali (GDPR)
+          </Label>
         </div>
       </section>
 

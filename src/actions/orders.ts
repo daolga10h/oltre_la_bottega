@@ -30,6 +30,7 @@ export type OrderRow = {
   prezzo: number
   acconto: number
   saldo: number
+  consenso_marketing: boolean
   chiedere_recensione: boolean
   recensione_richiesta: boolean
   recensione_ricevuta: boolean
