@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
+import { FileUpload } from "@/components/FileUpload"
 
 const CANALI = ["negozio", "WhatsApp", "telefono", "mail", "sito", "altro"]
 const BOZZA_OPTIONS = [
@@ -31,6 +32,7 @@ export function OrderForm({ order }: Props) {
 
   const [canale, setCanale] = useState(order?.canale ?? "negozio")
   const [bozza, setBozza] = useState(order?.bozza_grafica ?? "non_serve")
+  const [fileCliente, setFileCliente] = useState(order?.file_cliente ?? "")
   const [chiedereRec, setChiedereRec] = useState(order?.chiedere_recensione ?? false)
   const [recRichiesta, setRecRichiesta] = useState(order?.recensione_richiesta ?? false)
   const [recRicevuta, setRecRicevuta] = useState(order?.recensione_ricevuta ?? false)
@@ -61,7 +63,7 @@ export function OrderForm({ order }: Props) {
       quantita: Number(fd.get("quantita") ?? 1),
       bozza_grafica: bozza,
       foto_oggetto: v("foto_oggetto"),
-      file_cliente: v("file_cliente"),
+      file_cliente: fileCliente || null,
       note: v("note"),
       prezzo: n("prezzo"),
       acconto: n("acconto"),
@@ -169,8 +171,8 @@ export function OrderForm({ order }: Props) {
             </select>
           </div>
           <div className="sm:col-span-2">
-            <Label htmlFor="file_cliente">File inviati dal cliente</Label>
-            <Input id="file_cliente" name="file_cliente" defaultValue={order?.file_cliente ?? ""} placeholder="Nome file, link Drive, logo, foto..." />
+            <Label>File inviati dal cliente</Label>
+            <FileUpload value={fileCliente} onChange={setFileCliente} />
           </div>
           <div>
             <Label htmlFor="foto_oggetto">Foto oggetto scelto</Label>
