@@ -139,7 +139,19 @@ export function OrderForm({ order }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <Label htmlFor="tipo_lavorazione">Tipo lavorazione</Label>
-            <Input id="tipo_lavorazione" name="tipo_lavorazione" defaultValue={order?.tipo_lavorazione ?? ""} placeholder="Incisione laser, stampa UV..." />
+            <select
+              id="tipo_lavorazione"
+              name="tipo_lavorazione"
+              defaultValue={order?.tipo_lavorazione ?? ""}
+              className="w-full h-9 rounded-lg border border-input bg-white px-3 text-sm"
+            >
+              <option value="">— Seleziona —</option>
+              <option value="Stampa UV">Stampa UV</option>
+              <option value="Taglio + stampa">Taglio + stampa</option>
+              <option value="Incisione/taglio laser">Incisione/taglio laser</option>
+              <option value="Fresatura">Fresatura</option>
+              <option value="Stampa">Stampa</option>
+            </select>
           </div>
           <div>
             <Label htmlFor="quantita">Quantità</Label>
