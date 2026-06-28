@@ -37,9 +37,11 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl">Oltre la Bottega</CardTitle>
-          <p className="text-sm text-slate-500">
-            Inserisci la tua email per accedere
-          </p>
+          {!sent && (
+            <p className="text-sm text-slate-500">
+              Inserisci la tua email per accedere
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           {sent ? (
