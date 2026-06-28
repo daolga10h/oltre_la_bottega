@@ -6,11 +6,11 @@ import { LayoutDashboard, ShoppingBag, Users, Calendar, LayoutGrid } from "lucid
 import { cn } from "@/lib/utils"
 
 const links = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Oggi", icon: LayoutDashboard },
+  { href: "/kanban", label: "Bacheca", icon: LayoutGrid },
   { href: "/orders", label: "Ordini", icon: ShoppingBag },
-  { href: "/customers", label: "Clienti", icon: Users },
   { href: "/agenda", label: "Agenda", icon: Calendar },
-  { href: "/kanban", label: "Stati lavoro", icon: LayoutGrid },
+  { href: "/customers", label: "Clienti", icon: Users },
 ]
 
 export function Sidebar() {

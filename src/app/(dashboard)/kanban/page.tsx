@@ -7,7 +7,7 @@ export default async function KanbanPage() {
   const orders = await getOrders()
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Stati lavoro</h1>
+      <h1 className="text-2xl font-bold">Bacheca</h1>
       <p className="text-sm text-slate-500">Ordini divisi per fase di lavorazione</p>
       <KanbanBoard orders={orders} />
     </div>
