@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
 
@@ -114,12 +113,14 @@ export function OrderForm({ order }: Props) {
           </div>
           <div>
             <Label htmlFor="canale">Canale d&apos;ingresso</Label>
-            <Select value={canale} onValueChange={(v) => setCanale(v ?? "negozio")}>
-              <SelectTrigger id="canale"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {CANALI.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <select
+              id="canale"
+              value={canale}
+              onChange={(e) => setCanale(e.target.value)}
+              className="w-full h-9 rounded-lg border border-input bg-white px-3 text-sm"
+            >
+              {CANALI.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
           </div>
         </div>
       </section>
@@ -146,12 +147,14 @@ export function OrderForm({ order }: Props) {
           </div>
           <div>
             <Label htmlFor="bozza_grafica">Bozza grafica</Label>
-            <Select value={bozza} onValueChange={(v) => setBozza(v ?? "non_serve")}>
-              <SelectTrigger id="bozza_grafica"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {BOZZA_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <select
+              id="bozza_grafica"
+              value={bozza}
+              onChange={(e) => setBozza(e.target.value)}
+              className="w-full h-9 rounded-lg border border-input bg-white px-3 text-sm"
+            >
+              {BOZZA_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
           </div>
           <div className="sm:col-span-2">
             <Label htmlFor="file_cliente">File inviati dal cliente</Label>
