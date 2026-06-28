@@ -31,6 +31,9 @@ export function OrderForm({ order }: Props) {
 
   const [canale, setCanale] = useState(order?.canale ?? "negozio")
   const [bozza, setBozza] = useState(order?.bozza_grafica ?? "non_serve")
+  const [prezzo, setPrezzo] = useState<number>(order?.prezzo ?? 0)
+  const [acconto, setAcconto] = useState<number>(order?.acconto ?? 0)
+  const saldo = Math.max(0, prezzo - acconto)
   const [fileCliente, setFileCliente] = useState(order?.file_cliente ?? "")
   const [consensoMarketing, setConsensoMarketing] = useState(order?.consenso_marketing ?? false)
   const [chiedereRec, setChiedereRec] = useState(order?.chiedere_recensione ?? false)
@@ -65,9 +68,9 @@ export function OrderForm({ order }: Props) {
       foto_oggetto: v("foto_oggetto"),
       file_cliente: fileCliente || null,
       note: v("note"),
-      prezzo: n("prezzo"),
-      acconto: n("acconto"),
-      saldo: n("saldo"),
+      prezzo,
+      acconto,
+      saldo,
       consenso_marketing: consensoMarketing,
       chiedere_recensione: chiedereRec,
       recensione_richiesta: recRichiesta,
@@ -149,6 +152,16 @@ export function OrderForm({ order }: Props) {
           <Label htmlFor="testo_da_scrivere">Testo da scrivere / incidere / stampare</Label>
           <Textarea id="testo_da_scrivere" name="testo_da_scrivere" rows={3} defaultValue={order?.testo_da_scrivere ?? ""} placeholder="Frase, nome, data, testo targa, testo timbro..." />
         </div>
+        <div>
+          <Label htmlFor="dettagli_grafici">Dettagli grafici</Label>
+          <Textarea
+            id="dettagli_grafici"
+            name="dettagli_grafici"
+            rows={2}
+            defaultValue={(order as any)?.dettagli_grafici ?? ""}
+            placeholder="Font, posizione logo, colori, misure, istruzioni grafiche..."
+          />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <Label htmlFor="tipo_lavorazione">Tipo lavorazione</Label>
@@ -226,15 +239,35 @@ export function OrderForm({ order }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <Label htmlFor="prezzo">Prezzo (€)</Label>
-            <Input id="prezzo" name="prezzo" type="number" step="0.01" min="0" defaultValue={order?.prezzo ?? 0} />
+            <input
+              id="prezzo"
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              value={prezzo}
+              onChange={(e) => setPrezzo(Number(e.target.value) || 0)}
+              className="w-full h-9 rounded-lg border border-input bg-white px-3 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
           </div>
           <div>
             <Label htmlFor="acconto">Acconto (€)</Label>
-            <Input id="acconto" name="acconto" type="number" step="0.01" min="0" defaultValue={order?.acconto ?? 0} />
+            <input
+              id="acconto"
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              value={acconto}
+              onChange={(e) => setAcconto(Number(e.target.value) || 0)}
+              className="w-full h-9 rounded-lg border border-input bg-white px-3 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
           </div>
           <div>
-            <Label htmlFor="saldo">Saldo (€)</Label>
-            <Input id="saldo" name="saldo" type="number" step="0.01" min="0" defaultValue={order?.saldo ?? 0} />
+            <Label>Saldo (€)</Label>
+            <div className="w-full h-9 rounded-lg border border-input bg-slate-50 px-3 text-sm flex items-center font-medium text-slate-700">
+              {saldo.toFixed(2)}
+            </div>
           </div>
         </div>
       </section>
