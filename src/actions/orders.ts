@@ -162,3 +162,29 @@ export async function deleteOrder(id: string): Promise<void> {
     throw err instanceof AppError ? err : new AppError(String(err), USER_MESSAGES.saveFailed)
   }
 }
+
+export async function markReviewRequested(id: string): Promise<void> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from("orders")
+    .update({ recensione_richiesta: true })
+    .eq("id", id)
+  if (error) {
+    logError("markReviewRequested", error, { id })
+    throw new Error(USER_MESSAGES.saveFailed)
+  }
+}
+
+export async function markReviewReceived(id: string): Promise<void> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from("orders")
+    .update({ recensione_ricevuta: true })
+    .eq("id", id)
+  if (error) {
+    logError("markReviewReceived", error, { id })
+    throw new Error(USER_MESSAGES.saveFailed)
+  }
+}
