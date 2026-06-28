@@ -40,9 +40,10 @@ export default async function AgendaPage() {
     const title = formData.get("title") as string
     const due_at = formData.get("due_at") as string
     if (!title || !due_at) return
+    // Set time to end of day so the reminder shows all day
     await createReminder({
       title,
-      due_at: new Date(due_at).toISOString(),
+      due_at: new Date(`${due_at}T23:59:00`).toISOString(),
     })
     revalidatePath("/agenda")
   }
@@ -107,9 +108,9 @@ export default async function AgendaPage() {
             </div>
             <Input
               name="due_at"
-              type="datetime-local"
+              type="date"
               required
-              className="w-full sm:w-52"
+              className="w-full sm:w-40"
             />
             <Button type="submit" className="w-full sm:w-auto">Aggiungi</Button>
           </form>
