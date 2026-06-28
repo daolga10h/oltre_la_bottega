@@ -116,7 +116,10 @@ Vincoli critici:
 | shadcn/ui invece di libreria full | Componenti copiabili e personalizzabili, nessun lock-in |
 | Scope MVP stretto (ordini + clienti + dashboard + reminder) | Il rischio principale è lo scope creep; funzioni come parsing PDF e WhatsApp sono post-MVP |
 | Layout card-based con colori di stato | Gli utenti devono leggere le priorità in meno di 30 secondi |
-| Navigazione: Oggi · Bacheca · Ordini · Agenda · Recensioni · Clienti | Segue il flusso naturale di lavoro; Clienti in fondo perché accesso meno frequente |
+| Navigazione: Oggi · Ordini · Agenda · Recensioni · Clienti | Bacheca integrata in Ordini come vista alternativa (lista/kanban); Clienti in fondo |
+| Ordini mostra solo attivi (preventivo, in_lavorazione, pronto) | Consegnati spariscono dalla vista principale — evita confusione tra nuovo e vecchio |
+| Consegnato → se chiedere_recensione=true va in Recensioni, altrimenti si nasconde | Pipeline naturale: Ordini è sempre pulito e azionabile |
+| Storico ordini visibile solo dal profilo cliente | Non serve una pagina archivio separata; la storia è accessibile per cliente |
 | "Oggi" = nome dashboard (ex "Dashboard") | Risponde direttamente alla domanda "cosa devo fare oggi?" |
 | "Bacheca" = kanban stati lavori (ex "Kanban") | Richiama lavagna fisica in bottega, non confonde con "Oggi" |
 | Agenda = todo libera + scadenze fornitori (senza link ordini) | Gli ordini gestiscono da soli consegne e follow-up; l'agenda è per tutto il resto |

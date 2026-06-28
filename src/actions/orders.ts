@@ -48,6 +48,7 @@ export type CreateOrderInput = Omit<OrderRow, "id" | "created_at" | "updated_at"
 export async function getOrders(filters?: {
   status?: string
   search?: string
+  activeOnly?: boolean
 }): Promise<OrderRow[]> {
   try {
     const supabase = await createClient()
@@ -60,6 +61,8 @@ export async function getOrders(filters?: {
 
     if (filters?.status && filters.status !== "tutti") {
       query = query.eq("status", filters.status)
+    } else if (filters?.activeOnly) {
+      query = query.neq("status", "consegnato")
     }
     if (filters?.search) {
       query = query.or(
@@ -107,7 +110,7 @@ export async function createOrder(input: Partial<CreateOrderInput> & { nome: str
     .single()
   if (error) {
     logError("createOrder", error, { input })
-    throw new AppError(`[DEBUG] ${error.code}: ${error.message}`, USER_MESSAGES.saveFailed)
+    throw new AppError(error.message, USER_MESSAGES.saveFailed)
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase as any).from("order_events").insert({

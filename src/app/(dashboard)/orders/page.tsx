@@ -17,7 +17,6 @@ const FILTERS = [
   { value: "bozza_grafica", label: "Bozza" },
   { value: "in_lavorazione", label: "In lavorazione" },
   { value: "pronto", label: "Pronto" },
-  { value: "consegnato", label: "Consegnato" },
 ]
 
 export default async function OrdersPage({ searchParams }: OrdersPageProps) {
@@ -26,7 +25,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   let errorMsg: string | null = null
 
   try {
-    orders = await getOrders({ status: params.status, search: params.q })
+    orders = await getOrders({ status: params.status, search: params.q, activeOnly: true })
   } catch (err) {
     errorMsg = toUserMessage(err)
   }

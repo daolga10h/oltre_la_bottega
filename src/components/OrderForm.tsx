@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
-import { FileUpload } from "@/components/FileUpload"
 
 const CANALI = ["negozio", "WhatsApp", "telefono", "mail", "sito", "altro"]
 const BOZZA_OPTIONS = [
@@ -79,12 +78,10 @@ export function OrderForm({ order }: Props) {
     try {
       if (isEdit) {
         await updateOrder(order.id, payload)
-        router.push(`/orders/${order.id}`)
       } else {
-        const result = await createOrder(payload)
-        router.push(`/orders/${result.id}`)
+        await createOrder(payload)
       }
-      router.refresh()
+      window.location.href = "/orders"
     } catch (err) {
       setError(toUserMessage(err))
       setSaving(false)
@@ -185,8 +182,13 @@ export function OrderForm({ order }: Props) {
             </select>
           </div>
           <div className="sm:col-span-2">
-            <Label>File inviati dal cliente</Label>
-            <FileUpload value={fileCliente} onChange={setFileCliente} />
+            <Label htmlFor="file_cliente">File inviati dal cliente</Label>
+            <Input
+              id="file_cliente"
+              value={fileCliente}
+              onChange={(e) => setFileCliente(e.target.value)}
+              placeholder="Nome file, link Drive, foto WhatsApp..."
+            />
           </div>
           <div>
             <Label htmlFor="foto_oggetto">Foto oggetto scelto</Label>

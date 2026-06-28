@@ -28,12 +28,7 @@ export default async function RecensioniPage() {
 
   try {
     const all = await getOrders({ status: "consegnato" })
-    orders = all.filter(
-      (o) =>
-        o.chiedere_recensione ||
-        o.recensione_richiesta ||
-        o.recensione_ricevuta
-    )
+    orders = all.filter((o) => o.chiedere_recensione && !o.recensione_ricevuta)
   } catch (err) {
     errorMsg = toUserMessage(err)
   }
