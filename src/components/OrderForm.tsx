@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { createOrder, updateOrder, type OrderRow } from "@/actions/orders"
 import { Button } from "@/components/ui/button"
@@ -17,6 +17,14 @@ const BOZZA_OPTIONS = [
   { value: "inviata", label: "Inviata" },
   { value: "approvata", label: "Approvata" },
 ]
+const PREVENTIVO_OPTIONS = [
+  { value: "non_inviare", label: "Non inviare" },
+  { value: "da_inviare", label: "Da inviare" },
+  { value: "inviato", label: "Inviato" },
+]
+
+const numClass = "w-full h-9 rounded-lg border border-input bg-white px-2 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+const selectClass = "w-full h-9 rounded-lg border border-input bg-white px-2 text-sm"
 
 interface Props {
   order?: OrderRow
@@ -26,11 +34,16 @@ export function OrderForm({ order }: Props) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-
   const isEdit = !!order
+  const errorRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (error) errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }, [error])
 
   const [canale, setCanale] = useState(order?.canale ?? "negozio")
   const [bozza, setBozza] = useState(order?.bozza_grafica ?? "non_serve")
+  const [preventivo, setPreventivo] = useState("non_inviare")
   const [prezzo, setPrezzo] = useState<number>(order?.prezzo ?? 0)
   const [acconto, setAcconto] = useState<number>(order?.acconto ?? 0)
   const saldo = Math.max(0, prezzo - acconto)
@@ -46,9 +59,7 @@ export function OrderForm({ order }: Props) {
     setSaving(true)
     setError(null)
     const fd = new FormData(e.currentTarget)
-
     const v = (k: string) => (fd.get(k) as string | null)?.trim() || null
-    const n = (k: string) => { const val = fd.get(k); return val ? Number(val) : 0 }
 
     const payload = {
       nome: (fd.get("nome") as string).trim(),
@@ -56,7 +67,6 @@ export function OrderForm({ order }: Props) {
       telefono: v("telefono"),
       email_cliente: v("email_cliente"),
       canale,
-      // data_ordine: set automatically by DB default on create, shown only in edit
       data_ordine: isEdit ? (order.data_ordine ?? null) : undefined,
       data_consegna: v("data_consegna"),
       data_consegnato: isEdit ? v("data_consegnato") : undefined,
@@ -66,11 +76,17 @@ export function OrderForm({ order }: Props) {
       quantita: Number(fd.get("quantita") ?? 1),
       bozza_grafica: bozza,
       foto_oggetto: v("foto_oggetto"),
+      dettagli_grafici: v("dettagli_grafici"),
       file_cliente: fileCliente || null,
       note: v("note"),
       prezzo,
       acconto,
       saldo,
+      status: isEdit ? undefined : (
+        preventivo !== "non_inviare" ? "preventivo" :
+        bozza !== "non_serve" ? "bozza_grafica" :
+        "in_lavorazione"
+      ),
       consenso_marketing: consensoMarketing,
       chiedere_recensione: chiedereRec,
       recensione_richiesta: recRichiesta,
@@ -81,10 +97,11 @@ export function OrderForm({ order }: Props) {
     try {
       if (isEdit) {
         await updateOrder(order.id, payload)
+        window.location.href = `/orders/${order.id}`
       } else {
-        await createOrder(payload)
+        const { id } = await createOrder(payload)
+        window.location.href = `/orders/${id}`
       }
-      window.location.href = "/orders"
     } catch (err) {
       setError(toUserMessage(err))
       setSaving(false)
@@ -93,12 +110,12 @@ export function OrderForm({ order }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
-      {error && <ErrorMessage message={error} />}
+      {error && <div ref={errorRef}><ErrorMessage message={error} /></div>}
 
       {/* CLIENTE */}
       <section className="space-y-4">
         <h2 className="font-semibold text-slate-700 border-b pb-1">Cliente</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-3">
           <div>
             <Label htmlFor="nome">Nome *</Label>
             <Input id="nome" name="nome" required defaultValue={order?.nome} placeholder="Nome" />
@@ -117,17 +134,16 @@ export function OrderForm({ order }: Props) {
           </div>
           <div>
             <Label htmlFor="canale">Canale d&apos;ingresso</Label>
-            <select
-              id="canale"
-              value={canale}
-              onChange={(e) => setCanale(e.target.value)}
-              className="w-full h-9 rounded-lg border border-input bg-white px-3 text-sm"
-            >
+            <select id="canale" value={canale} onChange={(e) => setCanale(e.target.value)} className={selectClass}>
               {CANALI.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
+          <div>
+            <Label htmlFor="data_consegna">Data consegna</Label>
+            <Input id="data_consegna" name="data_consegna" type="date" defaultValue={order?.data_consegna ?? ""} />
+          </div>
         </div>
-        <div className="flex items-center gap-2 pt-1">
+        <div className="flex items-center gap-2">
           <input
             id="consenso_marketing"
             type="checkbox"
@@ -136,7 +152,7 @@ export function OrderForm({ order }: Props) {
             className="h-4 w-4 rounded border-slate-300"
           />
           <Label htmlFor="consenso_marketing" className="font-normal text-sm cursor-pointer">
-            Il cliente ha dato consenso per recensioni e comunicazioni commerciali (GDPR)
+            Consenso recensioni e comunicazioni (GDPR)
           </Label>
         </div>
       </section>
@@ -154,125 +170,96 @@ export function OrderForm({ order }: Props) {
         </div>
         <div>
           <Label htmlFor="dettagli_grafici">Dettagli grafici</Label>
-          <Textarea
-            id="dettagli_grafici"
-            name="dettagli_grafici"
-            rows={2}
-            defaultValue={(order as any)?.dettagli_grafici ?? ""}
-            placeholder="Font, posizione logo, colori, misure, istruzioni grafiche..."
-          />
+          <Textarea id="dettagli_grafici" name="dettagli_grafici" rows={2} defaultValue={(order as any)?.dettagli_grafici ?? ""} placeholder="Font, posizione logo, colori, misure..." />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+        {/* Tipo lavorazione · Bozza grafica · Inviare preventivo — stessa riga */}
+        <div className="grid grid-cols-3 gap-3">
           <div>
             <Label htmlFor="tipo_lavorazione">Tipo lavorazione</Label>
-            <select
-              id="tipo_lavorazione"
-              name="tipo_lavorazione"
-              defaultValue={order?.tipo_lavorazione ?? ""}
-              className="w-full h-9 rounded-lg border border-input bg-white px-3 text-sm"
-            >
+            <select id="tipo_lavorazione" name="tipo_lavorazione" defaultValue={order?.tipo_lavorazione ?? ""} className={selectClass}>
               <option value="">— Seleziona —</option>
-              <option value="Stampa UV">Stampa UV</option>
-              <option value="Taglio + stampa">Taglio + stampa</option>
-              <option value="Incisione/taglio laser">Incisione/taglio laser</option>
-              <option value="Fresatura">Fresatura</option>
-              <option value="Stampa">Stampa</option>
+              <option>Stampa UV</option>
+              <option>Taglio + stampa</option>
+              <option>Incisione/taglio laser</option>
+              <option>Fresatura</option>
+              <option>Stampa</option>
             </select>
-          </div>
-          <div>
-            <Label htmlFor="quantita">Quantità</Label>
-            <Input id="quantita" name="quantita" type="number" min="1" defaultValue={order?.quantita ?? 1} />
           </div>
           <div>
             <Label htmlFor="bozza_grafica">Bozza grafica</Label>
-            <select
-              id="bozza_grafica"
-              value={bozza}
-              onChange={(e) => setBozza(e.target.value)}
-              className="w-full h-9 rounded-lg border border-input bg-white px-3 text-sm"
-            >
+            <select id="bozza_grafica" value={bozza} onChange={(e) => setBozza(e.target.value)} className={selectClass}>
               {BOZZA_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
-          <div className="sm:col-span-2">
+          <div>
+            <Label htmlFor="preventivo">Preventivo</Label>
+            <select id="preventivo" value={preventivo} onChange={(e) => setPreventivo(e.target.value)} className={selectClass}>
+              {PREVENTIVO_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div className="col-span-2">
             <Label htmlFor="file_cliente">File inviati dal cliente</Label>
-            <Input
-              id="file_cliente"
-              value={fileCliente}
-              onChange={(e) => setFileCliente(e.target.value)}
-              placeholder="Nome file, link Drive, foto WhatsApp..."
-            />
+            <Input id="file_cliente" value={fileCliente} onChange={(e) => setFileCliente(e.target.value)} placeholder="Nome file, link Drive, foto WhatsApp..." />
           </div>
           <div>
-            <Label htmlFor="foto_oggetto">Foto oggetto scelto</Label>
+            <Label htmlFor="foto_oggetto">Foto oggetto</Label>
             <Input id="foto_oggetto" name="foto_oggetto" defaultValue={order?.foto_oggetto ?? ""} placeholder="Nome file o link" />
           </div>
         </div>
       </section>
 
-      {/* DATE */}
-      <section className="space-y-4">
-        <h2 className="font-semibold text-slate-700 border-b pb-1">Date</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {isEdit && (
+      {/* DATE — solo in modifica */}
+      {isEdit && (
+        <section className="space-y-4">
+          <h2 className="font-semibold text-slate-700 border-b pb-1">Date</h2>
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <Label htmlFor="data_ordine">Data ordine</Label>
               <Input id="data_ordine" name="data_ordine" type="date" defaultValue={order?.data_ordine ?? ""} />
             </div>
-          )}
-          <div>
-            <Label htmlFor="data_consegna">Data consegna prevista</Label>
-            <Input id="data_consegna" name="data_consegna" type="date" defaultValue={order?.data_consegna ?? ""} />
-          </div>
-          {isEdit && (
             <div>
               <Label htmlFor="data_consegnato">Data consegnato</Label>
               <Input id="data_consegnato" name="data_consegnato" type="date" defaultValue={order?.data_consegnato ?? ""} />
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
-      {/* PAGAMENTO */}
+      {/* PAGAMENTO — quantità + prezzo + acconto + saldo stessa riga */}
       <section className="space-y-4">
         <h2 className="font-semibold text-slate-700 border-b pb-1">Pagamento</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-3">
           <div>
-            <Label htmlFor="prezzo">Prezzo (€)</Label>
-            <input
-              id="prezzo"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
-              value={prezzo}
-              onChange={(e) => setPrezzo(Number(e.target.value) || 0)}
-              className="w-full h-9 rounded-lg border border-input bg-white px-3 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
+            <Label htmlFor="quantita">Qta</Label>
+            <input id="quantita" name="quantita" type="number" min="1" max="9999" defaultValue={order?.quantita ?? 1}
+              className={numClass} />
           </div>
           <div>
-            <Label htmlFor="acconto">Acconto (€)</Label>
-            <input
-              id="acconto"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
-              value={acconto}
-              onChange={(e) => setAcconto(Number(e.target.value) || 0)}
-              className="w-full h-9 rounded-lg border border-input bg-white px-3 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
+            <Label htmlFor="prezzo">Prezzo €</Label>
+            <input id="prezzo" type="number" inputMode="decimal" step="0.01" min="0" max="99999"
+              value={prezzo} onChange={(e) => setPrezzo(Number(e.target.value) || 0)}
+              className={numClass} />
           </div>
           <div>
-            <Label>Saldo (€)</Label>
-            <div className="w-full h-9 rounded-lg border border-input bg-slate-50 px-3 text-sm flex items-center font-medium text-slate-700">
+            <Label htmlFor="acconto">Acconto €</Label>
+            <input id="acconto" type="number" inputMode="decimal" step="0.01" min="0" max="99999"
+              value={acconto} onChange={(e) => setAcconto(Number(e.target.value) || 0)}
+              className={numClass} />
+          </div>
+          <div>
+            <Label>Saldo €</Label>
+            <div className="h-9 rounded-lg border border-input bg-slate-50 px-2 text-sm flex items-center font-medium text-slate-700">
               {saldo.toFixed(2)}
             </div>
           </div>
         </div>
       </section>
 
-      {/* VARIE */}
+      {/* NOTE + FLAG */}
       <section className="space-y-4">
         <h2 className="font-semibold text-slate-700 border-b pb-1">Note</h2>
         <div>
@@ -280,27 +267,21 @@ export function OrderForm({ order }: Props) {
           <Textarea id="note" name="note" rows={2} defaultValue={order?.note ?? ""} placeholder="Note interne..." />
         </div>
         {isEdit && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: "Msg PRONTO inviato", state: msgPronto, set: setMsgPronto },
-            { label: "Chiedere recensione", state: chiedereRec, set: setChiedereRec },
-            { label: "Recensione richiesta", state: recRichiesta, set: setRecRichiesta },
-            { label: "Recensione ricevuta", state: recRicevuta, set: setRecRicevuta },
-          ].map(({ label, state, set }) => (
-            <button
-              key={label}
-              type="button"
-              onClick={() => set(!state)}
-              className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors text-left ${
-                state
-                  ? "bg-green-50 border-green-300 text-green-700"
-                  : "bg-white border-slate-200 text-slate-500"
-              }`}
-            >
-              {state ? "✓ " : ""}{label}
-            </button>
-          ))}
-        </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Msg PRONTO inviato", state: msgPronto, set: setMsgPronto },
+              { label: "Chiedere recensione", state: chiedereRec, set: setChiedereRec },
+              { label: "Recensione richiesta", state: recRichiesta, set: setRecRichiesta },
+              { label: "Recensione ricevuta", state: recRicevuta, set: setRecRicevuta },
+            ].map(({ label, state, set }) => (
+              <button key={label} type="button" onClick={() => set(!state)}
+                className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors text-left ${
+                  state ? "bg-green-50 border-green-300 text-green-700" : "bg-white border-slate-200 text-slate-500"
+                }`}>
+                {state ? "✓ " : ""}{label}
+              </button>
+            ))}
+          </div>
         )}
       </section>
 
