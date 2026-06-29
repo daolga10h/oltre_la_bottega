@@ -10,46 +10,56 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Il prodotto NON è un CRM generico né un gestionale aziendale. È una "cabina di comando" operativa centrata sulla domanda: **"Cosa devo fare oggi?"**. L'AI, se introdotta, è un acceleratore secondario, non il centro dell'esperienza.
 
-**Stato attuale**: MVP implementato su branch `feat/mvp`. Fase 0 (scaffold + auth + schema) e Fase 1+2 (dashboard, ordini, clienti, agenda, inventario, ricerca, mobile QA, test E2E) completate. Pronto per test locali e deploy su Vercel. Il file `mini_crm_freelancer_single_html.html` è il prototipo HTML di riferimento per la UI.
+**Stato attuale**: MVP in produzione su Vercel. Fase 0+1+2 completate e deployate su `main`. In uso attivo con bug fixing continuo. Fase 3 parzialmente avviata (etichetta di stampa implementata). Il file `mini_crm_freelancer_single_html.html` è il prototipo HTML di riferimento per la UI.
 
 ---
 
-## Struttura del progetto (pianificata)
+## Struttura del progetto
 
 ```
 oltre_la_bottega/
 ├── CLAUDE.md
-├── specifica_tecnica_agente_ai.md   # Spec tecnica completa v2.0
-├── idea.md                          # Concept e progettazione
-├── research.md                      # Ricerca su UX, design, stack
-├── critiche.md                      # Analisi critica e rischi
+├── specifica_tecnica_agente_ai.md   # Spec tecnica completa
+├── idea.md                          # Concept e progettazione (storico)
+├── research.md                      # Ricerca su UX, design, stack (storico)
+├── critiche.md                      # Analisi critica e rischi (storico)
 ├── mini_crm_freelancer_single_html.html  # Prototipo UI di riferimento
-├── gestione.html                    # File HTML aggiuntivo di riferimento
-└── [src/]                           # App Next.js da creare (non ancora presente)
+├── supabase/migrations/             # Migration SQL da applicare in ordine
+└── src/                             # App Next.js
 ```
 
-**Struttura Next.js da scaffoldare:**
+**Struttura Next.js reale:**
 ```
 src/
 ├── app/
-│   ├── (dashboard)/page.tsx         # Vista oggi / prossimi 7 giorni
-│   ├── orders/page.tsx
-│   ├── customers/page.tsx
-│   ├── agenda/page.tsx
-│   └── api/
-│       ├── orders/route.ts
-│       ├── customers/route.ts
-│       ├── reminders/route.ts
-│       └── dashboard/
-│           ├── today/route.ts
-│           └── week/route.ts
+│   ├── (dashboard)/                 # Layout con sidebar + bottom nav
+│   │   ├── dashboard/page.tsx       # Vista "Oggi"
+│   │   ├── orders/                  # Lista ordini + nuovo + dettaglio + modifica
+│   │   ├── kanban/page.tsx          # Bacheca kanban
+│   │   ├── agenda/page.tsx          # Promemoria
+│   │   ├── recensioni/page.tsx
+│   │   ├── customers/               # Redirect a /orders
+│   │   └── layout.tsx
+│   ├── (print)/                     # Layout minimale (no sidebar) per stampa
+│   │   └── orders/[id]/print/       # Pagina etichetta stampabile con QR code
+│   ├── (auth)/login/page.tsx
+│   └── layout.tsx                   # Root layout
+├── actions/                         # Server actions
+│   ├── orders.ts
+│   ├── reminders.ts
+│   ├── customers.ts
+│   └── inventory.ts
 ├── components/
-│   ├── TodayBoard.tsx
 │   ├── OrderForm.tsx
+│   ├── OrderCard.tsx
+│   ├── KanbanBoard.tsx
 │   ├── ReminderList.tsx
-│   └── SearchBar.tsx
+│   ├── ReminderForm.tsx             # Client component con useActionState
+│   ├── TodayBoard.tsx
+│   └── nav/
 └── lib/
-    └── supabase.ts
+    ├── supabase/server.ts
+    └── errors.ts
 ```
 
 ---
@@ -97,12 +107,31 @@ Persistence Layer   →  PostgreSQL (Supabase) + Storage
 
 ## Modello dati (v1)
 
-Tabelle principali in PostgreSQL: `customers`, `orders`, `order_events`, `reminders`, `inventory_items`, `attachments`.
+Tabelle principali in PostgreSQL (schema v2, vedere `supabase/migrations/`):
+
+**`orders`** — tabella centrale, dati cliente embedded (no entità customer separata):
+- Anagrafica cliente: `nome`*, `cognome`, `telefono`, `email_cliente`, `canale`, `consenso_marketing`
+- Lavorazione: `cosa_ordinato`*, `testo_da_scrivere`, `tipo_lavorazione`, `dettagli_grafici`, `quantita`, `bozza_grafica`, `foto_oggetto`, `file_cliente`, `note`
+- Date: `data_ordine` (default today), `data_consegna`, `data_consegnato`
+- Stato: `status` (preventivo → bozza_grafica → in_lavorazione → pronto → consegnato)
+- Pagamento: `prezzo`, `acconto`, `saldo` (calcolato)
+- Flag: `msg_pronto_inviato`, `chiedere_recensione`, `recensione_richiesta`, `recensione_ricevuta`
+
+**`order_events`** — timeline audit log per ordine
+
+**`reminders`** — promemoria liberi (`title`, `due_at`, `status`: attivo/completato)
+
+**`inventory_items`** — materiali base
+
+Migrations da applicare in ordine:
+1. `20260626000001_order_schema_v2.sql` — schema principale (drop + recreate)
+2. `20260628000001_add_consenso_marketing.sql`
+3. `20260628000002_add_dettagli_grafici.sql`
 
 Vincoli critici:
 - Niente `shop_id` — installazione dedicata per bottega
-- Indici su `due_date`, `status`, `priority`, `customer_id`
-- `order_events` traccia la timeline di ogni ordine (audit log leggero)
+- Indici su `data_consegna`, `status`, `nome/cognome`
+- RLS abilitata: `auth.uid() is not null` su tutte le tabelle
 
 ---
 
@@ -123,6 +152,16 @@ Vincoli critici:
 | "Oggi" = nome dashboard (ex "Dashboard") | Risponde direttamente alla domanda "cosa devo fare oggi?" |
 | "Bacheca" = kanban stati lavori (ex "Kanban") | Richiama lavagna fisica in bottega, non confonde con "Oggi" |
 | Agenda = todo libera + scadenze fornitori (senza link ordini) | Gli ordini gestiscono da soli consegne e follow-up; l'agenda è per tutto il resto |
+| Auth = solo magic link via email, niente PIN | Per uso su tablet dedicato con blocco schermo, il PIN app è ridondante e incompleto |
+| Allegati = campo testo libero (no Supabase Storage) | Si scrive nome file / link Drive / riferimento WhatsApp — evita complessità di storage |
+| Campo `consenso_marketing` in orders | GDPR: serve consenso esplicito per recensioni e comunicazioni commerciali |
+| Stato ordine calcolato automaticamente alla creazione | Regola: inviare preventivo → "preventivo"; no preventivo + bozza → "bozza_grafica"; no preventivo + no bozza → "in_lavorazione" |
+| RLS abilitata su tutte le tabelle con `auth.uid() is not null` | Sicurezza base; single-tenant, nessuna separazione per utente |
+| Dopo crea/modifica ordine → redirect a scheda ordine (non lista) | Permette di stampare etichetta immediatamente dopo la creazione |
+| Bacheca = grid 5 colonne (non flex scroll) | Tutte le colonne visibili senza scrollare orizzontalmente |
+| Card ordine (lista e bacheca) = solo nome · cosa · data | Tipo lavorazione e saldo rimossi dalle card — info di dettaglio, non di scansione rapida |
+| Etichetta stampabile = pagina separata `(print)/orders/[id]/print` | Layout senza sidebar, auto-stampa, QR code verso la scheda ordine; dimensioni da configurare per stampante termica |
+| `ReminderForm` = client component con `useActionState` + `router.refresh()` | Form action + `revalidatePath` non aggiornava il server component montato; serve `router.refresh()` esplicito |
 
 **Regola guida di prodotto**: massimo 3–4 passi per ogni azione frequente. Se un flusso richiede più passaggi, va semplificato prima di essere implementato.
 
@@ -197,8 +236,8 @@ supabase gen types typescript --local > src/types/supabase.ts
 
 ## Piano di rilascio
 
-- **Fase 0** (3–5 gg): scaffold Next.js, Supabase project, schema SQL v1, auth
-- **Fase 1** (2–4 sett): dashboard oggi/7 giorni, CRUD ordini, CRUD clienti, reminder, ricerca/filtri
-- **Fase 2** (1–2 sett): timeline ordini, pagamento base, inventario base, UX mobile
-- **Fase 3** (opzionale): recensioni, template messaggi, integrazioni canali esterni
+- **Fase 0** ✅: scaffold Next.js, Supabase project, schema SQL v2, auth magic link
+- **Fase 1** ✅: dashboard oggi/7 giorni, CRUD ordini, agenda, bacheca kanban, ricerca/filtri
+- **Fase 2** ✅: timeline ordini, pagamento (prezzo/acconto/saldo), UX mobile, recensioni
+- **Fase 3** 🔄 in corso: etichetta stampabile con QR code (fatto); template messaggi (da fare); integrazioni canali (post-MVP)
 - **Fase 4** (opzionale): Supabase Realtime — aggiornamenti automatici tra più tablet senza ricaricare la pagina

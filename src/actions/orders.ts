@@ -1,5 +1,6 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { logError } from "@/lib/logger"
 import { AppError, USER_MESSAGES } from "@/lib/errors"
@@ -23,6 +24,7 @@ export type OrderRow = {
   tipo_lavorazione: string | null
   quantita: number
   bozza_grafica: string
+  dettagli_grafici: string | null
   foto_oggetto: string | null
   file_cliente: string | null
   note: string | null
@@ -118,6 +120,8 @@ export async function createOrder(input: Partial<CreateOrderInput> & { nome: str
     event_type: "created",
     note: "Ordine creato",
   })
+  revalidatePath("/orders")
+  revalidatePath("/dashboard")
   return { id: data.id }
 }
 
@@ -135,6 +139,9 @@ export async function updateOrder(id: string, input: Partial<CreateOrderInput>):
     event_type: "updated",
     note: "Ordine aggiornato",
   })
+  revalidatePath("/orders")
+  revalidatePath("/dashboard")
+  revalidatePath(`/orders/${id}`)
 }
 
 export async function updateOrderStatus(id: string, status: string): Promise<void> {

@@ -1,9 +1,9 @@
 # Specifica tecnica completa
 ## Dashboard operativa + Mini CRM per la gestione delle botteghe
 
-Versione: 2.0
-Data: 2026-06-24
-Stato: pronta per sviluppo MVP
+Versione: 3.0
+Data: 2026-06-29
+Stato: MVP in produzione su Vercel — bug fixing e Fase 3 in corso
 
 ---
 
@@ -237,95 +237,48 @@ RNF-06 Osservabilita:
 
 ---
 
-## 8) Modello dati (v1)
+## 8) Modello dati (v2 — schema attuale in produzione)
 
-### Tabelle principali
+Nessun `shop_id`, nessuna tabella `customers` separata. Single-tenant: un'istanza Supabase per bottega.
+Migrations in `supabase/migrations/` — applicare in ordine numerico.
 
-users:
-- id
-- email
-- full_name
-- created_at
+### orders (tabella centrale)
 
-shops:
-- id
-- owner_user_id
-- name
-- timezone
-- created_at
+Anagrafica cliente embedded:
+- id, nome*, cognome, telefono, email_cliente, canale, consenso_marketing
 
-customers:
-- id
-- shop_id
-- name
-- phone
-- email
-- tags
-- notes
-- created_at
+Lavorazione:
+- cosa_ordinato*, testo_da_scrivere, tipo_lavorazione, dettagli_grafici
+- quantita (default 1), bozza_grafica (non_serve/da_fare/inviata/approvata)
+- foto_oggetto, file_cliente, note
 
-orders:
-- id
-- shop_id
-- customer_id
-- title
-- description
-- status
-- priority
-- due_date
-- amount_estimated
-- payment_status
-- created_at
-- updated_at
+Date:
+- data_ordine (default today), data_consegna, data_consegnato
 
-order_events:
-- id
-- order_id
-- event_type
-- note
-- created_at
-- created_by
+Stato:
+- status: preventivo → bozza_grafica → in_lavorazione → pronto → consegnato
 
-reminders:
-- id
-- shop_id
-- order_id nullable
-- customer_id nullable
-- title
-- due_at
-- status
-- created_at
+Pagamento:
+- prezzo, acconto, saldo (tutti numeric)
 
-inventory_items:
-- id
-- shop_id
-- name
-- unit
-- quantity_available
-- reorder_threshold
-- updated_at
+Flag booleani:
+- msg_pronto_inviato, chiedere_recensione, recensione_richiesta, recensione_ricevuta
 
-reviews:
-- id
-- shop_id
-- order_id
-- requested_at
-- received_at nullable
-- rating nullable
-- note nullable
+### order_events
+- id, order_id (FK → orders), event_type, note, created_at
+- Traccia la timeline: created / status_change / updated
 
-attachments:
-- id
-- shop_id
-- entity_type
-- entity_id
-- storage_path
-- created_at
+### reminders
+- id, order_id nullable, title, due_at (timestamptz), status (attivo/completato), created_at
 
-### Vincoli essenziali
-- ogni record operativo legato a shop_id
-- indici su due_date, status, priority, customer_id
-- soft delete opzionale in fase 2
+### inventory_items
+- id, name, unit, quantity_available, reorder_threshold, updated_at
+
+### Vincoli critici
+- Niente shop_id — installazione per singola bottega
+- Indici su data_consegna, status, nome/cognome
+- RLS abilitata: `auth.uid() is not null` su tutte le tabelle
+- Trigger `updated_at` su orders e inventory_items
 
 ---
 
@@ -381,28 +334,27 @@ attachments:
 
 ## 12) Piano di rilascio
 
-### Fase 0 - Setup (3-5 giorni)
-- bootstrap progetto
-- auth + database
-- schema dati v1
+### Fase 0 ✅ - Setup
+- Next.js + Supabase + auth magic link
+- Schema SQL v2
 
-### Fase 1 - MVP core (2-4 settimane)
-- dashboard oggi/prossimi 7 giorni
-- CRUD ordini
-- CRUD clienti minimo
-- reminder
-- ricerca/filtri
+### Fase 1 ✅ - MVP core
+- Dashboard oggi/7 giorni con KPI
+- CRUD ordini (form completo con tutti i campi)
+- Bacheca kanban
+- Agenda / promemoria
+- Ricerca e filtri
 
-### Fase 2 - Stabilizzazione (1-2 settimane)
-- timeline ordini
-- pagamento base
-- inventario base
-- miglioramenti UX mobile
+### Fase 2 ✅ - Stabilizzazione
+- Timeline ordini (order_events)
+- Pagamento (prezzo / acconto / saldo calcolato)
+- Recensioni
+- UX mobile (bottom nav)
 
-### Fase 3 - Estensioni (opzionale)
-- recensioni
-- template messaggi
-- integrazioni canali esterni
+### Fase 3 🔄 - Estensioni (in corso)
+- Etichetta stampabile con QR code (✅ fatto)
+- Template messaggi per clienti (da fare)
+- Integrazioni canali esterni (post-MVP)
 
 ---
 

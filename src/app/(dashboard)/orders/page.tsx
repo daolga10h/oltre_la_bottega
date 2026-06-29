@@ -15,6 +15,7 @@ const FILTERS = [
   { value: "tutti", label: "Tutti" },
   { value: "preventivo", label: "Preventivo" },
   { value: "bozza_grafica", label: "Bozza" },
+  { value: "da_fare", label: "Da fare" },
   { value: "in_lavorazione", label: "In lavorazione" },
   { value: "pronto", label: "Pronto" },
 ]

@@ -5,6 +5,7 @@ import type { OrderRow } from "@/actions/orders"
 const STATUS_COLORS: Record<string, string> = {
   preventivo: "bg-blue-100 text-blue-700",
   bozza_grafica: "bg-purple-100 text-purple-700",
+  da_fare: "bg-orange-100 text-orange-700",
   in_lavorazione: "bg-amber-100 text-amber-700",
   pronto: "bg-green-100 text-green-700",
   consegnato: "bg-slate-100 text-slate-500",
@@ -13,6 +14,7 @@ const STATUS_COLORS: Record<string, string> = {
 const STATUS_LABELS: Record<string, string> = {
   preventivo: "Preventivo",
   bozza_grafica: "Bozza grafica",
+  da_fare: "Da fare",
   in_lavorazione: "In lavorazione",
   pronto: "Pronto",
   consegnato: "Consegnato",
@@ -41,13 +43,10 @@ export function OrderCard({ order }: { order: OrderRow }) {
           <StatusBadge status={order.status} />
         </div>
         <p className="text-sm text-slate-600 leading-tight">{order.cosa_ordinato}</p>
-        {order.tipo_lavorazione && (
-          <p className="text-xs text-slate-400">{order.tipo_lavorazione}</p>
-        )}
         <div className="flex items-center gap-3 text-xs text-slate-500 pt-0.5">
           {order.data_consegna && (
             <span className={overdue && order.status !== "consegnato" ? "text-red-600 font-medium" : ""}>
-              Consegna: {formatDate(order.data_consegna)}
+              {formatDate(order.data_consegna)}
             </span>
           )}
           {order.prezzo > 0 && <span>€{order.prezzo}</span>}

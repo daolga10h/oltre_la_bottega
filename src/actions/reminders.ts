@@ -1,8 +1,9 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { logError } from "@/lib/logger"
-import { AppError, USER_MESSAGES } from "@/lib/errors"
+import { AppError, USER_MESSAGES, toUserMessage } from "@/lib/errors"
 
 export type ReminderItem = {
   id: string
@@ -43,6 +44,24 @@ export async function createReminder(input: {
   } catch (err) {
     logError("createReminder", err, { input })
     throw err instanceof AppError ? err : new AppError(String(err), USER_MESSAGES.saveFailed)
+  }
+}
+
+export type AddReminderState = { error: string | null; ts?: number }
+
+export async function addReminderAction(
+  _prev: AddReminderState,
+  formData: FormData
+): Promise<AddReminderState> {
+  const title = (formData.get("title") as string | null)?.trim()
+  const due_at = formData.get("due_at") as string | null
+  if (!title || !due_at) return { error: "Compila titolo e data.", ts: _prev.ts }
+  try {
+    await createReminder({ title, due_at: new Date(`${due_at}T23:59:00`).toISOString() })
+    revalidatePath("/agenda")
+    return { error: null, ts: Date.now() }
+  } catch (err) {
+    return { error: toUserMessage(err), ts: _prev.ts }
   }
 }
 

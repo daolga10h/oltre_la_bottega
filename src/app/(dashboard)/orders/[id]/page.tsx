@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/OrderCard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
 import Link from "next/link"
-import { ArrowLeft, Edit } from "lucide-react"
+import { ArrowLeft, Edit, Printer } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { revalidatePath } from "next/cache"
@@ -39,9 +39,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <Link href="/orders" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900">
           <ArrowLeft className="w-3 h-3" />Ordini
         </Link>
-        <Link href={`/orders/${id}/edit`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "flex items-center gap-1")}>
-          <Edit className="w-3 h-3" />Modifica
-        </Link>
+        <div className="flex gap-2">
+          <Link href={`/orders/${id}/print`} target="_blank" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "flex items-center gap-1")}>
+            <Printer className="w-3 h-3" />Etichetta
+          </Link>
+          <Link href={`/orders/${id}/edit`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "flex items-center gap-1")}>
+            <Edit className="w-3 h-3" />Modifica
+          </Link>
+        </div>
       </div>
 
       {/* Status stepper */}

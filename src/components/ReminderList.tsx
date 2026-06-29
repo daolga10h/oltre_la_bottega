@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect } from "react"
 import { completeReminder } from "@/actions/reminders"
 import { Button } from "@/components/ui/button"
 import { ErrorMessage } from "@/components/ErrorMessage"
@@ -16,7 +16,12 @@ export function ReminderList({ reminders }: { reminders: ReminderItem[] }) {
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
+  useEffect(() => {
+    setItems(reminders)
+  }, [reminders])
+
   function handleComplete(id: string) {
+    if (!window.confirm("Segna questo promemoria come completato? Non sarà più visibile.")) return
     startTransition(async () => {
       try {
         await completeReminder(id)
