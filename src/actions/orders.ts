@@ -133,15 +133,54 @@ export async function updateOrder(id: string, input: Partial<CreateOrderInput>):
     logError("updateOrder", error, { id })
     throw new Error(USER_MESSAGES.saveFailed)
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase as any).from("order_events").insert({
-    order_id: id,
-    event_type: "updated",
-    note: "Ordine aggiornato",
-  })
   revalidatePath("/orders")
   revalidatePath("/dashboard")
   revalidatePath(`/orders/${id}`)
+}
+
+const BOZZA_LABELS: Record<string, string> = {
+  da_fare: "Bozza da fare",
+  inviata: "Bozza inviata al cliente",
+  modificata: "Bozza modificata — in attesa risposta",
+  approvata: "Bozza approvata",
+}
+
+const PREVENTIVO_LABELS: Record<string, string> = {
+  da_inviare: "Preventivo da inviare",
+  inviato: "Preventivo inviato al cliente",
+  approvato: "Preventivo approvato",
+}
+
+export async function updatePreventivo(id: string, value: string): Promise<void> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from("orders").update({ preventivo: value }).eq("id", id)
+  if (error) {
+    logError("updatePreventivo", error, { id, value })
+    throw new Error(USER_MESSAGES.saveFailed)
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from("order_events").insert({
+    order_id: id,
+    event_type: "preventivo_change",
+    note: PREVENTIVO_LABELS[value] ?? value,
+  })
+}
+
+export async function updateBozzaGrafica(id: string, value: string): Promise<void> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from("orders").update({ bozza_grafica: value }).eq("id", id)
+  if (error) {
+    logError("updateBozzaGrafica", error, { id, value })
+    throw new Error(USER_MESSAGES.saveFailed)
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from("order_events").insert({
+    order_id: id,
+    event_type: "bozza_change",
+    note: BOZZA_LABELS[value] ?? value,
+  })
 }
 
 export async function updateOrderStatus(id: string, status: string): Promise<void> {
@@ -158,7 +197,14 @@ export async function updateOrderStatus(id: string, status: string): Promise<voi
   await (supabase as any).from("order_events").insert({
     order_id: id,
     event_type: "status_change",
-    note: `Stato: ${STATUS_LABELS[status] ?? status}`,
+    note: ({
+      preventivo: "Preventivo da inviare",
+      bozza_grafica: "Bozza da preparare",
+      da_fare: "Da fare",
+      in_lavorazione: "In lavorazione",
+      pronto: "Pronto per la consegna",
+      consegnato: "Consegnato al cliente",
+    } as Record<string, string>)[status] ?? status,
   })
 }
 

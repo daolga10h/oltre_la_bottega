@@ -113,9 +113,11 @@ Tabelle principali in PostgreSQL (schema v2, vedere `supabase/migrations/`):
 - Anagrafica cliente: `nome`*, `cognome`, `telefono`, `email_cliente`, `canale`, `consenso_marketing`
 - Lavorazione: `cosa_ordinato`*, `testo_da_scrivere`, `tipo_lavorazione`, `dettagli_grafici`, `quantita`, `bozza_grafica`, `foto_oggetto`, `file_cliente`, `note`
 - Date: `data_ordine` (default today), `data_consegna`, `data_consegnato`
-- Stato: `status` (preventivo → bozza_grafica → in_lavorazione → pronto → consegnato)
+- Stato principale: `status` (preventivo → bozza_grafica → da_fare → in_lavorazione → pronto → consegnato)
+- Sottostato preventivo: `preventivo` (da_inviare → inviato → approvato)
+- Sottostato bozza: `bozza_grafica` (non_serve | da_fare | inviata | modificata | approvata)
 - Pagamento: `prezzo`, `acconto`, `saldo` (calcolato)
-- Flag: `msg_pronto_inviato`, `chiedere_recensione`, `recensione_richiesta`, `recensione_ricevuta`
+- Flag: `msg_pronto_inviato`, `chiedere_recensione`, `recensione_richiesta`, `recensione_ricevuta`, `consenso_marketing`
 
 **`order_events`** — timeline audit log per ordine
 
@@ -127,6 +129,7 @@ Migrations da applicare in ordine:
 1. `20260626000001_order_schema_v2.sql` — schema principale (drop + recreate)
 2. `20260628000001_add_consenso_marketing.sql`
 3. `20260628000002_add_dettagli_grafici.sql`
+4. `20260629000001_add_preventivo_bozza_modificata.sql` — colonna preventivo + aggiorna constraint bozza
 
 Vincoli critici:
 - Niente `shop_id` — installazione dedicata per bottega
@@ -156,6 +159,8 @@ Vincoli critici:
 | Allegati = campo testo libero (no Supabase Storage) | Si scrive nome file / link Drive / riferimento WhatsApp — evita complessità di storage |
 | Campo `consenso_marketing` in orders | GDPR: serve consenso esplicito per recensioni e comunicazioni commerciali |
 | Stato ordine calcolato automaticamente alla creazione | Regola: inviare preventivo → "preventivo"; no preventivo + bozza → "bozza_grafica"; no preventivo + no bozza → "in_lavorazione" |
+| Bottoni rapidi nella pagina dettaglio per sottostati | Preventivo (da_inviare/inviato/approvato) e Bozza (da_fare/inviata/modificata/approvata) senza entrare in modifica |
+| Log attività con testo descrittivo in italiano | Niente "Stato: X" — messaggi leggibili tipo "Bozza approvata", "Consegnato al cliente" |
 | RLS abilitata su tutte le tabelle con `auth.uid() is not null` | Sicurezza base; single-tenant, nessuna separazione per utente |
 | Dopo crea/modifica ordine → redirect a scheda ordine (non lista) | Permette di stampare etichetta immediatamente dopo la creazione |
 | Bacheca = grid 5 colonne (non flex scroll) | Tutte le colonne visibili senza scrollare orizzontalmente |

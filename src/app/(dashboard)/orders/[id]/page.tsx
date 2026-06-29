@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { getOrder, updateOrderStatus } from "@/actions/orders"
+import { getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo } from "@/actions/orders"
 import { STATUS_LABELS, STATUS_ORDER } from "@/lib/orderConstants"
 import { StatusBadge } from "@/components/OrderCard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,6 +22,20 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     revalidatePath(`/orders/${id}`)
     revalidatePath("/orders")
     revalidatePath("/dashboard")
+  }
+
+  async function changeBozza(formData: FormData) {
+    "use server"
+    const value = formData.get("bozza") as string
+    await updateBozzaGrafica(id, value)
+    revalidatePath(`/orders/${id}`)
+  }
+
+  async function changePreventivo(formData: FormData) {
+    "use server"
+    const value = formData.get("preventivo") as string
+    await updatePreventivo(id, value)
+    revalidatePath(`/orders/${id}`)
   }
 
   const currentIdx = STATUS_ORDER.indexOf(order.status)
@@ -95,8 +109,41 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         {order.data_consegnato && (
           <div><span className="text-slate-400 block text-xs">Consegnato il</span>{formatDate(order.data_consegnato)}</div>
         )}
-        {order.bozza_grafica !== "non_serve" && (
-          <div><span className="text-slate-400 block text-xs">Bozza grafica</span>{order.bozza_grafica.replace("_", " ")}</div>
+        {order.status === "preventivo" && (
+          <div className="sm:col-span-3">
+            <span className="text-slate-400 block text-xs mb-1">Preventivo</span>
+            <div className="flex gap-2 flex-wrap">
+              {([["da_inviare", "Da inviare"], ["inviato", "Inviato"], ["approvato", "Approvato"]] as const).map(([v, label]) => (
+                <form key={v} action={changePreventivo}>
+                  <input type="hidden" name="preventivo" value={v} />
+                  <button type="submit" className={cn(
+                    "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+                    (order as any).preventivo === v
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                  )}>{label}</button>
+                </form>
+              ))}
+            </div>
+          </div>
+        )}
+        {order.status === "bozza_grafica" && order.bozza_grafica !== "non_serve" && (
+          <div className="sm:col-span-3">
+            <span className="text-slate-400 block text-xs mb-1">Bozza grafica</span>
+            <div className="flex gap-2 flex-wrap">
+              {([["da_fare", "Da fare"], ["inviata", "Inviata"], ["modificata", "Modificata"], ["approvata", "Approvata"]] as const).map(([v, label]) => (
+                <form key={v} action={changeBozza}>
+                  <input type="hidden" name="bozza" value={v} />
+                  <button type="submit" className={cn(
+                    "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+                    order.bozza_grafica === v
+                      ? "bg-purple-600 text-white border-purple-600"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                  )}>{label}</button>
+                </form>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 

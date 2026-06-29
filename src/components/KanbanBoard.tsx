@@ -33,7 +33,7 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
 
   return (
     <div className="grid grid-cols-5 gap-3">
-      {STATUS_ORDER.map((status) => {
+      {STATUS_ORDER.filter((s) => s !== "consegnato").map((status) => {
         const colOrders = orders.filter((o) => o.status === status)
         return (
           <div
@@ -67,7 +67,15 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
                       key={order.id}
                       className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm space-y-2"
                     >
-                      <p className="font-bold text-sm">{clientName}</p>
+                      <div className="flex items-start justify-between gap-1">
+                        <p className="font-bold text-sm">{clientName}</p>
+                        {(order.status === "preventivo" && (order as any).preventivo === "inviato") && (
+                          <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full whitespace-nowrap">⏳ attesa</span>
+                        )}
+                        {(order.status === "bozza_grafica" && (order.bozza_grafica === "inviata" || order.bozza_grafica === "modificata")) && (
+                          <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full whitespace-nowrap">⏳ attesa</span>
+                        )}
+                      </div>
                       <p className="text-sm text-slate-500 leading-tight">
                         {order.cosa_ordinato}
                       </p>
