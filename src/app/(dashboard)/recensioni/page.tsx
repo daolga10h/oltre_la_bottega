@@ -54,39 +54,39 @@ export default async function RecensioniPage() {
       {errorMsg && <ErrorMessage message={errorMsg} />}
 
       {orders.length === 0 && !errorMsg && (
-        <p className="text-slate-500 text-sm">
+        <p className="text-muted-foreground text-sm">
           Nessuna recensione da gestire. Le recensioni appaiono quando un ordine
           consegnato ha &ldquo;Chiedere recensione&rdquo; attivo.
         </p>
       )}
 
       {orders.length > 0 && (
-        <div className="bg-white rounded-xl border overflow-x-auto">
+        <div className="bg-card rounded-lg border border-border overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-slate-50">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Cliente</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Telefono</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Data consegnato</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Cosa ordinato</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Chiedere recensione</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Recensione richiesta?</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Recensione ricevuta</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Azioni</th>
+              <tr className="border-b bg-background">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Cliente</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Telefono</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Data consegnato</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Cosa ordinato</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Chiedere recensione</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Recensione richiesta?</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Recensione ricevuta</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Azioni</th>
               </tr>
             </thead>
             <tbody>
               {orders.map((o) => {
                 const clientName = [o.nome, o.cognome].filter(Boolean).join(" ")
                 return (
-                  <tr key={o.id} className="border-b last:border-0 hover:bg-slate-50">
+                  <tr key={o.id} className="border-b last:border-0 hover:bg-muted/40">
                     <td className="px-4 py-3">
                       <Link href={`/orders/${o.id}`} className="font-bold hover:underline">
                         {clientName}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-slate-500">{o.telefono ?? "—"}</td>
-                    <td className="px-4 py-3 text-slate-500">
+                    <td className="px-4 py-3 text-muted-foreground">{o.telefono ?? "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
                       {o.data_consegnato ? formatDate(o.data_consegnato) : "—"}
                     </td>
                     <td className="px-4 py-3">{o.cosa_ordinato}</td>

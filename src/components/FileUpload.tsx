@@ -20,7 +20,6 @@ function parseFiles(value: string): AttachedFile[] {
     const parsed = JSON.parse(value)
     if (Array.isArray(parsed)) return parsed
   } catch {}
-  // Fallback: treat as plain text (old format)
   return []
 }
 
@@ -61,7 +60,6 @@ export function FileUpload({ value, onChange }: FileUploadProps) {
     setFiles(updated)
     onChange(JSON.stringify(updated))
     setUploading(false)
-    // Reset input so same file can be re-selected
     if (inputRef.current) inputRef.current.value = ""
   }
 
@@ -73,24 +71,23 @@ export function FileUpload({ value, onChange }: FileUploadProps) {
 
   return (
     <div className="space-y-2">
-      {/* Uploaded files */}
       {files.length > 0 && (
         <ul className="space-y-1">
           {files.map((f, i) => (
-            <li key={i} className="flex items-center gap-2 text-sm bg-slate-50 rounded-lg px-3 py-2 border">
-              <Paperclip className="w-3 h-3 text-slate-400 shrink-0" />
+            <li key={i} className="flex items-center gap-2 text-sm bg-background rounded-lg px-3 py-2 border border-border">
+              <Paperclip className="w-3 h-3 text-muted-foreground shrink-0" />
               <a
                 href={f.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 truncate text-blue-600 hover:underline"
+                className="flex-1 truncate text-foreground underline underline-offset-2 hover:text-bark"
               >
                 {f.name}
               </a>
               <button
                 type="button"
                 onClick={() => removeFile(i)}
-                className="text-slate-400 hover:text-red-500 shrink-0"
+                className="text-muted-foreground hover:text-terracotta shrink-0"
                 aria-label="Rimuovi"
               >
                 <X className="w-3 h-3" />
@@ -100,7 +97,6 @@ export function FileUpload({ value, onChange }: FileUploadProps) {
         </ul>
       )}
 
-      {/* Upload button */}
       <div>
         <input
           ref={inputRef}
@@ -113,7 +109,7 @@ export function FileUpload({ value, onChange }: FileUploadProps) {
         />
         <label
           htmlFor="file-upload-input"
-          className={`inline-flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-slate-300 px-4 py-2 text-sm text-slate-500 hover:border-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}
+          className={`inline-flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-border px-4 py-2 text-sm text-muted-foreground hover:border-foreground/30 hover:text-foreground hover:bg-muted/40 transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}
         >
           {uploading ? (
             <><Loader2 className="w-4 h-4 animate-spin" />Caricamento…</>
@@ -123,7 +119,7 @@ export function FileUpload({ value, onChange }: FileUploadProps) {
         </label>
       </div>
 
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-terracotta">{error}</p>}
     </div>
   )
 }

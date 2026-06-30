@@ -49,7 +49,7 @@ export function SearchBar() {
 
   return (
     <div ref={containerRef} className="relative w-full max-w-sm">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
       <Input
         value={query}
         onChange={(e) => {
@@ -61,18 +61,18 @@ export function SearchBar() {
         className="pl-9"
       />
       {open && hasResults && (
-        <div className="absolute top-full mt-1 w-full bg-white border rounded-lg shadow-lg z-50 overflow-hidden">
-          <p className="px-3 py-1.5 text-xs font-medium text-slate-500 bg-slate-50">
+        <div className="absolute top-full mt-1 w-full bg-card border border-border rounded-lg shadow-[0px_4px_8px_0px_rgba(38,27,7,0.08)] z-50 overflow-hidden">
+          <p className="px-3 py-1.5 text-xs font-semibold text-muted-foreground bg-background uppercase tracking-widest">
             Ordini
           </p>
           {results!.orders.map((o) => (
             <button
               key={o.id}
-              className="w-full px-3 py-2 text-sm text-left hover:bg-slate-50"
+              className="w-full px-3 py-2 text-sm text-left hover:bg-muted/40"
               onClick={() => navigate(`/orders/${o.id}`)}
             >
               <span className="font-medium">{o.cosa_ordinato}</span>
-              <span className="text-slate-400 ml-2 text-xs">
+              <span className="text-muted-foreground ml-2 text-xs">
                 {[o.nome, o.cognome].filter(Boolean).join(" ")}
               </span>
             </button>

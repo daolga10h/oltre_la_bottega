@@ -70,11 +70,11 @@ export default function SetupPinPage() {
       : "Inserisci di nuovo le stesse 6 cifre"
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl">{title}</CardTitle>
-          <p className="text-sm text-slate-500">{subtitle}</p>
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex justify-center gap-3 py-4">
@@ -83,8 +83,8 @@ export default function SetupPinPage() {
                 key={i}
                 className={`w-4 h-4 rounded-full border-2 transition-colors ${
                   i < pin.length
-                    ? "bg-slate-900 border-slate-900"
-                    : "border-slate-300"
+                    ? "bg-espresso border-espresso"
+                    : "border-border"
                 }`}
               />
             ))}
@@ -97,12 +97,12 @@ export default function SetupPinPage() {
                 type="button"
                 onClick={() => k !== "" && handleDigit(k)}
                 disabled={loading || k === ""}
-                className={`h-14 rounded-xl text-xl font-medium transition-colors ${
+                className={`h-14 rounded-lg text-xl font-medium transition-colors ${
                   k === ""
                     ? "invisible"
                     : k === "⌫"
-                    ? "bg-slate-100 hover:bg-slate-200 text-slate-600"
-                    : "bg-slate-100 hover:bg-slate-200 active:bg-slate-300"
+                    ? "bg-muted hover:bg-accent text-muted-foreground"
+                    : "bg-muted hover:bg-accent text-foreground active:bg-linen"
                 }`}
               >
                 {k}
@@ -111,7 +111,7 @@ export default function SetupPinPage() {
           </div>
 
           {message && (
-            <p className="text-sm text-center text-red-600">{message}</p>
+            <p className="text-sm text-center text-terracotta">{message}</p>
           )}
         </CardContent>
       </Card>

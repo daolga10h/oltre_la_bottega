@@ -17,22 +17,23 @@ const links = [
 export function BottomNav() {
   const pathname = usePathname()
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t z-50 flex">
-      {links.map(({ href, label, icon: Icon }) => (
-        <Link
-          key={href}
-          href={href}
-          className={cn(
-            "flex flex-col items-center gap-0.5 flex-1 py-2 text-xs",
-            pathname.startsWith(href)
-              ? "text-slate-900 font-medium"
-              : "text-slate-500"
-          )}
-        >
-          <Icon className="w-5 h-5" />
-          {label}
-        </Link>
-      ))}
+    <nav className="md:hidden fixed bottom-0 inset-x-0 bg-card border-t border-border z-50 flex">
+      {links.map(({ href, label, icon: Icon }) => {
+        const active = pathname.startsWith(href)
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={cn(
+              "flex flex-col items-center gap-0.5 flex-1 py-2 text-xs transition-colors",
+              active ? "text-foreground font-semibold" : "text-muted-foreground"
+            )}
+          >
+            <Icon className={cn("w-5 h-5", active && "text-espresso")} />
+            {label}
+          </Link>
+        )
+      })}
     </nav>
   )
 }

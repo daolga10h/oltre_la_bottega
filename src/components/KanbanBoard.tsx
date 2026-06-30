@@ -9,12 +9,12 @@ import Link from "next/link"
 import type { OrderRow } from "@/actions/orders"
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
-  preventivo: "bg-blue-100 text-blue-700",
-  bozza_grafica: "bg-purple-100 text-purple-700",
-  da_fare: "bg-orange-100 text-orange-700",
-  in_lavorazione: "bg-amber-100 text-amber-700",
-  pronto: "bg-green-100 text-green-700",
-  consegnato: "bg-slate-100 text-slate-500",
+  preventivo: "bg-linen text-bark",
+  bozza_grafica: "bg-wisteria text-[#3d2a6e]",
+  da_fare: "bg-honey text-bark",
+  in_lavorazione: "bg-honey text-bark",
+  pronto: "bg-honey text-bark",
+  consegnato: "bg-linen text-muted-foreground",
 }
 
 export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
@@ -22,7 +22,6 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
   const [isPending, startTransition] = useTransition()
 
   function handleStatusChange(orderId: string, newStatus: string) {
-    // Optimistic update
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
     )
@@ -38,22 +37,17 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
         return (
           <div
             key={status}
-            className="bg-slate-100 rounded-xl p-3 min-w-0"
+            className="bg-background border border-border rounded-lg p-3 min-w-0"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="font-bold text-sm">{STATUS_LABELS[status]}</span>
-              <span
-                className={cn(
-                  "text-xs font-bold px-2 py-0.5 rounded-full",
-                  STATUS_BADGE_COLORS[status]
-                )}
-              >
+              <span className="font-semibold text-sm text-foreground">{STATUS_LABELS[status]}</span>
+              <span className={cn("text-xs font-semibold px-2 py-0.5 rounded", STATUS_BADGE_COLORS[status])}>
                 {colOrders.length}
               </span>
             </div>
 
             {colOrders.length === 0 ? (
-              <div className="text-center text-slate-400 text-sm py-8 border border-dashed border-slate-300 rounded-lg bg-white">
+              <div className="text-center text-muted-foreground text-sm py-8 border border-dashed border-border rounded-lg bg-card">
                 Vuoto
               </div>
             ) : (
@@ -65,22 +59,22 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
                   return (
                     <div
                       key={order.id}
-                      className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm space-y-2"
+                      className="bg-card border border-border rounded-lg p-3 shadow-[0px_2px_4px_0px_rgba(38,27,7,0.05)] space-y-2"
                     >
                       <div className="flex items-start justify-between gap-1">
-                        <p className="font-bold text-sm">{clientName}</p>
+                        <p className="font-semibold text-sm text-foreground">{clientName}</p>
                         {(order.status === "preventivo" && (order as any).preventivo === "inviato") && (
-                          <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full whitespace-nowrap">⏳ attesa</span>
+                          <span className="text-xs bg-honey text-bark px-1.5 py-0.5 rounded whitespace-nowrap">⏳ attesa</span>
                         )}
                         {(order.status === "bozza_grafica" && (order.bozza_grafica === "inviata" || order.bozza_grafica === "modificata")) && (
-                          <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full whitespace-nowrap">⏳ attesa</span>
+                          <span className="text-xs bg-honey text-bark px-1.5 py-0.5 rounded whitespace-nowrap">⏳ attesa</span>
                         )}
                       </div>
-                      <p className="text-sm text-slate-500 leading-tight">
+                      <p className="text-sm text-bark leading-tight">
                         {order.cosa_ordinato}
                       </p>
                       {order.data_consegna && (
-                        <p className="text-xs font-medium text-slate-500">
+                        <p className="text-xs font-medium text-muted-foreground">
                           {formatDate(order.data_consegna)}
                         </p>
                       )}
@@ -88,10 +82,8 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
                       <select
                         value={order.status}
                         disabled={isPending}
-                        onChange={(e) =>
-                          handleStatusChange(order.id, e.target.value)
-                        }
-                        className="w-full text-sm border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 cursor-pointer disabled:opacity-50"
+                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                        className="w-full text-sm border border-border rounded-lg px-2 py-1.5 bg-background text-foreground cursor-pointer disabled:opacity-50"
                       >
                         {STATUS_ORDER.map((s) => (
                           <option key={s} value={s}>

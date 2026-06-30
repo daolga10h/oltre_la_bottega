@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
-import { AlertTriangle, Clock, Package, Truck } from "lucide-react"
+import { Clock } from "lucide-react"
 import Link from "next/link"
 
 interface KPI {
@@ -57,7 +57,7 @@ export function TodayBoard() {
   }, [])
 
   if (loading) {
-    return <p className="text-sm text-slate-500">Caricamento…</p>
+    return <p className="text-sm text-muted-foreground">Caricamento…</p>
   }
   if (error) {
     return <ErrorMessage message={error} />
@@ -68,45 +68,34 @@ export function TodayBoard() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiCard label="Ordini aperti" value={kpi.open} icon={<Package className="w-4 h-4" />} />
-        <KpiCard
-          label="In lavorazione"
-          value={kpi.urgent}
-          icon={<AlertTriangle className="w-4 h-4" />}
-          variant={kpi.urgent > 0 ? "urgent" : "default"}
-        />
-        <KpiCard
-          label="In ritardo"
-          value={kpi.overdue}
-          icon={<Clock className="w-4 h-4" />}
-          variant={kpi.overdue > 0 ? "danger" : "default"}
-        />
-        <KpiCard
-          label="Consegne oggi"
-          value={kpi.todayDeliveries}
-          icon={<Truck className="w-4 h-4" />}
-          variant={kpi.todayDeliveries > 0 ? "info" : "default"}
-        />
+        <KpiCard label="Ordini aperti" value={kpi.open} />
+        <KpiCard label="In lavorazione" value={kpi.urgent} />
+        <KpiCard label="In ritardo" value={kpi.overdue} variant={kpi.overdue > 0 ? "danger" : "default"} />
+        <KpiCard label="Consegne oggi" value={kpi.todayDeliveries} variant={kpi.todayDeliveries > 0 ? "today" : "default"} />
       </div>
 
       {todayOrders.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Consegne di oggi</CardTitle>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-sm font-semibold">Consegne di oggi</CardTitle>
+            <span className="text-xs font-semibold bg-muted border border-border rounded-full px-2.5 py-0.5 text-muted-foreground">
+              {todayOrders.length}
+            </span>
           </CardHeader>
-          <CardContent className="space-y-1">
+          <CardContent className="space-y-2">
             {todayOrders.map((o) => (
               <Link
                 key={o.id}
                 href={`/orders/${o.id}`}
-                className="flex items-center justify-between py-2 border-b last:border-0 hover:bg-slate-50 rounded px-2 -mx-2"
+                className="flex items-center justify-between bg-background rounded-lg px-4 py-3 hover:bg-muted/60 transition-colors group"
               >
                 <div>
-                  <p className="font-medium text-sm">{o.cosa_ordinato}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="font-semibold text-sm text-foreground">{o.cosa_ordinato}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {[o.nome, o.cognome].filter(Boolean).join(" ")}
                   </p>
                 </div>
+                <span className="text-muted-foreground/50 group-hover:text-muted-foreground text-sm">›</span>
               </Link>
             ))}
           </CardContent>
@@ -115,14 +104,17 @@ export function TodayBoard() {
 
       {reminders.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Promemoria di oggi</CardTitle>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-sm font-semibold">Promemoria di oggi</CardTitle>
+            <span className="text-xs font-semibold bg-muted border border-border rounded-full px-2.5 py-0.5 text-muted-foreground">
+              {reminders.length}
+            </span>
           </CardHeader>
-          <CardContent className="space-y-1">
+          <CardContent className="space-y-2">
             {reminders.map((r) => (
-              <div key={r.id} className="flex items-center gap-2 py-2 border-b last:border-0">
-                <Clock className="w-4 h-4 text-slate-400 shrink-0" />
-                <span className="text-sm">{r.title}</span>
+              <div key={r.id} className="flex items-center gap-3 bg-background rounded-lg px-4 py-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold ring-2 ring-gold/20 shrink-0" />
+                <span className="text-sm text-bark">{r.title}</span>
               </div>
             ))}
           </CardContent>
@@ -130,7 +122,7 @@ export function TodayBoard() {
       )}
 
       {todayOrders.length === 0 && reminders.length === 0 && (
-        <p className="text-sm text-slate-500">Nessuna scadenza per oggi. Ottimo lavoro!</p>
+        <p className="text-sm text-muted-foreground">Nessuna scadenza per oggi. Ottimo lavoro!</p>
       )}
     </div>
   )
@@ -139,29 +131,22 @@ export function TodayBoard() {
 function KpiCard({
   label,
   value,
-  icon,
   variant = "default",
 }: {
   label: string
   value: number
-  icon: React.ReactNode
-  variant?: "default" | "urgent" | "danger" | "info"
+  variant?: "default" | "danger" | "today"
 }) {
-  const colors: Record<string, string> = {
-    default: "bg-white",
-    urgent: "bg-amber-50 border-amber-200",
-    danger: "bg-red-50 border-red-200",
-    info: "bg-blue-50 border-blue-200",
-  }
   return (
-    <Card className={colors[variant]}>
-      <CardContent className="pt-4 pb-4">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-slate-400">{icon}</span>
-          <span className="text-2xl font-bold">{value}</span>
-        </div>
-        <p className="text-xs text-slate-500">{label}</p>
-      </CardContent>
-    </Card>
+    <div className="relative bg-card border border-border rounded-lg px-5 py-4 overflow-hidden shadow-[0px_4px_8px_0px_rgba(38,27,7,0.06)]">
+      {variant === "danger" && (
+        <span className="absolute top-0 left-0 right-0 h-0.5 bg-terracotta rounded-t-lg" />
+      )}
+      {variant === "today" && (
+        <span className="absolute top-0 left-0 right-0 h-0.5 bg-gold rounded-t-lg" />
+      )}
+      <p className="text-3xl font-bold tracking-tight text-foreground">{value}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mt-2">{label}</p>
+    </div>
   )
 }

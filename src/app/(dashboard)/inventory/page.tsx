@@ -37,7 +37,7 @@ export default async function InventoryPage() {
       <h1 className="text-2xl font-bold">Materiali</h1>
 
       {lowStock.length > 0 && (
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-800">
+        <div className="flex items-center gap-2 bg-honey border border-gold/40 rounded-lg p-3 text-sm text-bark">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           {lowStock.length} materiale/i sotto la soglia minima
         </div>
@@ -47,27 +47,27 @@ export default async function InventoryPage() {
 
       <div className="space-y-2">
         {items.length === 0 && !errorMsg && (
-          <p className="text-slate-500 text-sm">Nessun materiale ancora.</p>
+          <p className="text-muted-foreground text-sm">Nessun materiale ancora.</p>
         )}
         {items.map((item) => (
           <Card
             key={item.id}
             className={
               item.quantity_available <= item.reorder_threshold
-                ? "border-amber-200"
+                ? "border-gold/40"
                 : ""
             }
           >
             <CardContent className="py-3 flex items-center justify-between">
               <div>
                 <p className="font-medium text-sm">{item.name}</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   {item.quantity_available} {item.unit} disponibili · soglia{" "}
                   {item.reorder_threshold}
                 </p>
               </div>
               {item.quantity_available <= item.reorder_threshold && (
-                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-gold shrink-0" />
               )}
             </CardContent>
           </Card>

@@ -34,7 +34,7 @@ export function ReminderList({ reminders }: { reminders: ReminderItem[] }) {
 
   if (items.length === 0) {
     return (
-      <p className="text-slate-500 text-sm">Nessun promemoria attivo.</p>
+      <p className="text-muted-foreground text-sm">Nessun promemoria attivo.</p>
     )
   }
 
@@ -47,14 +47,14 @@ export function ReminderList({ reminders }: { reminders: ReminderItem[] }) {
           <div
             key={r.id}
             className={cn(
-              "flex items-center gap-3 bg-white rounded-lg border p-3",
-              overdue && "border-red-200 bg-red-50"
+              "flex items-center gap-3 bg-card rounded-lg border border-border p-3",
+              overdue && "border-terracotta/30 bg-[#fdf0ef]"
             )}
           >
             <Clock
               className={cn(
                 "w-4 h-4 shrink-0",
-                overdue ? "text-red-500" : "text-slate-400"
+                overdue ? "text-terracotta" : "text-muted-foreground"
               )}
             />
             <div className="flex-1 min-w-0">
@@ -62,7 +62,7 @@ export function ReminderList({ reminders }: { reminders: ReminderItem[] }) {
               <p
                 className={cn(
                   "text-xs",
-                  overdue ? "text-red-500" : "text-slate-500"
+                  overdue ? "text-terracotta" : "text-muted-foreground"
                 )}
               >
                 {format(new Date(r.due_at), "d MMM, HH:mm", { locale: it })}

@@ -54,7 +54,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
       {errorMsg && <ErrorMessage message={errorMsg} />}
 
       {orders.length === 0 && !errorMsg ? (
-        <p className="text-slate-500 text-sm">Nessun ordine trovato.</p>
+        <p className="text-muted-foreground text-sm">Nessun ordine trovato.</p>
       ) : (
         <div className="grid gap-3">
           {orders.map((o) => <OrderCard key={o.id} order={o} />)}

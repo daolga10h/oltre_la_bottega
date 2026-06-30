@@ -50,7 +50,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <Link href="/orders" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900">
+        <Link href="/orders" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-3 h-3" />Ordini
         </Link>
         <div className="flex gap-2">
@@ -71,12 +71,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <button
               type="submit"
               className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                "px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors",
                 i === currentIdx
-                  ? "bg-slate-900 text-white border-slate-900"
+                  ? "bg-espresso text-cream border-espresso"
                   : i < currentIdx
-                  ? "bg-slate-100 text-slate-400 border-slate-200"
-                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                  ? "bg-muted text-muted-foreground border-border"
+                  : "bg-card text-foreground border-border hover:border-foreground/30"
               )}
             >
               {STATUS_LABELS[s]}
@@ -87,40 +87,40 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold">{order.cosa_ordinato}</h1>
-        <p className="text-slate-600 font-medium">{clientName}</p>
-        {order.telefono && <p className="text-sm text-slate-400">{order.telefono}</p>}
+        <h1 className="text-xl font-bold tracking-tight">{order.cosa_ordinato}</h1>
+        <p className="text-bark font-medium">{clientName}</p>
+        {order.telefono && <p className="text-sm text-muted-foreground">{order.telefono}</p>}
       </div>
 
       {/* Key info */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
         {order.tipo_lavorazione && (
-          <div><span className="text-slate-400 block text-xs">Lavorazione</span>{order.tipo_lavorazione}</div>
+          <div><span className="text-muted-foreground block text-xs">Lavorazione</span>{order.tipo_lavorazione}</div>
         )}
         {order.quantita > 1 && (
-          <div><span className="text-slate-400 block text-xs">Quantità</span>{order.quantita} pz</div>
+          <div><span className="text-muted-foreground block text-xs">Quantità</span>{order.quantita} pz</div>
         )}
         {order.canale && (
-          <div><span className="text-slate-400 block text-xs">Canale</span>{order.canale}</div>
+          <div><span className="text-muted-foreground block text-xs">Canale</span>{order.canale}</div>
         )}
         {order.data_consegna && (
-          <div><span className="text-slate-400 block text-xs">Consegna prevista</span>{formatDate(order.data_consegna)}</div>
+          <div><span className="text-muted-foreground block text-xs">Consegna prevista</span>{formatDate(order.data_consegna)}</div>
         )}
         {order.data_consegnato && (
-          <div><span className="text-slate-400 block text-xs">Consegnato il</span>{formatDate(order.data_consegnato)}</div>
+          <div><span className="text-muted-foreground block text-xs">Consegnato il</span>{formatDate(order.data_consegnato)}</div>
         )}
         {order.status === "preventivo" && (
           <div className="sm:col-span-3">
-            <span className="text-slate-400 block text-xs mb-1">Preventivo</span>
+            <span className="text-muted-foreground block text-xs mb-1">Preventivo</span>
             <div className="flex gap-2 flex-wrap">
               {([["da_inviare", "Da inviare"], ["inviato", "Inviato"], ["approvato", "Approvato"]] as const).map(([v, label]) => (
                 <form key={v} action={changePreventivo}>
                   <input type="hidden" name="preventivo" value={v} />
                   <button type="submit" className={cn(
-                    "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+                    "px-3 py-1 rounded-full text-xs font-semibold border transition-colors",
                     (order as any).preventivo === v
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                      ? "bg-espresso text-cream border-espresso"
+                      : "bg-card text-foreground border-border hover:border-foreground/30"
                   )}>{label}</button>
                 </form>
               ))}
@@ -129,16 +129,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         )}
         {order.status === "bozza_grafica" && order.bozza_grafica !== "non_serve" && (
           <div className="sm:col-span-3">
-            <span className="text-slate-400 block text-xs mb-1">Bozza grafica</span>
+            <span className="text-muted-foreground block text-xs mb-1">Bozza grafica</span>
             <div className="flex gap-2 flex-wrap">
               {([["da_fare", "Da fare"], ["inviata", "Inviata"], ["modificata", "Modificata"], ["approvata", "Approvata"]] as const).map(([v, label]) => (
                 <form key={v} action={changeBozza}>
                   <input type="hidden" name="bozza" value={v} />
                   <button type="submit" className={cn(
-                    "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+                    "px-3 py-1 rounded-full text-xs font-semibold border transition-colors",
                     order.bozza_grafica === v
-                      ? "bg-purple-600 text-white border-purple-600"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                      ? "bg-wisteria text-[#3d2a6e] border-wisteria"
+                      : "bg-card text-foreground border-border hover:border-foreground/30"
                   )}>{label}</button>
                 </form>
               ))}
@@ -150,7 +150,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       {/* Text to engrave */}
       {order.testo_da_scrivere && (
         <Card>
-          <CardHeader><CardTitle className="text-sm text-slate-500">Testo da scrivere</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm text-muted-foreground">Testo da scrivere</CardTitle></CardHeader>
           <CardContent className="pt-0">
             <p className="font-medium">{order.testo_da_scrivere}</p>
           </CardContent>
@@ -161,8 +161,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       {(order.file_cliente || order.foto_oggetto) && (
         <Card>
           <CardContent className="pt-4 space-y-1 text-sm">
-            {order.file_cliente && <p><span className="text-slate-400">File cliente: </span>{order.file_cliente}</p>}
-            {order.foto_oggetto && <p><span className="text-slate-400">Foto oggetto: </span>{order.foto_oggetto}</p>}
+            {order.file_cliente && <p><span className="text-muted-foreground">File cliente: </span>{order.file_cliente}</p>}
+            {order.foto_oggetto && <p><span className="text-muted-foreground">Foto oggetto: </span>{order.foto_oggetto}</p>}
           </CardContent>
         </Card>
       )}
@@ -170,9 +170,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       {/* Payment */}
       <Card>
         <CardContent className="pt-4 grid grid-cols-3 gap-4 text-center">
-          <div><p className="text-xs text-slate-400">Prezzo</p><p className="font-bold text-lg">€{order.prezzo}</p></div>
-          <div><p className="text-xs text-slate-400">Acconto</p><p className="font-bold text-lg text-green-600">€{order.acconto}</p></div>
-          <div><p className="text-xs text-slate-400">Saldo</p><p className="font-bold text-lg text-amber-600">€{order.saldo}</p></div>
+          <div><p className="text-xs text-muted-foreground">Prezzo</p><p className="font-bold text-lg">€{order.prezzo}</p></div>
+          <div><p className="text-xs text-muted-foreground">Acconto</p><p className="font-bold text-lg text-green-600">€{order.acconto}</p></div>
+          <div><p className="text-xs text-muted-foreground">Saldo</p><p className="font-bold text-lg text-gold">€{order.saldo}</p></div>
         </CardContent>
       </Card>
 
@@ -184,14 +184,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           { label: "Recensione richiesta", active: order.recensione_richiesta },
           { label: "Recensione ricevuta", active: order.recensione_ricevuta },
         ].map(({ label, active }) => active ? (
-          <span key={label} className="bg-green-50 border border-green-200 text-green-700 px-2 py-1 rounded-full">{label}</span>
+          <span key={label} className="bg-honey border border-gold/30 text-bark px-2 py-1 rounded">{label}</span>
         ) : null)}
       </div>
 
       {/* Notes */}
       {order.note && (
         <Card>
-          <CardContent className="pt-4 text-sm text-slate-600">{order.note}</CardContent>
+          <CardContent className="pt-4 text-sm text-bark">{order.note}</CardContent>
         </Card>
       )}
 
@@ -208,7 +208,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <ol className="space-y-2">
               {order.events.map((ev) => (
                 <li key={ev.id} className="flex gap-3 text-sm">
-                  <span className="text-slate-400 shrink-0 text-xs">{formatDate(ev.created_at)}</span>
+                  <span className="text-muted-foreground shrink-0 text-xs">{formatDate(ev.created_at)}</span>
                   <span>{ev.note ?? EVENT_LABELS[ev.event_type] ?? ev.event_type}</span>
                 </li>
               ))}

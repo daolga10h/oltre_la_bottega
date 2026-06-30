@@ -23,8 +23,8 @@ const PREVENTIVO_OPTIONS = [
   { value: "inviato", label: "Inviato" },
 ]
 
-const numClass = "w-full h-9 rounded-lg border border-input bg-white px-2 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-const selectClass = "w-full h-9 rounded-lg border border-input bg-white px-2 text-sm"
+const numClass = "w-full h-9 rounded-lg border border-input bg-card px-2 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+const selectClass = "w-full h-9 rounded-lg border border-input bg-card px-2 text-sm"
 
 interface Props {
   order?: OrderRow
@@ -114,7 +114,7 @@ export function OrderForm({ order }: Props) {
 
       {/* CLIENTE */}
       <section className="space-y-4">
-        <h2 className="font-semibold text-slate-700 border-b pb-1">Cliente</h2>
+        <h2 className="font-semibold text-foreground border-b pb-1">Cliente</h2>
         <div className="grid grid-cols-3 gap-3">
           <div>
             <Label htmlFor="nome">Nome *</Label>
@@ -149,7 +149,7 @@ export function OrderForm({ order }: Props) {
             type="checkbox"
             checked={consensoMarketing}
             onChange={(e) => setConsensoMarketing(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300"
+            className="h-4 w-4 rounded border-border"
           />
           <Label htmlFor="consenso_marketing" className="font-normal text-sm cursor-pointer">
             Consenso recensioni e comunicazioni (GDPR)
@@ -159,7 +159,7 @@ export function OrderForm({ order }: Props) {
 
       {/* ORDINE */}
       <section className="space-y-4">
-        <h2 className="font-semibold text-slate-700 border-b pb-1">Ordine</h2>
+        <h2 className="font-semibold text-foreground border-b pb-1">Ordine</h2>
         <div>
           <Label htmlFor="cosa_ordinato">Cosa ordinato *</Label>
           <Input id="cosa_ordinato" name="cosa_ordinato" required defaultValue={order?.cosa_ordinato} placeholder="Es. targa plexiglass, timbro, portachiavi inciso..." />
@@ -215,7 +215,7 @@ export function OrderForm({ order }: Props) {
       {/* DATE — solo in modifica */}
       {isEdit && (
         <section className="space-y-4">
-          <h2 className="font-semibold text-slate-700 border-b pb-1">Date</h2>
+          <h2 className="font-semibold text-foreground border-b pb-1">Date</h2>
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label htmlFor="data_ordine">Data ordine</Label>
@@ -231,7 +231,7 @@ export function OrderForm({ order }: Props) {
 
       {/* PAGAMENTO — quantità + prezzo + acconto + saldo stessa riga */}
       <section className="space-y-4">
-        <h2 className="font-semibold text-slate-700 border-b pb-1">Pagamento</h2>
+        <h2 className="font-semibold text-foreground border-b pb-1">Pagamento</h2>
         <div className="grid grid-cols-4 gap-3">
           <div>
             <Label htmlFor="quantita">Qta</Label>
@@ -252,7 +252,7 @@ export function OrderForm({ order }: Props) {
           </div>
           <div>
             <Label>Saldo €</Label>
-            <div className="h-9 rounded-lg border border-input bg-slate-50 px-2 text-sm flex items-center font-medium text-slate-700">
+            <div className="h-9 rounded-lg border border-input bg-background px-2 text-sm flex items-center font-medium text-foreground">
               {saldo.toFixed(2)}
             </div>
           </div>
@@ -261,7 +261,7 @@ export function OrderForm({ order }: Props) {
 
       {/* NOTE + FLAG */}
       <section className="space-y-4">
-        <h2 className="font-semibold text-slate-700 border-b pb-1">Note</h2>
+        <h2 className="font-semibold text-foreground border-b pb-1">Note</h2>
         <div>
           <Label htmlFor="note">Note interne</Label>
           <Textarea id="note" name="note" rows={2} defaultValue={order?.note ?? ""} placeholder="Note interne..." />
@@ -276,7 +276,7 @@ export function OrderForm({ order }: Props) {
             ].map(({ label, state, set }) => (
               <button key={label} type="button" onClick={() => set(!state)}
                 className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors text-left ${
-                  state ? "bg-green-50 border-green-300 text-green-700" : "bg-white border-slate-200 text-slate-500"
+                  state ? "bg-honey border-gold/40 text-bark font-semibold" : "bg-card border-border text-muted-foreground"
                 }`}>
                 {state ? "✓ " : ""}{label}
               </button>

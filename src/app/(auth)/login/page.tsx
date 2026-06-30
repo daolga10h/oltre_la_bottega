@@ -33,12 +33,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl">Oltre la Bottega</CardTitle>
           {!sent && (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Inserisci la tua email per accedere
             </p>
           )}
@@ -48,13 +48,13 @@ export default function LoginPage() {
             <div className="text-center space-y-3 py-4">
               <p className="text-2xl">📧</p>
               <p className="font-medium">Controlla la tua email</p>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Ti abbiamo inviato un link a <strong>{email}</strong>.
                 Clicca il link per entrare.
               </p>
               <button
                 onClick={() => { setSent(false); setEmail("") }}
-                className="text-xs text-slate-400 hover:text-slate-600 underline mt-2"
+                className="text-xs text-muted-foreground hover:text-foreground underline mt-2"
               >
                 Usa un&apos;altra email
               </button>
