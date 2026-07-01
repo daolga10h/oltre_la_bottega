@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
-import { Clock } from "lucide-react"
+import { Clock, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 
 interface KPI {
@@ -29,9 +29,17 @@ interface Reminder {
   due_at: string
 }
 
+interface DeliveredOrder {
+  id: string
+  cosa_ordinato: string
+  nome: string
+  cognome: string | null
+}
+
 interface DashboardData {
   kpi: KPI
   todayOrders: TodayOrder[]
+  deliveredToday: DeliveredOrder[]
   reminders: Reminder[]
 }
 
@@ -63,7 +71,7 @@ export function TodayBoard() {
     return <ErrorMessage message={error} />
   }
 
-  const { kpi, todayOrders, reminders } = data!
+  const { kpi, todayOrders, deliveredToday, reminders } = data!
 
   return (
     <div className="space-y-6">
@@ -77,7 +85,7 @@ export function TodayBoard() {
       {todayOrders.length > 0 && (
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-semibold">Consegne di oggi</CardTitle>
+            <CardTitle className="text-sm font-semibold">Da consegnare oggi</CardTitle>
             <span className="text-xs font-semibold bg-muted border border-border rounded-full px-2.5 py-0.5 text-muted-foreground">
               {todayOrders.length}
             </span>
@@ -96,6 +104,34 @@ export function TodayBoard() {
                   </p>
                 </div>
                 <span className="text-muted-foreground/50 group-hover:text-muted-foreground text-sm">›</span>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {deliveredToday.length > 0 && (
+        <Card>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-sm font-semibold">Consegnati oggi</CardTitle>
+            <span className="text-xs font-semibold bg-sage border border-[#3a5a2e]/30 rounded-full px-2.5 py-0.5 text-[#3a5a2e]">
+              {deliveredToday.length}
+            </span>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {deliveredToday.map((o) => (
+              <Link
+                key={o.id}
+                href={`/orders/${o.id}`}
+                className="flex items-center gap-3 bg-background rounded-lg px-4 py-3 hover:bg-muted/60 transition-colors group"
+              >
+                <CheckCircle2 className="w-4 h-4 text-[#3a5a2e] shrink-0" />
+                <div>
+                  <p className="font-semibold text-sm text-foreground">{o.cosa_ordinato}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {[o.nome, o.cognome].filter(Boolean).join(" ")}
+                  </p>
+                </div>
               </Link>
             ))}
           </CardContent>
@@ -121,7 +157,7 @@ export function TodayBoard() {
         </Card>
       )}
 
-      {todayOrders.length === 0 && reminders.length === 0 && (
+      {todayOrders.length === 0 && deliveredToday.length === 0 && reminders.length === 0 && (
         <p className="text-sm text-muted-foreground">Nessuna scadenza per oggi. Ottimo lavoro!</p>
       )}
     </div>

@@ -10,6 +10,10 @@ export function formatDate(date: string | Date): string {
   return format(new Date(date), "dd/MM/yyyy")
 }
 
+export function formatEUR(value: number): string {
+  return value.toFixed(2)
+}
+
 export function isOverdue(dueDate: string): boolean {
   const d = new Date(dueDate)
   return isPast(d) && !isToday(d)

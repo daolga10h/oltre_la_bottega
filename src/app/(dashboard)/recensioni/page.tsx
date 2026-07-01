@@ -13,8 +13,8 @@ function YesNoBadge({ value }: { value: boolean }) {
       className={cn(
         "inline-flex items-center rounded-full px-3 py-1 text-xs font-bold",
         value
-          ? "bg-green-100 text-green-700"
-          : "bg-red-100 text-red-600"
+          ? "bg-honey text-bark"
+          : "bg-linen text-muted-foreground"
       )}
     >
       {value ? "Sì" : "No"}

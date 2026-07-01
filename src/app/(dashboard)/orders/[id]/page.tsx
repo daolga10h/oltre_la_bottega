@@ -5,8 +5,8 @@ import { StatusBadge } from "@/components/OrderCard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
 import Link from "next/link"
-import { ArrowLeft, Edit, Printer } from "lucide-react"
-import { formatDate } from "@/lib/utils"
+import { ArrowLeft, Edit, Printer, CalendarPlus } from "lucide-react"
+import { formatDate, formatEUR } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { revalidatePath } from "next/cache"
 
@@ -86,26 +86,30 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       </div>
 
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold tracking-tight">{order.cosa_ordinato}</h1>
-        <p className="text-bark font-medium">{clientName}</p>
-        {order.telefono && <p className="text-sm text-muted-foreground">{order.telefono}</p>}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight">{clientName}</h1>
+          <p className="text-bark font-medium">{order.cosa_ordinato}</p>
+          {order.telefono && <p className="text-sm text-muted-foreground">{order.telefono}</p>}
+        </div>
+        {order.data_consegna ? (
+          <div className="text-right shrink-0">
+            <span className="text-muted-foreground block text-xs">Consegna prevista</span>
+            <span className="text-base font-semibold text-foreground">{formatDate(order.data_consegna)}</span>
+          </div>
+        ) : (
+          <Link
+            href={`/orders/${id}/edit`}
+            className="shrink-0 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <CalendarPlus className="w-3.5 h-3.5" />
+            Aggiungi data consegna
+          </Link>
+        )}
       </div>
 
       {/* Key info */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-        {order.tipo_lavorazione && (
-          <div><span className="text-muted-foreground block text-xs">Lavorazione</span>{order.tipo_lavorazione}</div>
-        )}
-        {order.quantita > 1 && (
-          <div><span className="text-muted-foreground block text-xs">Quantità</span>{order.quantita} pz</div>
-        )}
-        {order.canale && (
-          <div><span className="text-muted-foreground block text-xs">Canale</span>{order.canale}</div>
-        )}
-        {order.data_consegna && (
-          <div><span className="text-muted-foreground block text-xs">Consegna prevista</span>{formatDate(order.data_consegna)}</div>
-        )}
         {order.data_consegnato && (
           <div><span className="text-muted-foreground block text-xs">Consegnato il</span>{formatDate(order.data_consegnato)}</div>
         )}
@@ -137,7 +141,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   <button type="submit" className={cn(
                     "px-3 py-1 rounded-full text-xs font-semibold border transition-colors",
                     order.bozza_grafica === v
-                      ? "bg-wisteria text-[#3d2a6e] border-wisteria"
+                      ? "bg-sage text-[#3a5a2e] border-sage"
                       : "bg-card text-foreground border-border hover:border-foreground/30"
                   )}>{label}</button>
                 </form>
@@ -168,13 +172,24 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       )}
 
       {/* Payment */}
-      <Card>
-        <CardContent className="pt-4 grid grid-cols-3 gap-4 text-center">
-          <div><p className="text-xs text-muted-foreground">Prezzo</p><p className="font-bold text-lg">€{order.prezzo}</p></div>
-          <div><p className="text-xs text-muted-foreground">Acconto</p><p className="font-bold text-lg text-green-600">€{order.acconto}</p></div>
-          <div><p className="text-xs text-muted-foreground">Saldo</p><p className="font-bold text-lg text-gold">€{order.saldo}</p></div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="rounded-lg border border-border bg-card px-3 py-3 text-center shadow-[0px_4px_8px_0px_rgba(38,27,7,0.06)]">
+          <p className="text-xs text-muted-foreground">Qtà</p>
+          <p className="font-semibold text-base text-foreground">{order.quantita}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card px-3 py-3 text-center shadow-[0px_4px_8px_0px_rgba(38,27,7,0.06)]">
+          <p className="text-xs text-muted-foreground">Prezzo</p>
+          <p className="font-semibold text-base text-foreground">€{formatEUR(order.prezzo)}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card px-3 py-3 text-center shadow-[0px_4px_8px_0px_rgba(38,27,7,0.06)]">
+          <p className="text-xs text-muted-foreground">Acconto</p>
+          <p className="font-semibold text-base text-foreground">€{formatEUR(order.acconto)}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card px-3 py-3 text-center shadow-[0px_4px_8px_0px_rgba(38,27,7,0.06)]">
+          <p className="text-xs text-muted-foreground">Saldo</p>
+          <p className="font-semibold text-base text-gold">€{formatEUR(order.saldo)}</p>
+        </div>
+      </div>
 
       {/* Flags */}
       <div className="flex flex-wrap gap-2 text-xs">

@@ -5,12 +5,14 @@ import { updateOrderStatus } from "@/actions/orders"
 import { STATUS_ORDER, STATUS_LABELS } from "@/lib/orderConstants"
 import { formatDate, cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
+import { Clock } from "lucide-react"
 import type { OrderRow } from "@/actions/orders"
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
   preventivo: "bg-linen text-bark",
-  bozza_grafica: "bg-wisteria text-[#3d2a6e]",
+  bozza_grafica: "bg-sage text-[#3a5a2e]",
   da_fare: "bg-honey text-bark",
   in_lavorazione: "bg-honey text-bark",
   pronto: "bg-honey text-bark",
@@ -59,15 +61,16 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
                   return (
                     <div
                       key={order.id}
-                      className="bg-card border border-border rounded-lg p-3 shadow-[0px_2px_4px_0px_rgba(38,27,7,0.05)] space-y-2"
+                      className="bg-card border border-border rounded-lg p-3 shadow-[0px_2px_4px_0px_rgba(38,27,7,0.05)] hover:shadow-[0px_4px_10px_0px_rgba(38,27,7,0.1)] transition-shadow space-y-2"
                     >
                       <div className="flex items-start justify-between gap-1">
                         <p className="font-semibold text-sm text-foreground">{clientName}</p>
-                        {(order.status === "preventivo" && (order as any).preventivo === "inviato") && (
-                          <span className="text-xs bg-honey text-bark px-1.5 py-0.5 rounded whitespace-nowrap">⏳ attesa</span>
-                        )}
-                        {(order.status === "bozza_grafica" && (order.bozza_grafica === "inviata" || order.bozza_grafica === "modificata")) && (
-                          <span className="text-xs bg-honey text-bark px-1.5 py-0.5 rounded whitespace-nowrap">⏳ attesa</span>
+                        {((order.status === "preventivo" && (order as any).preventivo === "inviato") ||
+                          (order.status === "bozza_grafica" && (order.bozza_grafica === "inviata" || order.bozza_grafica === "modificata"))) && (
+                          <span className="inline-flex items-center gap-1 text-xs bg-honey text-bark px-1.5 py-0.5 rounded whitespace-nowrap">
+                            <Clock className="w-3 h-3" />
+                            attesa
+                          </span>
                         )}
                       </div>
                       <p className="text-sm text-bark leading-tight">
@@ -79,18 +82,23 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
                         </p>
                       )}
 
-                      <select
+                      <Select
+                        items={STATUS_LABELS}
                         value={order.status}
                         disabled={isPending}
-                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                        className="w-full text-sm border border-border rounded-lg px-2 py-1.5 bg-background text-foreground cursor-pointer disabled:opacity-50"
+                        onValueChange={(status) => status && handleStatusChange(order.id, status)}
                       >
-                        {STATUS_ORDER.map((s) => (
-                          <option key={s} value={s}>
-                            {STATUS_LABELS[s]}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="w-full transition-opacity disabled:opacity-50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_ORDER.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {STATUS_LABELS[s]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
 
                       <Link
                         href={`/orders/${order.id}`}

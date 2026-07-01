@@ -35,6 +35,28 @@ export function PrintClient({ orderId, nome, cognome, telefono, dataConsegna }: 
       padding: "3mm",
       lineHeight: 1.4,
     }}>
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "4px",
+        marginBottom: "5px",
+        paddingBottom: "4px",
+        borderBottom: "1px solid #000",
+      }}>
+        <span style={{
+          display: "inline-block",
+          width: "14px",
+          height: "14px",
+          lineHeight: "14px",
+          textAlign: "center",
+          fontSize: "8px",
+          fontWeight: "bold",
+          color: "#fff",
+          background: "#000",
+          borderRadius: "3px",
+        }}>OB</span>
+        <span style={{ fontSize: "10px", fontWeight: "bold", letterSpacing: "0.3px" }}>OLTRE LA BOTTEGA</span>
+      </div>
       <p style={{ fontWeight: "bold", fontSize: "16px", margin: "0 0 4px 0" }}>{clientName}</p>
       {telefono && <p style={{ margin: "0 0 3px 0" }}>{telefono}</p>}
       {date && <p style={{ margin: "0 0 8px 0" }}>{date}</p>}

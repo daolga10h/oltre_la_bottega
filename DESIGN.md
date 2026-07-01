@@ -25,14 +25,14 @@ Il design si ispira a un **registro finanziario artigianale**: superfici neutre 
 | Amber Signal | `#f9a600` | `bg-amber` | Solo CTA primario (`variant="amber"`) |
 | Burnished Gold | `#e89b01` | `bg-gold` / `text-gold` | Accento sidebar, saldo, striscia KPI oggi |
 | Terracotta | `#f0624f` | `text-terracotta` / `bg-terracotta` | Errori, "In ritardo", stati urgenti |
-| Wisteria | `#d5befa` | `bg-wisteria` | Badge "Bozza grafica" |
+| Sage | `#c8dab8` | `bg-sage` / `text-[#3a5a2e]` | Badge "Bozza grafica", stato attivo "Approvata", "Consegnati oggi" |
 | Honey Wash | `#f8da9d` | `bg-honey` | Badge stati attivi (pronto, da_fare, in_lavorazione), toggle ON |
 
 ### Regole cromatiche
 
 - **Un solo colore cromatico per bottone primario**: solo `bg-espresso` (azione principale) o `bg-amber` (variante alternativa). Mai altri colori pieni.
 - **Mai il nero puro `#000000`**: usare sempre `#261b07` (espresso) per testo e icone.
-- **Niente blu, verde, viola come colori interfaccia**: usare honey/wisteria/linen per badge stati, terracotta per errori/urgenze.
+- **Niente blu o viola come colori interfaccia**: usare honey/sage/linen per badge stati, terracotta per errori/urgenze. Il verde salvia (sage) è l'unica eccezione cromatica, riservato a "bozza grafica" e agli stati di completamento (approvato, consegnato).
 - **Ombre sempre con tinta calda**: `rgba(38,27,7,0.06)` mai grigi freddi.
 
 ---
@@ -92,7 +92,7 @@ box-shadow: inset 0px 1px 2px rgba(255,255,255,0.18),
 | Status | Classe |
 |---|---|
 | preventivo | `bg-linen text-bark` |
-| bozza_grafica | `bg-wisteria text-[#3d2a6e]` |
+| bozza_grafica | `bg-sage text-[#3a5a2e]` |
 | da_fare | `bg-honey text-bark` |
 | in_lavorazione | `bg-honey text-bark` |
 | pronto | `bg-honey text-bark` |
@@ -111,10 +111,33 @@ box-shadow: inset 0px 1px 2px rgba(255,255,255,0.18),
 - Link attivo: `bg-muted` + barra verticale `bg-gold` a sinistra (3px)
 - Label sezioni: 10px uppercase tracking-widest `text-warm-ash`
 
+### Logo mark "OB" — riutilizzo
+Lo stesso marchio (quadrato espresso, testo cream "OB") va ripetuto ovunque il brand deve comparire, per coerenza:
+- Sidebar (24×24px)
+- Login page (32×32px, con striscia ambra sopra la card)
+- Favicon — generato dinamicamente in `src/app/icon.tsx` via `next/og` `ImageResponse` (nessun file binario da mantenere)
+- Etichetta di stampa — versione bianco/nero 14×14px per compatibilità stampante termica monocromatica
+
 ### Righe liste (Oggi, Agenda)
 - Sfondo `bg-background` (cream), bordo-radius `rounded-lg`, padding `px-4 py-3`
 - Hover: `hover:bg-muted/60`
 - Freccia › a destra `text-muted-foreground/50`
+
+### Valore in box (Qtà, Prezzo, Acconto, Saldo)
+- Ogni valore in un box separato: `border border-border bg-card rounded-lg px-3 py-3 text-center`, ombra standard
+- Numero `text-base font-semibold` (non `text-lg font-bold` — risulta più elegante e meno "urlato")
+- Label sopra `text-xs text-muted-foreground`
+- Importi sempre con 2 decimali (`formatEUR` da `lib/utils.ts`), mai numeri interi grezzi
+
+### Menu a tendina (Select)
+- Usare sempre `@/components/ui/select` (basato su `@base-ui/react/select`), **mai** l'elemento `<select>` nativo
+- Motivo: il popup nativo del `<select>` browser ignora il font-family della pagina su alcune combinazioni OS/browser, mostrando un font di sistema (serif) invece di Inter — bug non risolvibile via CSS
+- Quando valore e etichetta differiscono (es. `da_fare` → "Da fare"), passare sempre la prop `items` (array `{value,label}` o `Record<string,string>`): senza `items`, `<SelectValue>` mostra il valore grezzo invece dell'etichetta
+
+### Campi form (Input, Textarea, Select trigger)
+- Sfondo sempre `bg-card` (bianco), **mai** `bg-transparent`: su pagina `bg-background` (cream) un campo trasparente si confonde con lo sfondo e non si capisce dove si scrive
+- `Label` ha sempre `mb-1.5` (respiro tra etichetta e campo) — eccezione: label inline accanto a una checkbox usa `mb-0` (sono affiancate, non impilate)
+- Campi a digitazione libera che non devono suggerire valori precedenti (es. "Cosa ordinato", "Testo da scrivere"): `autoComplete="off"`
 
 ---
 
@@ -136,16 +159,17 @@ box-shadow: inset 0px 1px 2px rgba(255,255,255,0.18),
 ```
 
 ### Token brand disponibili come utility Tailwind
-`bg-cream`, `bg-linen`, `bg-honey`, `bg-wisteria`, `bg-amber`, `bg-gold`, `bg-terracotta`
+`bg-cream`, `bg-linen`, `bg-honey`, `bg-sage`, `bg-amber`, `bg-gold`, `bg-terracotta`
 `text-espresso`, `text-bark`, `text-driftwood`, `text-warm-ash`, `text-gold`, `text-terracotta`
 
 ---
 
 ## Cosa NON fare
 
-- ❌ Non usare `blue-*`, `purple-*`, `green-*` come colori interfaccia decorativi
+- ❌ Non usare `blue-*`, `purple-*` come colori interfaccia decorativi (eccetto `sage` per bozza/stati completati)
 - ❌ Non usare `#000000` per testo — sempre `text-foreground` (`#261b07`)
 - ❌ Non usare `slate-*` — rimpiazzare con `muted-foreground`, `foreground`, `border`, `background`
 - ❌ Non usare ombre con tinte fredde (`rgba(0,0,0,...)`) — sempre tinta warm-brown
 - ❌ Non usare `rounded-full` su card o bottoni
 - ❌ Non usare più colori cromatici pieni nei bottoni — solo espresso (default) o amber
+- ❌ Non ripetere la stessa parola in titolo sezione + etichetta campo + placeholder (es. sezione "Note" con label "Note interne" e placeholder "Note interne...") — se la sezione ha un solo campo, il titolo di sezione basta

@@ -1,10 +1,10 @@
 import Link from "next/link"
-import { cn, formatDate, isOverdue } from "@/lib/utils"
+import { cn, formatDate, formatEUR, isOverdue } from "@/lib/utils"
 import type { OrderRow } from "@/actions/orders"
 
 const STATUS_COLORS: Record<string, string> = {
   preventivo: "bg-linen text-bark",
-  bozza_grafica: "bg-wisteria text-[#3d2a6e]",
+  bozza_grafica: "bg-sage text-[#3a5a2e]",
   da_fare: "bg-honey text-bark",
   in_lavorazione: "bg-honey text-bark",
   pronto: "bg-honey text-bark",
@@ -52,7 +52,7 @@ export function OrderCard({ order }: { order: OrderRow }) {
               {formatDate(order.data_consegna)}
             </span>
           )}
-          {order.prezzo > 0 && <span>€{order.prezzo}</span>}
+          {order.prezzo > 0 && <span>€{formatEUR(order.prezzo)}</span>}
         </div>
       </div>
     </Link>

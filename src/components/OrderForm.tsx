@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
 
 const CANALI = ["negozio", "WhatsApp", "telefono", "mail", "sito", "altro"]
+const TIPI_LAVORAZIONE = ["Stampa UV", "Taglio + stampa", "Incisione/taglio laser", "Fresatura", "Stampa"]
 const BOZZA_OPTIONS = [
   { value: "non_serve", label: "Non serve" },
   { value: "da_fare", label: "Da fare" },
@@ -24,7 +26,6 @@ const PREVENTIVO_OPTIONS = [
 ]
 
 const numClass = "w-full h-9 rounded-lg border border-input bg-card px-2 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-const selectClass = "w-full h-9 rounded-lg border border-input bg-card px-2 text-sm"
 
 interface Props {
   order?: OrderRow
@@ -42,10 +43,13 @@ export function OrderForm({ order }: Props) {
   }, [error])
 
   const [canale, setCanale] = useState(order?.canale ?? "negozio")
+  const [tipoLavorazione, setTipoLavorazione] = useState(order?.tipo_lavorazione ?? "")
   const [bozza, setBozza] = useState(order?.bozza_grafica ?? "non_serve")
   const [preventivo, setPreventivo] = useState("non_inviare")
-  const [prezzo, setPrezzo] = useState<number>(order?.prezzo ?? 0)
-  const [acconto, setAcconto] = useState<number>(order?.acconto ?? 0)
+  const [prezzoText, setPrezzoText] = useState(order?.prezzo ? order.prezzo.toFixed(2) : "")
+  const [accontoText, setAccontoText] = useState(order?.acconto ? order.acconto.toFixed(2) : "")
+  const prezzo = parseFloat(prezzoText) || 0
+  const acconto = parseFloat(accontoText) || 0
   const saldo = Math.max(0, prezzo - acconto)
   const [fileCliente, setFileCliente] = useState(order?.file_cliente ?? "")
   const [consensoMarketing, setConsensoMarketing] = useState(order?.consenso_marketing ?? false)
@@ -72,7 +76,7 @@ export function OrderForm({ order }: Props) {
       data_consegnato: isEdit ? v("data_consegnato") : undefined,
       cosa_ordinato: (fd.get("cosa_ordinato") as string).trim(),
       testo_da_scrivere: v("testo_da_scrivere"),
-      tipo_lavorazione: v("tipo_lavorazione"),
+      tipo_lavorazione: tipoLavorazione || null,
       quantita: Number(fd.get("quantita") ?? 1),
       bozza_grafica: bozza,
       foto_oggetto: v("foto_oggetto"),
@@ -85,7 +89,7 @@ export function OrderForm({ order }: Props) {
       status: isEdit ? undefined : (
         preventivo !== "non_inviare" ? "preventivo" :
         bozza !== "non_serve" ? "bozza_grafica" :
-        "in_lavorazione"
+        "da_fare"
       ),
       consenso_marketing: consensoMarketing,
       chiedere_recensione: chiedereRec,
@@ -134,9 +138,14 @@ export function OrderForm({ order }: Props) {
           </div>
           <div>
             <Label htmlFor="canale">Canale d&apos;ingresso</Label>
-            <select id="canale" value={canale} onChange={(e) => setCanale(e.target.value)} className={selectClass}>
-              {CANALI.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+            <Select value={canale} onValueChange={(v) => v && setCanale(v)}>
+              <SelectTrigger id="canale" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CANALI.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="data_consegna">Data consegna</Label>
@@ -151,7 +160,7 @@ export function OrderForm({ order }: Props) {
             onChange={(e) => setConsensoMarketing(e.target.checked)}
             className="h-4 w-4 rounded border-border"
           />
-          <Label htmlFor="consenso_marketing" className="font-normal text-sm cursor-pointer">
+          <Label htmlFor="consenso_marketing" className="mb-0 font-normal text-sm cursor-pointer">
             Consenso recensioni e comunicazioni (GDPR)
           </Label>
         </div>
@@ -162,11 +171,11 @@ export function OrderForm({ order }: Props) {
         <h2 className="font-semibold text-foreground border-b pb-1">Ordine</h2>
         <div>
           <Label htmlFor="cosa_ordinato">Cosa ordinato *</Label>
-          <Input id="cosa_ordinato" name="cosa_ordinato" required defaultValue={order?.cosa_ordinato} placeholder="Es. targa plexiglass, timbro, portachiavi inciso..." />
+          <Input id="cosa_ordinato" name="cosa_ordinato" required autoComplete="off" defaultValue={order?.cosa_ordinato} placeholder="Es. targa plexiglass, timbro, portachiavi inciso..." />
         </div>
         <div>
           <Label htmlFor="testo_da_scrivere">Testo da scrivere / incidere / stampare</Label>
-          <Textarea id="testo_da_scrivere" name="testo_da_scrivere" rows={3} defaultValue={order?.testo_da_scrivere ?? ""} placeholder="Frase, nome, data, testo targa, testo timbro..." />
+          <Textarea id="testo_da_scrivere" name="testo_da_scrivere" rows={3} autoComplete="off" defaultValue={order?.testo_da_scrivere ?? ""} placeholder="Frase, nome, data, testo targa, testo timbro..." />
         </div>
         <div>
           <Label htmlFor="dettagli_grafici">Dettagli grafici</Label>
@@ -177,26 +186,36 @@ export function OrderForm({ order }: Props) {
         <div className="grid grid-cols-3 gap-3">
           <div>
             <Label htmlFor="tipo_lavorazione">Tipo lavorazione</Label>
-            <select id="tipo_lavorazione" name="tipo_lavorazione" defaultValue={order?.tipo_lavorazione ?? ""} className={selectClass}>
-              <option value="">— Seleziona —</option>
-              <option>Stampa UV</option>
-              <option>Taglio + stampa</option>
-              <option>Incisione/taglio laser</option>
-              <option>Fresatura</option>
-              <option>Stampa</option>
-            </select>
+            <Select value={tipoLavorazione} onValueChange={(v) => setTipoLavorazione(v ?? "")}>
+              <SelectTrigger id="tipo_lavorazione" className="w-full">
+                <SelectValue placeholder="— Seleziona —" />
+              </SelectTrigger>
+              <SelectContent>
+                {TIPI_LAVORAZIONE.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="bozza_grafica">Bozza grafica</Label>
-            <select id="bozza_grafica" value={bozza} onChange={(e) => setBozza(e.target.value)} className={selectClass}>
-              {BOZZA_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+            <Select items={BOZZA_OPTIONS} value={bozza} onValueChange={(v) => v && setBozza(v)}>
+              <SelectTrigger id="bozza_grafica" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {BOZZA_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="preventivo">Preventivo</Label>
-            <select id="preventivo" value={preventivo} onChange={(e) => setPreventivo(e.target.value)} className={selectClass}>
-              {PREVENTIVO_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+            <Select items={PREVENTIVO_OPTIONS} value={preventivo} onValueChange={(v) => v && setPreventivo(v)}>
+              <SelectTrigger id="preventivo" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PREVENTIVO_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -241,13 +260,19 @@ export function OrderForm({ order }: Props) {
           <div>
             <Label htmlFor="prezzo">Prezzo €</Label>
             <input id="prezzo" type="number" inputMode="decimal" step="0.01" min="0" max="99999"
-              value={prezzo} onChange={(e) => setPrezzo(Number(e.target.value) || 0)}
+              value={prezzoText} placeholder="0.00"
+              onChange={(e) => setPrezzoText(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              onBlur={() => setPrezzoText(prezzoText ? (parseFloat(prezzoText) || 0).toFixed(2) : "")}
               className={numClass} />
           </div>
           <div>
             <Label htmlFor="acconto">Acconto €</Label>
             <input id="acconto" type="number" inputMode="decimal" step="0.01" min="0" max="99999"
-              value={acconto} onChange={(e) => setAcconto(Number(e.target.value) || 0)}
+              value={accontoText} placeholder="0.00"
+              onChange={(e) => setAccontoText(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              onBlur={() => setAccontoText(accontoText ? (parseFloat(accontoText) || 0).toFixed(2) : "")}
               className={numClass} />
           </div>
           <div>
@@ -261,10 +286,9 @@ export function OrderForm({ order }: Props) {
 
       {/* NOTE + FLAG */}
       <section className="space-y-4">
-        <h2 className="font-semibold text-foreground border-b pb-1">Note</h2>
+        <h2 className="text-sm font-semibold text-foreground border-b pb-1">Note</h2>
         <div>
-          <Label htmlFor="note">Note interne</Label>
-          <Textarea id="note" name="note" rows={2} defaultValue={order?.note ?? ""} placeholder="Note interne..." />
+          <Textarea id="note" name="note" rows={2} aria-label="Note interne" defaultValue={order?.note ?? ""} />
         </div>
         {isEdit && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

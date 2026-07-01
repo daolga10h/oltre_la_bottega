@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Il prodotto NON è un CRM generico né un gestionale aziendale. È una "cabina di comando" operativa centrata sulla domanda: **"Cosa devo fare oggi?"**. L'AI, se introdotta, è un acceleratore secondario, non il centro dell'esperienza.
 
-**Stato attuale**: MVP in produzione su Vercel. Fase 0+1+2 completate e deployate su `main`. In uso attivo con bug fixing continuo. Fase 3 parzialmente avviata (etichetta di stampa implementata). Il file `mini_crm_freelancer_single_html.html` è il prototipo HTML di riferimento per la UI.
+**Stato attuale**: MVP in produzione su Vercel. Fase 0+1+2 completate e deployate su `main`. In uso attivo con bug fixing continuo e affinamento UI (design system "Runway" applicato a tutta l'interfaccia, vedere `DESIGN.md`). Fase 3 parzialmente avviata (etichetta di stampa implementata). Il file `mini_crm_freelancer_single_html.html` è il prototipo HTML di riferimento per la UI.
 
 ---
 
@@ -19,6 +19,7 @@ Il prodotto NON è un CRM generico né un gestionale aziendale. È una "cabina d
 ```
 oltre_la_bottega/
 ├── CLAUDE.md
+├── DESIGN.md                        # Design system "Runway" — colori, tipografia, componenti
 ├── specifica_tecnica_agente_ai.md   # Spec tecnica completa
 ├── idea.md                          # Concept e progettazione (storico)
 ├── research.md                      # Ricerca su UX, design, stack (storico)
@@ -43,6 +44,7 @@ src/
 │   ├── (print)/                     # Layout minimale (no sidebar) per stampa
 │   │   └── orders/[id]/print/       # Pagina etichetta stampabile con QR code
 │   ├── (auth)/login/page.tsx
+│   ├── icon.tsx                     # Favicon generato dinamicamente (ImageResponse, marchio "OB")
 │   └── layout.tsx                   # Root layout
 ├── actions/                         # Server actions
 │   ├── orders.ts
@@ -158,7 +160,7 @@ Vincoli critici:
 | Auth = solo magic link via email, niente PIN | Per uso su tablet dedicato con blocco schermo, il PIN app è ridondante e incompleto |
 | Allegati = campo testo libero (no Supabase Storage) | Si scrive nome file / link Drive / riferimento WhatsApp — evita complessità di storage |
 | Campo `consenso_marketing` in orders | GDPR: serve consenso esplicito per recensioni e comunicazioni commerciali |
-| Stato ordine calcolato automaticamente alla creazione | Regola: inviare preventivo → "preventivo"; no preventivo + bozza → "bozza_grafica"; no preventivo + no bozza → "in_lavorazione" |
+| Stato ordine calcolato automaticamente alla creazione | Regola: inviare preventivo → "preventivo"; no preventivo + bozza → "bozza_grafica"; no preventivo + no bozza → "da_fare" (non "in_lavorazione": l'ordine va programmato prima di essere messo in lavorazione) |
 | Bottoni rapidi nella pagina dettaglio per sottostati | Preventivo (da_inviare/inviato/approvato) e Bozza (da_fare/inviata/modificata/approvata) senza entrare in modifica |
 | Log attività con testo descrittivo in italiano | Niente "Stato: X" — messaggi leggibili tipo "Bozza approvata", "Consegnato al cliente" |
 | RLS abilitata su tutte le tabelle con `auth.uid() is not null` | Sicurezza base; single-tenant, nessuna separazione per utente |
@@ -167,6 +169,13 @@ Vincoli critici:
 | Card ordine (lista e bacheca) = solo nome · cosa · data | Tipo lavorazione e saldo rimossi dalle card — info di dettaglio, non di scansione rapida |
 | Etichetta stampabile = pagina separata `(print)/orders/[id]/print` | Layout senza sidebar, auto-stampa, QR code verso la scheda ordine; dimensioni da configurare per stampante termica |
 | `ReminderForm` = client component con `useActionState` + `router.refresh()` | Form action + `revalidatePath` non aggiornava il server component montato; serve `router.refresh()` esplicito |
+| Tutti i menu a tendina usano `@/components/ui/select` (mai `<select>` nativo) | Il popup nativo del browser ignora il font della pagina su alcune combinazioni OS/browser (mostra un font di sistema invece di Inter) — bug non risolvibile via CSS |
+| Scheda ordine: nome cliente come titolo, "cosa ordinato" sotto (non il contrario) | Al banco si cerca il cliente, non l'oggetto — il nome cliente è l'informazione con cui si scansiona più spesso |
+| Data consegna prevista accanto al nome cliente in testata; canale e tipo lavorazione nascosti dalla vista principale | Riduce il rumore visivo nella scheda; i due campi restano modificabili da "Modifica", non sono spariti dal dato |
+| Se manca la data di consegna, link "Aggiungi data consegna" al posto dello spazio vuoto | Evita che l'assenza del dato sembri un errore grafico |
+| Riquadro pagamento con Qtà, Prezzo, Acconto, Saldo in box separati, sempre 2 decimali | Leggibilità a colpo d'occhio; formato numerico coerente ovunque (card, scheda, bacheca) tramite `formatEUR()` |
+| Dashboard: "Consegne di oggi" → "Da consegnare oggi" + nuova scheda "Consegnati oggi" | Distingue ciò che resta da fare da ciò che è già stato completato in giornata — vedere i lavori consegnati è gratificante per chi lavora in bottega |
+| Verde salvia (`sage`) come unica eccezione al divieto di verde/viola in interfaccia | Sostituisce il viola (wisteria) per "bozza grafica" e stati di completamento (approvato, consegnato) su richiesta esplicita: il viola non si sposava con la palette calda |
 
 **Regola guida di prodotto**: massimo 3–4 passi per ogni azione frequente. Se un flusso richiede più passaggi, va semplificato prima di essere implementato.
 
@@ -230,6 +239,7 @@ supabase gen types typescript --local > src/types/supabase.ts
 | File | Responsabilità | Aggiornamento |
 |---|---|---|
 | `CLAUDE.md` | Orientamento rapido per Claude, stato del progetto | Aggiornare a ogni cambio di stack, decisione architetturale o completamento di fase |
+| `DESIGN.md` | Design system "Runway" — colori, tipografia, componenti UI | Aggiornare a ogni nuovo token colore, componente o convenzione visiva |
 | `specifica_tecnica_agente_ai.md` | Spec funzionale e tecnica di riferimento (v2.0) | Aggiornare solo per cambi di scope o modello dati significativi |
 | `idea.md` | Concept originale e progettazione | Non modificare — documento storico |
 | `research.md` | Ricerca UX e stack | Non modificare — documento storico |

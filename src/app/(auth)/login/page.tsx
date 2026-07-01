@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { MailCheck } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -34,8 +35,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
+      <Card className="w-full max-w-sm overflow-hidden">
+        <div className="h-0.5 bg-gradient-to-r from-gold to-amber" />
+        <CardHeader className="items-center text-center pt-6">
+          <div className="w-8 h-8 rounded-md bg-espresso flex items-center justify-center text-xs font-bold text-cream mb-2">
+            OB
+          </div>
           <CardTitle className="text-xl">Oltre la Bottega</CardTitle>
           {!sent && (
             <p className="text-sm text-muted-foreground">
@@ -46,7 +51,7 @@ export default function LoginPage() {
         <CardContent>
           {sent ? (
             <div className="text-center space-y-3 py-4">
-              <p className="text-2xl">📧</p>
+              <MailCheck className="w-8 h-8 mx-auto text-gold" strokeWidth={1.5} />
               <p className="font-medium">Controlla la tua email</p>
               <p className="text-sm text-muted-foreground">
                 Ti abbiamo inviato un link a <strong>{email}</strong>.
@@ -77,7 +82,7 @@ export default function LoginPage() {
                 {loading ? "Invio in corso…" : "Invia link di accesso"}
               </Button>
               {error && (
-                <p className="text-sm text-center text-red-600">{error}</p>
+                <p className="text-sm text-center text-destructive">{error}</p>
               )}
             </form>
           )}
