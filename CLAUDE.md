@@ -132,6 +132,7 @@ Migrations da applicare in ordine:
 2. `20260628000001_add_consenso_marketing.sql`
 3. `20260628000002_add_dettagli_grafici.sql`
 4. `20260629000001_add_preventivo_bozza_modificata.sql` — colonna preventivo + aggiorna constraint bozza
+5. `20260702000002_add_da_fare_status.sql` — aggiunge `da_fare` al constraint `orders_status_check`
 
 Vincoli critici:
 - Niente `shop_id` — installazione dedicata per bottega
@@ -176,6 +177,9 @@ Vincoli critici:
 | Riquadro pagamento con Qtà, Prezzo, Acconto, Saldo in box separati, sempre 2 decimali | Leggibilità a colpo d'occhio; formato numerico coerente ovunque (card, scheda, bacheca) tramite `formatEUR()` |
 | Dashboard: "Consegne di oggi" → "Da consegnare oggi" + nuova scheda "Consegnati oggi" | Distingue ciò che resta da fare da ciò che è già stato completato in giornata — vedere i lavori consegnati è gratificante per chi lavora in bottega |
 | Verde salvia (`sage`) come unica eccezione al divieto di verde/viola in interfaccia | Sostituisce il viola (wisteria) per "bozza grafica" e stati di completamento (approvato, consegnato) su richiesta esplicita: il viola non si sposava con la palette calda |
+| Vista Clienti = rubrica derivata da `orders` (no tabella customers separata) | `/customers` aggrega ordini per telefono/nome; `/customers/profilo?nome=&tel=` mostra storico completo inclusi consegnati + totale speso. Caso d'uso: cliente torna al banco, si cerca il nome, si vede la storia in 5 secondi |
+| Autocomplete nel form ordine sul campo Nome | Carica clienti esistenti al mount, filtra mentre si digita (min 2 char), click auto-riempie nome/cognome/telefono/email — evita di inserire dati già presenti |
+| Nome bottega in `user_metadata` Supabase Auth | Chiesto al primo login via `/auth/setup-shop`; letto con `getShopName(user)` da `lib/shop-name.ts`; mostrato nel sidebar e nell'etichetta di stampa al posto di "OB"/"OLTRE LA BOTTEGA" |
 
 **Regola guida di prodotto**: massimo 3–4 passi per ogni azione frequente. Se un flusso richiede più passaggi, va semplificato prima di essere implementato.
 
