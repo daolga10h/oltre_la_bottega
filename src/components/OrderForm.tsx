@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { createOrder, updateOrder, type OrderRow } from "@/actions/orders"
+import { getCustomers, type CustomerSummary } from "@/actions/customers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -42,6 +43,52 @@ export function OrderForm({ order }: Props) {
     if (error) errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
   }, [error])
 
+  // Autocomplete clienti esistenti
+  const [allCustomers, setAllCustomers] = useState<CustomerSummary[]>([])
+  const [suggestions, setSuggestions] = useState<CustomerSummary[]>([])
+  const [showSugg, setShowSugg] = useState(false)
+  const suggRef = useRef<HTMLDivElement>(null)
+
+  // Campi cliente controllati (necessario per auto-fill da autocomplete)
+  const [nomeValue, setNomeValue] = useState(order?.nome ?? "")
+  const [cognomeValue, setCognomeValue] = useState(order?.cognome ?? "")
+  const [telefonoValue, setTelefonoValue] = useState(order?.telefono ?? "")
+  const [emailValue, setEmailValue] = useState(order?.email_cliente ?? "")
+
+  useEffect(() => {
+    getCustomers().then(setAllCustomers).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (suggRef.current && !suggRef.current.contains(e.target as Node)) {
+        setShowSugg(false)
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside)
+    return () => document.removeEventListener("mousedown", onClickOutside)
+  }, [])
+
+  function handleNomeInput(value: string) {
+    setNomeValue(value)
+    if (value.length < 2) { setShowSugg(false); return }
+    const v = value.toLowerCase()
+    const matches = allCustomers.filter((c) =>
+      `${c.nome} ${c.cognome ?? ""}`.toLowerCase().includes(v) ||
+      (c.telefono ?? "").includes(value)
+    ).slice(0, 6)
+    setSuggestions(matches)
+    setShowSugg(matches.length > 0)
+  }
+
+  function fillCustomer(c: CustomerSummary) {
+    setNomeValue(c.nome)
+    setCognomeValue(c.cognome ?? "")
+    setTelefonoValue(c.telefono ?? "")
+    setEmailValue(c.email ?? "")
+    setShowSugg(false)
+  }
+
   const [canale, setCanale] = useState(order?.canale ?? "negozio")
   const [tipoLavorazione, setTipoLavorazione] = useState(order?.tipo_lavorazione ?? "")
   const [bozza, setBozza] = useState(order?.bozza_grafica ?? "non_serve")
@@ -66,10 +113,10 @@ export function OrderForm({ order }: Props) {
     const v = (k: string) => (fd.get(k) as string | null)?.trim() || null
 
     const payload = {
-      nome: (fd.get("nome") as string).trim(),
-      cognome: v("cognome"),
-      telefono: v("telefono"),
-      email_cliente: v("email_cliente"),
+      nome: nomeValue.trim(),
+      cognome: cognomeValue.trim() || null,
+      telefono: telefonoValue.trim() || null,
+      email_cliente: emailValue.trim() || null,
       canale,
       data_ordine: isEdit ? (order.data_ordine ?? null) : undefined,
       data_consegna: v("data_consegna"),
@@ -120,21 +167,65 @@ export function OrderForm({ order }: Props) {
       <section className="space-y-4">
         <h2 className="font-semibold text-foreground border-b pb-1">Cliente</h2>
         <div className="grid grid-cols-3 gap-3">
-          <div>
+          <div ref={suggRef} className="relative">
             <Label htmlFor="nome">Nome *</Label>
-            <Input id="nome" name="nome" required defaultValue={order?.nome} placeholder="Nome" />
+            <Input
+              id="nome"
+              name="nome"
+              required
+              value={nomeValue}
+              onChange={(e) => handleNomeInput(e.target.value)}
+              onFocus={() => { if (suggestions.length > 0) setShowSugg(true) }}
+              placeholder="Nome"
+              autoComplete="off"
+            />
+            {showSugg && (
+              <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg overflow-hidden">
+                {suggestions.map((c, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => fillCustomer(c)}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted/60 flex items-center justify-between border-b border-border last:border-0"
+                  >
+                    <span className="font-medium">{[c.nome, c.cognome].filter(Boolean).join(" ")}</span>
+                    {c.telefono && <span className="text-muted-foreground text-xs">{c.telefono}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div>
             <Label htmlFor="cognome">Cognome</Label>
-            <Input id="cognome" name="cognome" defaultValue={order?.cognome ?? ""} placeholder="Cognome" />
+            <Input
+              id="cognome"
+              name="cognome"
+              value={cognomeValue}
+              onChange={(e) => setCognomeValue(e.target.value)}
+              placeholder="Cognome"
+            />
           </div>
           <div>
             <Label htmlFor="telefono">Telefono</Label>
-            <Input id="telefono" name="telefono" type="tel" defaultValue={order?.telefono ?? ""} placeholder="+39 333 ..." />
+            <Input
+              id="telefono"
+              name="telefono"
+              type="tel"
+              value={telefonoValue}
+              onChange={(e) => setTelefonoValue(e.target.value)}
+              placeholder="+39 333 ..."
+            />
           </div>
           <div>
             <Label htmlFor="email_cliente">Email</Label>
-            <Input id="email_cliente" name="email_cliente" type="email" defaultValue={order?.email_cliente ?? ""} placeholder="email@..." />
+            <Input
+              id="email_cliente"
+              name="email_cliente"
+              type="email"
+              value={emailValue}
+              onChange={(e) => setEmailValue(e.target.value)}
+              placeholder="email@..."
+            />
           </div>
           <div>
             <Label htmlFor="canale">Canale d&apos;ingresso</Label>

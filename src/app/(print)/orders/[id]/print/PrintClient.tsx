@@ -9,9 +9,10 @@ interface Props {
   cognome: string | null
   telefono: string | null
   dataConsegna: string | null
+  shopName: string
 }
 
-export function PrintClient({ orderId, nome, cognome, telefono, dataConsegna }: Props) {
+export function PrintClient({ orderId, nome, cognome, telefono, dataConsegna, shopName }: Props) {
   const [url, setUrl] = useState("")
 
   useEffect(() => {
@@ -54,8 +55,16 @@ export function PrintClient({ orderId, nome, cognome, telefono, dataConsegna }: 
           color: "#fff",
           background: "#000",
           borderRadius: "3px",
-        }}>OB</span>
-        <span style={{ fontSize: "10px", fontWeight: "bold", letterSpacing: "0.3px" }}>OLTRE LA BOTTEGA</span>
+          position: "relative",
+          overflow: "hidden",
+        }}>
+          <span style={{ position: "absolute", opacity: 0.15 }}>OB</span>
+          <span style={{ position: "relative" }}>{shopName.substring(0, 2).toUpperCase()}</span>
+        </span>
+        <span style={{ fontSize: "10px", fontWeight: "bold", letterSpacing: "0.3px", position: "relative" }}>
+          <span style={{ position: "absolute", opacity: 0.15, fontSize: "7px" }}>OLTRE LA BOTTEGA</span>
+          <span style={{ position: "relative" }}>{shopName}</span>
+        </span>
       </div>
       <p style={{ fontWeight: "bold", fontSize: "16px", margin: "0 0 4px 0" }}>{clientName}</p>
       {telefono && <p style={{ margin: "0 0 3px 0" }}>{telefono}</p>}

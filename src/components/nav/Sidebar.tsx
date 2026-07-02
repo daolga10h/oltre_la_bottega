@@ -1,8 +1,11 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, ShoppingBag, Users, Calendar, LayoutGrid, Star } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import { getShopName } from "@/lib/shop-name"
 import { cn } from "@/lib/utils"
 
 const mainLinks = [
@@ -40,18 +43,33 @@ function NavLink({ href, label, icon: Icon, pathname }: { href: string; label: s
 
 export function Sidebar() {
   const pathname = usePathname()
+  const [shopName, setShopName] = useState("OB")
+
+  useEffect(() => {
+    const fetchShopName = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      setShopName(getShopName(user))
+    }
+    fetchShopName()
+  }, [])
+
   return (
     <aside className="hidden md:flex flex-col w-56 border-r border-border bg-card min-h-screen">
       {/* striscia ambra in cima */}
       <div className="mx-4 h-0.5 bg-gradient-to-r from-gold to-amber rounded-b-sm" />
 
       <div className="flex flex-col flex-1 p-4 gap-1">
-        {/* Logo */}
+        {/* Logo con nome bottega */}
         <div className="flex items-center gap-2 px-2 pb-5 pt-2">
-          <div className="w-6 h-6 rounded-md bg-espresso flex items-center justify-center text-[10px] font-bold text-cream shrink-0">
-            OB
+          <div className="w-6 h-6 rounded-md bg-espresso flex items-center justify-center text-[10px] font-bold text-cream shrink-0 relative overflow-hidden">
+            <span className="absolute opacity-15">OB</span>
+            <span className="relative">{shopName.substring(0, 2).toUpperCase()}</span>
           </div>
-          <span className="font-bold text-[15px] tracking-tight text-foreground">Oltre la Bottega</span>
+          <div className="flex-1 min-w-0">
+            <span className="block font-bold text-[13px] tracking-tight text-foreground truncate">{shopName}</span>
+            <span className="block text-[9px] text-muted-foreground opacity-40">Oltre la Bottega</span>
+          </div>
         </div>
 
         {/* Principale */}
