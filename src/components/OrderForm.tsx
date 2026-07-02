@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
+import { computeOrderStatus, computeSaldo } from "@/lib/orderConstants"
 
 const CANALI = ["negozio", "WhatsApp", "telefono", "mail", "sito", "altro"]
 const TIPI_LAVORAZIONE = ["Stampa UV", "Taglio + stampa", "Incisione/taglio laser", "Fresatura", "Stampa"]
@@ -24,6 +25,7 @@ const PREVENTIVO_OPTIONS = [
   { value: "non_inviare", label: "Non inviare" },
   { value: "da_inviare", label: "Da inviare" },
   { value: "inviato", label: "Inviato" },
+  { value: "approvato", label: "Approvato" },
 ]
 
 const numClass = "w-full h-9 rounded-lg border border-input bg-card px-2 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -92,12 +94,12 @@ export function OrderForm({ order }: Props) {
   const [canale, setCanale] = useState(order?.canale ?? "negozio")
   const [tipoLavorazione, setTipoLavorazione] = useState(order?.tipo_lavorazione ?? "")
   const [bozza, setBozza] = useState(order?.bozza_grafica ?? "non_serve")
-  const [preventivo, setPreventivo] = useState("non_inviare")
+  const [preventivo, setPreventivo] = useState(order?.preventivo ?? "non_inviare")
   const [prezzoText, setPrezzoText] = useState(order?.prezzo ? order.prezzo.toFixed(2) : "")
   const [accontoText, setAccontoText] = useState(order?.acconto ? order.acconto.toFixed(2) : "")
   const prezzo = parseFloat(prezzoText) || 0
   const acconto = parseFloat(accontoText) || 0
-  const saldo = Math.max(0, prezzo - acconto)
+  const saldo = computeSaldo(prezzo, acconto)
   const [fileCliente, setFileCliente] = useState(order?.file_cliente ?? "")
   const [consensoMarketing, setConsensoMarketing] = useState(order?.consenso_marketing ?? false)
   const [chiedereRec, setChiedereRec] = useState(order?.chiedere_recensione ?? false)
@@ -133,11 +135,7 @@ export function OrderForm({ order }: Props) {
       prezzo,
       acconto,
       saldo,
-      status: isEdit ? undefined : (
-        preventivo !== "non_inviare" ? "preventivo" :
-        bozza !== "non_serve" ? "bozza_grafica" :
-        "da_fare"
-      ),
+      status: isEdit ? undefined : computeOrderStatus(preventivo, bozza),
       consenso_marketing: consensoMarketing,
       chiedere_recensione: chiedereRec,
       recensione_richiesta: recRichiesta,

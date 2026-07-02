@@ -24,6 +24,7 @@ export type OrderRow = {
   tipo_lavorazione: string | null
   quantita: number
   bozza_grafica: string
+  preventivo: string
   dettagli_grafici: string | null
   foto_oggetto: string | null
   file_cliente: string | null
@@ -67,8 +68,13 @@ export async function getOrders(filters?: {
       query = query.neq("status", "consegnato")
     }
     if (filters?.search) {
+      // PostgREST's .or() syntax uses "," and "()" as delimiters, so a search
+      // term containing them must be wrapped in double quotes (with internal
+      // backslashes/quotes backslash-escaped) to be treated as a literal value.
+      const escaped = filters.search.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+      const term = `"%${escaped}%"`
       query = query.or(
-        `nome.ilike.%${filters.search}%,cognome.ilike.%${filters.search}%,cosa_ordinato.ilike.%${filters.search}%,telefono.ilike.%${filters.search}%`
+        `nome.ilike.${term},cognome.ilike.${term},cosa_ordinato.ilike.${term},telefono.ilike.${term}`
       )
     }
     const { data, error } = await query
