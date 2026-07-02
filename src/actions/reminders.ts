@@ -11,16 +11,20 @@ export type ReminderItem = {
   due_at: string
   status: string
   order_id: string | null
+  completed_at: string | null
 }
 
 export async function getActiveReminders(): Promise<ReminderItem[]> {
   try {
     const supabase = await createClient()
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
       .from("reminders")
-      .select("id, title, due_at, status, order_id")
-      .eq("status", "attivo")
+      .select("id, title, due_at, status, order_id, completed_at")
+      .or(`status.eq.attivo,and(status.eq.completato,completed_at.gte.${todayStart.toISOString()})`)
       .order("due_at")
 
     if (error) throw new AppError(error.message, USER_MESSAGES.generic)
@@ -71,7 +75,7 @@ export async function completeReminder(id: string): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any)
       .from("reminders")
-      .update({ status: "completato" })
+      .update({ status: "completato", completed_at: new Date().toISOString() })
       .eq("id", id)
     if (error) throw new AppError(error.message, USER_MESSAGES.saveFailed)
   } catch (err) {

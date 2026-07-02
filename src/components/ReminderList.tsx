@@ -2,7 +2,6 @@
 
 import { useState, useTransition, useEffect } from "react"
 import { completeReminder } from "@/actions/reminders"
-import { Button } from "@/components/ui/button"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
 import type { ReminderItem } from "@/actions/reminders"
@@ -21,13 +20,15 @@ export function ReminderList({ reminders }: { reminders: ReminderItem[] }) {
   }, [reminders])
 
   function handleComplete(id: string) {
-    if (!window.confirm("Segna questo promemoria come completato? Non sarà più visibile.")) return
+    setItems((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: "completato", completed_at: new Date().toISOString() } : r))
+    )
     startTransition(async () => {
       try {
         await completeReminder(id)
-        setItems((prev) => prev.filter((r) => r.id !== id))
       } catch (err) {
         setError(toUserMessage(err))
+        setItems((prev) => prev.map((r) => (r.id === id ? { ...r, status: "attivo", completed_at: null } : r)))
       }
     })
   }
@@ -42,15 +43,29 @@ export function ReminderList({ reminders }: { reminders: ReminderItem[] }) {
     <div className="space-y-2">
       {error && <ErrorMessage message={error} className="mb-3" />}
       {items.map((r) => {
-        const overdue = isPast(new Date(r.due_at))
+        const done = r.status === "completato"
+        const overdue = !done && isPast(new Date(r.due_at))
         return (
           <div
             key={r.id}
             className={cn(
               "flex items-center gap-3 bg-card rounded-lg border border-border p-3",
-              overdue && "border-terracotta/30 bg-[#fdf0ef]"
+              overdue && "border-terracotta/30 bg-[#fdf0ef]",
+              done && "opacity-60"
             )}
           >
+            <button
+              type="button"
+              onClick={() => !done && handleComplete(r.id)}
+              disabled={isPending || done}
+              aria-label="Segna come fatto"
+              className={cn(
+                "w-5 h-5 shrink-0 rounded border flex items-center justify-center transition-colors",
+                done ? "bg-sage border-[#3a5a2e]" : "border-border hover:border-gold"
+              )}
+            >
+              {done && <Check className="w-3.5 h-3.5 text-[#3a5a2e]" />}
+            </button>
             <Clock
               className={cn(
                 "w-4 h-4 shrink-0",
@@ -58,7 +73,7 @@ export function ReminderList({ reminders }: { reminders: ReminderItem[] }) {
               )}
             />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{r.title}</p>
+              <p className={cn("text-sm font-medium truncate", done && "line-through")}>{r.title}</p>
               <p
                 className={cn(
                   "text-xs",
@@ -68,15 +83,6 @@ export function ReminderList({ reminders }: { reminders: ReminderItem[] }) {
                 {format(new Date(r.due_at), "d MMM, HH:mm", { locale: it })}
               </p>
             </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => handleComplete(r.id)}
-              disabled={isPending}
-              aria-label="Segna come fatto"
-            >
-              <Check className="w-4 h-4" />
-            </Button>
           </div>
         )
       })}
