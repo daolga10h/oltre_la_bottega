@@ -15,13 +15,13 @@ test.describe("Flusso A — Avvio giornata", () => {
     await page.goto("/login")
     await expect(page.getByText(/Oltre la Bottega/i).first()).toBeVisible()
     await expect(page.getByLabel(/Email/i)).toBeVisible()
-    await expect(page.getByRole("button", { name: /Accedi/i })).toBeVisible()
+    await expect(page.getByRole("button", { name: /Invia link di accesso/i })).toBeVisible()
   })
 
   test("login form shows message on submit", async ({ page }) => {
     await page.goto("/login")
     await page.getByLabel(/Email/i).fill("test@example.com")
-    await page.getByRole("button", { name: /Accedi/i }).click()
+    await page.getByRole("button", { name: /Invia link di accesso/i }).click()
     // Wait for either success or error message
     await expect(
       page.getByText(/controlla|errore/i)

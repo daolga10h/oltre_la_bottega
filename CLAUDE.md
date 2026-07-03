@@ -198,7 +198,9 @@ Vincoli critici:
 - Flusso A: apertura dashboard → lettura priorità (< 60 s) — implementato (`e2e/flusso-a-dashboard.spec.ts`)
 - Flusso B: creazione nuovo ordine (< 2 min) — implementato (`e2e/flusso-b-nuovo-ordine.spec.ts`)
 - Flusso C: aggiornamento stato ordine esistente (< 30 s) — implementato (`e2e/flusso-c-aggiorna-ordine.spec.ts`)
-- Flusso D: consegna + aggiornamento pagamento + follow-up — non ancora implementato, rimandato (vedere Roadmap)
+- Flusso D: consegna + aggiornamento pagamento + follow-up — implementato (`e2e/flusso-d-consegna.spec.ts`)
+
+**Autenticazione nei test E2E** (`e2e/helpers/auth.ts`): l'app usa solo magic link, quindi non esiste una password di test. Flusso D si autentica generando una sessione reale via Supabase Admin API (`generateLink` + `verifyOtp`) per un utente dedicato `e2e-test@oltrelabottega.local`, e inietta i cookie di sessione nel browser context di Playwright — nessuna email da intercettare. Richiede `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`. **Il test gira contro lo stesso progetto Supabase dell'app (anche produzione)**: l'ordine creato durante il test viene sempre cancellato in `afterEach` (bypassando l'app via service role), indipendentemente dall'esito — verificato che non lasci dati residui. L'utente di test invece resta (creazione idempotente), come un normale account di servizio.
 
 **Checklist di verifica prima di ogni release:**
 - [ ] Dashboard mostra KPI corretti (ordini aperti, urgenti, in ritardo, consegne oggi)
@@ -270,5 +272,6 @@ supabase gen types typescript --local > src/types/supabase.ts
 
 **Osservazioni emerse dalla review del 2026-07-03, rimandate a una fase successiva:**
 - Vulnerabilità moderata in `postcss` (XSS su output CSS stringify), rilevata da `npm audit`, portata transitivamente da `next` — il fix richiede un aggiornamento major di `next` (breaking change): rimandato, non rientra nello scope della modifica corrente.
-- Flusso E2E D (consegna + aggiornamento pagamento + follow-up) non ancora scritto — restano coperti solo i flussi A, B, C.
 - Nessuna pipeline CI automatica: test, lint, typecheck e security review vengono eseguiti manualmente prima del push, non ad ogni commit/PR.
+
+~~Flusso E2E D (consegna + aggiornamento pagamento + follow-up) non ancora scritto~~ — implementato il 2026-07-03 (vedere Testing). Il test crea un utente Supabase dedicato via Admin API la prima volta che gira (persiste, come un account di servizio) e ripulisce sempre l'ordine di prova a fine test.
