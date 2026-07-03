@@ -189,11 +189,16 @@ Vincoli critici:
 
 ## Testing
 
+**Stato al 2026-07-03**: test unitari, code review e security review completati sull'ultima modifica (`getOrders` — ricerca ordini).
+- **Test unitari**: 6 suite / 42 test (Jest) su `src/actions/orders.ts`, `src/actions/customers.ts`, `src/actions/reminders.ts`, `src/app/api/dashboard/today`, `src/lib/orderConstants.ts` — tutti verdi; `npx tsc --noEmit` pulito.
+- **Code review**: nessun bug di correttezza aggiuntivo individuato sul diff.
+- **Security review**: individuata e corretta una vulnerabilità di filter-injection PostgREST nel campo di ricerca ordini — `filters.search` veniva interpolato senza escaping in `.or()`, permettendo a un utente autenticato di alterare la sintassi del filtro tramite `,`/`()`/`"`. Corretto in `getOrders` (`src/actions/orders.ts`) escapando backslash e virgolette e racchiudendo il valore tra doppi apici (sintassi di quoting valori di PostgREST). Nessun segreto esposto nel repo o nella cronologia Git; RLS e controllo accessi invariati.
+
 **Flussi E2E da testare (Playwright o simile):**
-- Flusso A: apertura dashboard → lettura priorità (< 60 s)
-- Flusso B: creazione nuovo ordine (< 2 min)
-- Flusso C: aggiornamento stato ordine esistente (< 30 s)
-- Flusso D: consegna + aggiornamento pagamento + follow-up
+- Flusso A: apertura dashboard → lettura priorità (< 60 s) — implementato (`e2e/flusso-a-dashboard.spec.ts`)
+- Flusso B: creazione nuovo ordine (< 2 min) — implementato (`e2e/flusso-b-nuovo-ordine.spec.ts`)
+- Flusso C: aggiornamento stato ordine esistente (< 30 s) — implementato (`e2e/flusso-c-aggiorna-ordine.spec.ts`)
+- Flusso D: consegna + aggiornamento pagamento + follow-up — non ancora implementato, rimandato (vedere Roadmap)
 
 **Checklist di verifica prima di ogni release:**
 - [ ] Dashboard mostra KPI corretti (ordini aperti, urgenti, in ritardo, consegne oggi)
@@ -262,3 +267,8 @@ supabase gen types typescript --local > src/types/supabase.ts
 - **Fase 2** ✅: timeline ordini, pagamento (prezzo/acconto/saldo), UX mobile, recensioni
 - **Fase 3** 🔄 in corso: etichetta stampabile con QR code (fatto); template messaggi (da fare); integrazioni canali (post-MVP)
 - **Fase 4** (opzionale): Supabase Realtime — aggiornamenti automatici tra più tablet senza ricaricare la pagina
+
+**Osservazioni emerse dalla review del 2026-07-03, rimandate a una fase successiva:**
+- Vulnerabilità moderata in `postcss` (XSS su output CSS stringify), rilevata da `npm audit`, portata transitivamente da `next` — il fix richiede un aggiornamento major di `next` (breaking change): rimandato, non rientra nello scope della modifica corrente.
+- Flusso E2E D (consegna + aggiornamento pagamento + follow-up) non ancora scritto — restano coperti solo i flussi A, B, C.
+- Nessuna pipeline CI automatica: test, lint, typecheck e security review vengono eseguiti manualmente prima del push, non ad ogni commit/PR.
