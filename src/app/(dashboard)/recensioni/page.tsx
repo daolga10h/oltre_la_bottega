@@ -1,10 +1,13 @@
 import { getOrders, markReviewRequested, markReviewReceived } from "@/actions/orders"
 import { toUserMessage } from "@/lib/errors"
 import { ErrorMessage } from "@/components/ErrorMessage"
-import { formatDate } from "@/lib/utils"
+import { formatDate, buildWhatsAppLink } from "@/lib/utils"
 import { revalidatePath } from "next/cache"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/server"
+import { getShopName } from "@/lib/shop-name"
+import { MessageCircle } from "lucide-react"
 import Link from "next/link"
 
 function YesNoBadge({ value }: { value: boolean }) {
@@ -23,6 +26,10 @@ function YesNoBadge({ value }: { value: boolean }) {
 }
 
 export default async function RecensioniPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const shopName = getShopName(user)
+
   let orders: Awaited<ReturnType<typeof getOrders>> = []
   let errorMsg: string | null = null
 
@@ -101,6 +108,25 @@ export default async function RecensioniPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
+                        {(() => {
+                          const waLink = buildWhatsAppLink(
+                            o.telefono,
+                            `Ciao ${o.nome}! Qui è ${shopName} 🙂 Se hai un minuto, ci farebbe molto piacere ricevere una tua recensione. Grazie mille!`
+                          )
+                          return waLink ? (
+                            <a
+                              href={waLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={cn(
+                                buttonVariants({ variant: "outline", size: "sm" }),
+                                "w-full text-xs inline-flex items-center justify-center gap-1"
+                              )}
+                            >
+                              <MessageCircle className="w-3 h-3" />Chiedi su WhatsApp
+                            </a>
+                          ) : null
+                        })()}
                         {!o.recensione_richiesta && (
                           <form action={segnaRichiesta}>
                             <input type="hidden" name="id" value={o.id} />

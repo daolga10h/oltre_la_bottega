@@ -5,15 +5,21 @@ import { StatusBadge } from "@/components/OrderCard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
 import Link from "next/link"
-import { ArrowLeft, Edit, Printer, CalendarPlus } from "lucide-react"
-import { formatDate, formatEUR } from "@/lib/utils"
+import { ArrowLeft, Edit, Printer, CalendarPlus, MessageCircle, Mail } from "lucide-react"
+import { formatDate, formatEUR, buildWhatsAppLink, buildMailtoLink } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { revalidatePath } from "next/cache"
+import { createClient } from "@/lib/supabase/server"
+import { getShopName } from "@/lib/shop-name"
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const order = await getOrder(id)
   if (!order) notFound()
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const shopName = getShopName(user)
 
   async function changeStatus(formData: FormData) {
     "use server"
@@ -107,6 +113,43 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </Link>
         )}
       </div>
+
+      {/* Avvisa cliente — ordine pronto */}
+      {order.status === "pronto" && !order.msg_pronto_inviato && (() => {
+        const waLink = buildWhatsAppLink(
+          order.telefono,
+          `Ciao ${order.nome}! Il tuo ordine (${order.cosa_ordinato}) è pronto per il ritiro da ${shopName}. Ti aspettiamo! 🙂`
+        )
+        const mailLink = buildMailtoLink(
+          order.email_cliente,
+          "Il tuo ordine è pronto",
+          `Ciao ${order.nome},\n\nil tuo ordine (${order.cosa_ordinato}) è pronto per il ritiro da ${shopName}.\n\nA presto!`
+        )
+        if (!waLink && !mailLink) return null
+        return (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gold/30 bg-honey/40 px-3 py-2">
+            <span className="text-xs font-semibold text-bark mr-1">Avvisa il cliente:</span>
+            {waLink && (
+              <a
+                href={waLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "inline-flex items-center gap-1 bg-card")}
+              >
+                <MessageCircle className="w-3.5 h-3.5" />WhatsApp
+              </a>
+            )}
+            {mailLink && (
+              <a
+                href={mailLink}
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "inline-flex items-center gap-1 bg-card")}
+              >
+                <Mail className="w-3.5 h-3.5" />Email
+              </a>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Key info */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">

@@ -26,3 +26,18 @@ export function dueDateLabel(dueDate: string): string {
   if (isOverdue(dueDate)) return "In ritardo"
   return formatDate(dueDate)
 }
+
+/** Costruisce un link wa.me per aprire WhatsApp con un messaggio precompilato verso un numero italiano. */
+export function buildWhatsAppLink(telefono: string | null, message: string): string | null {
+  if (!telefono) return null
+  const digits = telefono.replace(/\D/g, "")
+  if (!digits) return null
+  const withCountryCode = digits.startsWith("39") ? digits : `39${digits}`
+  return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`
+}
+
+/** Costruisce un link mailto: con oggetto e corpo precompilati. */
+export function buildMailtoLink(email: string | null, subject: string, body: string): string | null {
+  if (!email) return null
+  return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+}
