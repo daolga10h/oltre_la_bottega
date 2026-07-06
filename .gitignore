@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+!.env*.example
 
 # vercel
 .vercel
@@ -43,3 +45,6 @@ test-results/
 
 # superpowers brainstorming companion
 .superpowers/
+
+# Claude Code local settings (may contain secrets pasted into permission rules)
+.claude/settings.local.json

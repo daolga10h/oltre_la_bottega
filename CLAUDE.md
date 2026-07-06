@@ -270,7 +270,7 @@ supabase gen types typescript --local > src/types/supabase.ts
 - **Fase 0** ✅: scaffold Next.js, Supabase project, schema SQL v2, auth magic link
 - **Fase 1** ✅: dashboard oggi/7 giorni, CRUD ordini, agenda, bacheca kanban, ricerca/filtri
 - **Fase 2** ✅: timeline ordini, pagamento (prezzo/acconto/saldo), UX mobile, recensioni
-- **Fase 3** 🔄 in corso: etichetta stampabile con QR code (fatto); template messaggi (da fare); integrazioni canali (post-MVP)
+- **Fase 3** 🔄 in corso: etichetta stampabile con QR code (fatto); link rapidi WhatsApp/Email per richiesta recensione e avviso ordine pronto (fatto, senza integrazione API); template messaggi per altri casi d'uso — es. ordine in ritardo, promemoria pagamento (da fare); integrazioni canali vere con API (post-MVP)
 - **Fase 4** (opzionale): Supabase Realtime — aggiornamenti automatici tra più tablet senza ricaricare la pagina
 
 **Osservazioni emerse dalla review del 2026-07-03, rimandate a una fase successiva:**
