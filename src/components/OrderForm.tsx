@@ -204,11 +204,12 @@ export function OrderForm({ order }: Props) {
             />
           </div>
           <div>
-            <Label htmlFor="telefono">Telefono</Label>
+            <Label htmlFor="telefono">Telefono *</Label>
             <Input
               id="telefono"
               name="telefono"
               type="tel"
+              required
               value={telefonoValue}
               onChange={(e) => setTelefonoValue(e.target.value)}
               placeholder="+39 333 ..."

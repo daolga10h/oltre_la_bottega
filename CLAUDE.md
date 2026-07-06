@@ -111,7 +111,7 @@ Persistence Layer   →  PostgreSQL (Supabase) + Storage
 Tabelle principali in PostgreSQL (schema v2, vedere `supabase/migrations/`):
 
 **`orders`** — tabella centrale, dati cliente embedded (no entità customer separata):
-- Anagrafica cliente: `nome`*, `cognome`, `telefono`, `email_cliente`, `canale`, `consenso_marketing`
+- Anagrafica cliente: `nome`*, `cognome`, `telefono`*, `email_cliente`, `canale`, `consenso_marketing`
 - Lavorazione: `cosa_ordinato`*, `testo_da_scrivere`, `tipo_lavorazione`, `dettagli_grafici`, `quantita`, `bozza_grafica`, `foto_oggetto`, `file_cliente`, `note`
 - Date: `data_ordine` (default today), `data_consegna`, `data_consegnato`
 - Stato principale: `status` (preventivo → bozza_grafica → da_fare → in_lavorazione → pronto → consegnato)
@@ -184,6 +184,7 @@ Vincoli critici:
 | Pagina Inventario rimossa (2026-07-04) | Esisteva già una pagina `/inventory` con relativa server action, ma non era collegata al menu — un tentativo precedente mai completato. Rimossa per evitare confusione, coerente con la regola "il rischio principale è lo scope creep": si riprenderà solo dopo aver usato il nucleo (ordini/dashboard/agenda) con clienti veri. La tabella `inventory_items` resta nello schema, senza UI |
 | Bottone "Chiedi su WhatsApp" nella pagina Recensioni, invece di un'integrazione WhatsApp vera | `buildWhatsAppLink()` in `lib/utils.ts` genera un link `wa.me` con messaggio precompilato (nome cliente + nome bottega), senza API/costi/configurazione. Nasce da un'esigenza reale: senza un modo comodo per chiedere la recensione, l'utente ammette di non farlo mai. Non è ancora un'integrazione (nessun webhook, nessuna automazione) — coerente con l'approccio "soluzione minima" già usato per gli allegati |
 | Riquadro "Avvisa il cliente" (WhatsApp + Email) nella scheda ordine quando status = "pronto" | Stessa logica del bottone recensioni: mostra sempre entrambi i link se telefono/email sono presenti, indipendentemente dal `canale` d'origine dell'ordine (un ordine arrivato per telefono può comunque avere un numero WhatsApp valido) — scelta esplicita dell'utente per evitare falsi negativi. Sparisce quando `msg_pronto_inviato` è già true; il flag va comunque marcato a mano da "Modifica" dopo l'invio, nessuna automazione |
+| Telefono cliente obbligatorio nel form ordine | Senza numero salvato il riquadro "Avvisa il cliente" non ha nulla a cui collegarsi e resta invisibile (successo in produzione con l'ordine di Alfonso, privo di telefono). Validazione solo lato form (attributo `required`, come già per `nome`/`cosa_ordinato`), nessun vincolo `NOT NULL` a livello di database — gli ordini già esistenti senza telefono restano validi finché non vengono modificati |
 
 **Regola guida di prodotto**: massimo 3–4 passi per ogni azione frequente. Se un flusso richiede più passaggi, va semplificato prima di essere implementato.
 
