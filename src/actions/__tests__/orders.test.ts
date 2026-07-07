@@ -6,7 +6,7 @@ jest.mock("@/lib/supabase/server", () => ({
 }))
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }))
 
-import { getOrders, updateOrderStatus, createOrder } from "../orders"
+import { getOrders, updateOrderStatus, updateBozzaGrafica, updatePreventivo, createOrder } from "../orders"
 
 describe("getOrders filters", () => {
   afterEach(() => jest.clearAllMocks())
@@ -156,6 +156,84 @@ describe("updateOrderStatus", () => {
     jest.spyOn(console, "error").mockImplementation(() => {})
 
     await expect(updateOrderStatus("id1", "pronto")).rejects.toThrow()
+  })
+})
+
+describe("updateBozzaGrafica", () => {
+  afterEach(() => jest.clearAllMocks())
+
+  it("advances the order status to da_fare when the draft is approved", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await updateBozzaGrafica("id1", "approvata")
+
+    const builder = client.from.mock.results[0].value
+    const updatePayload = builder.update.mock.calls[0][0]
+    expect(updatePayload).toEqual({ bozza_grafica: "approvata", status: "da_fare" })
+  })
+
+  it("does not touch status for any other draft value", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await updateBozzaGrafica("id1", "inviata")
+
+    const builder = client.from.mock.results[0].value
+    const updatePayload = builder.update.mock.calls[0][0]
+    expect(updatePayload).toEqual({ bozza_grafica: "inviata" })
+  })
+})
+
+describe("updatePreventivo", () => {
+  afterEach(() => jest.clearAllMocks())
+
+  it("advances status to bozza_grafica when the quote is approved and a draft is still needed", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: { bozza_grafica: "da_fare" }, error: null }, { data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await updatePreventivo("id1", "approvato")
+
+    const updateBuilder = client.from.mock.results[1].value
+    const updatePayload = updateBuilder.update.mock.calls[0][0]
+    expect(updatePayload).toEqual({ preventivo: "approvato", status: "bozza_grafica" })
+  })
+
+  it("advances status to da_fare when the quote is approved and no draft is needed", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: { bozza_grafica: "non_serve" }, error: null }, { data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await updatePreventivo("id1", "approvato")
+
+    const updateBuilder = client.from.mock.results[1].value
+    const updatePayload = updateBuilder.update.mock.calls[0][0]
+    expect(updatePayload).toEqual({ preventivo: "approvato", status: "da_fare" })
+  })
+
+  it("does not touch status for any other quote value", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await updatePreventivo("id1", "inviato")
+
+    const builder = client.from.mock.results[0].value
+    const updatePayload = builder.update.mock.calls[0][0]
+    expect(updatePayload).toEqual({ preventivo: "inviato" })
   })
 })
 

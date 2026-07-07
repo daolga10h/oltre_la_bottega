@@ -159,8 +159,18 @@ const PREVENTIVO_LABELS: Record<string, string> = {
 
 export async function updatePreventivo(id: string, value: string): Promise<void> {
   const supabase = await createClient()
+  const updates: Record<string, unknown> = { preventivo: value }
+  if (value === "approvato") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: order } = await (supabase as any)
+      .from("orders")
+      .select("bozza_grafica")
+      .eq("id", id)
+      .single()
+    updates.status = order?.bozza_grafica && order.bozza_grafica !== "non_serve" ? "bozza_grafica" : "da_fare"
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).from("orders").update({ preventivo: value }).eq("id", id)
+  const { error } = await (supabase as any).from("orders").update(updates).eq("id", id)
   if (error) {
     logError("updatePreventivo", error, { id, value })
     throw new Error(USER_MESSAGES.saveFailed)
@@ -175,8 +185,10 @@ export async function updatePreventivo(id: string, value: string): Promise<void>
 
 export async function updateBozzaGrafica(id: string, value: string): Promise<void> {
   const supabase = await createClient()
+  const updates: Record<string, unknown> = { bozza_grafica: value }
+  if (value === "approvata") updates.status = "da_fare"
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).from("orders").update({ bozza_grafica: value }).eq("id", id)
+  const { error } = await (supabase as any).from("orders").update(updates).eq("id", id)
   if (error) {
     logError("updateBozzaGrafica", error, { id, value })
     throw new Error(USER_MESSAGES.saveFailed)
