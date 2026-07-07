@@ -162,6 +162,7 @@ Vincoli critici:
 | Allegati = campo testo libero (no Supabase Storage) | Si scrive nome file / link Drive / riferimento WhatsApp — evita complessità di storage |
 | Campo `consenso_marketing` in orders | GDPR: serve consenso esplicito per recensioni e comunicazioni commerciali |
 | Stato ordine calcolato automaticamente alla creazione | Regola: inviare preventivo → "preventivo"; no preventivo + bozza → "bozza_grafica"; no preventivo + no bozza → "da_fare" (non "in_lavorazione": l'ordine va programmato prima di essere messo in lavorazione) |
+| Stato ordine avanza automaticamente anche dopo la creazione, quando bozza/preventivo vengono approvati | Bug corretto il 2026-07-07: `updateBozzaGrafica`/`updatePreventivo` scrivevano solo il sottostato, lasciando l'ordine bloccato su "bozza_grafica"/"preventivo" anche dopo l'approvazione (richiedeva un cambio di stato manuale). Ora bozza "approvata" → status "da_fare"; preventivo "approvato" → "bozza_grafica" (se serve ancora una bozza) o "da_fare", stessa regola già usata in `computeOrderStatus` applicata anche in questi due punti |
 | Bottoni rapidi nella pagina dettaglio per sottostati | Preventivo (da_inviare/inviato/approvato) e Bozza (da_fare/inviata/modificata/approvata) senza entrare in modifica |
 | Log attività con testo descrittivo in italiano | Niente "Stato: X" — messaggi leggibili tipo "Bozza approvata", "Consegnato al cliente" |
 | RLS abilitata su tutte le tabelle con `auth.uid() is not null` | Sicurezza base; single-tenant, nessuna separazione per utente |
@@ -192,10 +193,12 @@ Vincoli critici:
 
 ## Testing
 
-**Stato al 2026-07-03**: test unitari, code review e security review completati sull'ultima modifica (`getOrders` — ricerca ordini).
-- **Test unitari**: 6 suite / 42 test (Jest) su `src/actions/orders.ts`, `src/actions/customers.ts`, `src/actions/reminders.ts`, `src/app/api/dashboard/today`, `src/lib/orderConstants.ts` — tutti verdi; `npx tsc --noEmit` pulito.
-- **Code review**: nessun bug di correttezza aggiuntivo individuato sul diff.
-- **Security review**: individuata e corretta una vulnerabilità di filter-injection PostgREST nel campo di ricerca ordini — `filters.search` veniva interpolato senza escaping in `.or()`, permettendo a un utente autenticato di alterare la sintassi del filtro tramite `,`/`()`/`"`. Corretto in `getOrders` (`src/actions/orders.ts`) escapando backslash e virgolette e racchiudendo il valore tra doppi apici (sintassi di quoting valori di PostgREST). Nessun segreto esposto nel repo o nella cronologia Git; RLS e controllo accessi invariati.
+**Stato al 2026-07-07**: test unitari e correzione bug completati sull'ultima modifica (avanzamento automatico dello stato ordine su approvazione bozza/preventivo), verificata anche manualmente in produzione dall'utente.
+- **Test unitari**: 6 suite / 47 test (Jest) su `src/actions/orders.ts`, `src/actions/customers.ts`, `src/actions/reminders.ts`, `src/app/api/dashboard/today`, `src/lib/orderConstants.ts` — tutti verdi; `npx tsc --noEmit` pulito.
+- **Bug fix (2026-07-07)**: `updateBozzaGrafica` e `updatePreventivo` non facevano avanzare lo `status` principale dell'ordine dopo l'approvazione del sottostato — vedere riga corrispondente in Decisioni chiave. Corretto con TDD (test scritti per primi, poi fix minimo); 5 nuovi test coprono entrambe le funzioni.
+- **Code review (2026-07-03)**: nessun bug di correttezza aggiuntivo individuato sul diff (`getOrders` — ricerca ordini).
+- **Security review (2026-07-03)**: individuata e corretta una vulnerabilità di filter-injection PostgREST nel campo di ricerca ordini — `filters.search` veniva interpolato senza escaping in `.or()`, permettendo a un utente autenticato di alterare la sintassi del filtro tramite `,`/`()`/`"`. Corretto in `getOrders` (`src/actions/orders.ts`) escapando backslash e virgolette e racchiudendo il valore tra doppi apici (sintassi di quoting valori di PostgREST). Nessun segreto esposto nel repo o nella cronologia Git; RLS e controllo accessi invariati.
+- **Hardening pre-deploy (2026-07-07)**: aggiunto `.env.example` (nomi variabili, nessun valore) ed `engines.node` in `package.json`; rafforzato `.gitignore` per impedire il tracking di `.claude/settings.local.json`, che conteneva temporaneamente un service role key incollato in una regola di permesso locale — mai pubblicato su GitHub (repo pubblico, verificato sull'intera history), ma la chiave è stata comunque ruotata per precauzione (nuova chiave attiva in produzione su Vercel). Rimosso anche l'endpoint orfano `/api/auth/setup`, residuo del flusso di autenticazione a PIN abbandonato in favore del solo magic link.
 
 **Flussi E2E da testare (Playwright o simile):**
 - Flusso A: apertura dashboard → lettura priorità (< 60 s) — implementato (`e2e/flusso-a-dashboard.spec.ts`)
@@ -276,5 +279,9 @@ supabase gen types typescript --local > src/types/supabase.ts
 **Osservazioni emerse dalla review del 2026-07-03, rimandate a una fase successiva:**
 - Vulnerabilità moderata in `postcss` (XSS su output CSS stringify), rilevata da `npm audit`, portata transitivamente da `next` — il fix richiede un aggiornamento major di `next` (breaking change): rimandato, non rientra nello scope della modifica corrente.
 - Nessuna pipeline CI automatica: test, lint, typecheck e security review vengono eseguiti manualmente prima del push, non ad ogni commit/PR.
+
+**Osservazioni emerse dalla preparazione al deploy del 2026-07-07, rimandate a una fase successiva:**
+- La pagina `src/app/(auth)/setup-pin/page.tsx` è un residuo del flusso di autenticazione a PIN: la UI di login è stata rimossa nel commit `acfd743` ("remove PIN auth, keep magic link only"), ma questa pagina è rimasta raggiungibile e funzionante (imposta una password sull'account tramite client Supabase direttamente, senza passare dall'endpoint API già rimosso). Contraddice la decisione "solo magic link, niente PIN" — da valutare se rimuovere.
+- Vecchia Supabase secret key (`sb_secret_piwm1...`) ancora da revocare su Dashboard: Supabase blocca la cancellazione delle chiavi usate nelle 24h precedenti, e questa era ancora la chiave di produzione fino alla rotazione dello stesso giorno. Da revocare non appena il cooldown è scaduto — link: Project Settings → API Keys.
 
 ~~Flusso E2E D (consegna + aggiornamento pagamento + follow-up) non ancora scritto~~ — implementato il 2026-07-03 (vedere Testing). Il test crea un utente Supabase dedicato via Admin API la prima volta che gira (persiste, come un account di servizio) e ripulisce sempre l'ordine di prova a fine test.
