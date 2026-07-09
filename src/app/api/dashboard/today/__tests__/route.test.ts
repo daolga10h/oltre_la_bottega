@@ -8,8 +8,15 @@ jest.mock("@/lib/supabase/server", () => ({
 import { GET } from "../route"
 
 // L'ordine delle risposte deve rispettare l'ordine dei from("orders") nel
-// Promise.all della route: open, urgent, overdue, todayOrders, deliveredToday.
-function mockOrdersSequence(counts: { open: number; urgent: number; overdue: number }, todayOrders: unknown[], deliveredToday: unknown[]) {
+// Promise.all della route: open, urgent, overdue, todayOrders, deliveredToday,
+// materialeDaOrdinare, materialeOrdinatoOggi.
+function mockOrdersSequence(
+  counts: { open: number; urgent: number; overdue: number },
+  todayOrders: unknown[],
+  deliveredToday: unknown[],
+  materialeDaOrdinare: unknown[] = [],
+  materialeOrdinatoOggi: unknown[] = []
+) {
   return createSupabaseMock({
     orders: [
       { data: null, error: null, count: counts.open },
@@ -17,6 +24,8 @@ function mockOrdersSequence(counts: { open: number; urgent: number; overdue: num
       { data: null, error: null, count: counts.overdue },
       { data: todayOrders, error: null },
       { data: deliveredToday, error: null },
+      { data: materialeDaOrdinare, error: null },
+      { data: materialeOrdinatoOggi, error: null },
     ],
     reminders: [{ data: [], error: null }],
   })
@@ -67,6 +76,8 @@ describe("GET /api/dashboard/today", () => {
         { data: null, error: null, count: null },
         { data: null, error: null },
         { data: null, error: null },
+        { data: null, error: null },
+        { data: null, error: null },
       ],
       reminders: [{ data: null, error: null }],
     })
@@ -78,6 +89,8 @@ describe("GET /api/dashboard/today", () => {
     expect(body.kpi).toEqual({ open: 0, urgent: 0, overdue: 0, todayDeliveries: 0 })
     expect(body.todayOrders).toEqual([])
     expect(body.deliveredToday).toEqual([])
+    expect(body.materialeDaOrdinare).toEqual([])
+    expect(body.materialeOrdinatoOggi).toEqual([])
     expect(body.reminders).toEqual([])
   })
 
@@ -91,5 +104,22 @@ describe("GET /api/dashboard/today", () => {
     expect(res.status).toBe(500)
     const body = await res.json()
     expect(body.error).toBe("Internal server error")
+  })
+})
+
+describe("materiale sections", () => {
+  afterEach(() => jest.clearAllMocks())
+
+  it("returns materialeDaOrdinare and materialeOrdinatoOggi from their dedicated queries", async () => {
+    const daOrdinare = [{ id: "m1", cosa_ordinato: "Targa", nome: "Gigi", cognome: null }]
+    const ordinatoOggi = [{ id: "m2", cosa_ordinato: "Timbro", nome: "Ada", cognome: null }]
+    const client = mockOrdersSequence({ open: 0, urgent: 0, overdue: 0 }, [], [], daOrdinare, ordinatoOggi)
+    mockCreateClient.mockResolvedValue(client)
+
+    const res = await GET()
+    const body = await res.json()
+
+    expect(body.materialeDaOrdinare).toEqual(daOrdinare)
+    expect(body.materialeOrdinatoOggi).toEqual(ordinatoOggi)
   })
 })
