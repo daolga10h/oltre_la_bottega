@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ComponentType } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
@@ -29,14 +29,7 @@ interface Reminder {
   due_at: string
 }
 
-interface DeliveredOrder {
-  id: string
-  cosa_ordinato: string
-  nome: string
-  cognome: string | null
-}
-
-interface MaterialeOrder {
+interface OrderSummary {
   id: string
   cosa_ordinato: string
   nome: string
@@ -46,9 +39,9 @@ interface MaterialeOrder {
 interface DashboardData {
   kpi: KPI
   todayOrders: TodayOrder[]
-  deliveredToday: DeliveredOrder[]
-  materialeDaOrdinare: MaterialeOrder[]
-  materialeOrdinatoOggi: MaterialeOrder[]
+  deliveredToday: OrderSummary[]
+  materialeDaOrdinare: OrderSummary[]
+  materialeOrdinatoOggi: OrderSummary[]
   reminders: Reminder[]
 }
 
@@ -91,117 +84,33 @@ export function TodayBoard() {
         <KpiCard label="Consegne oggi" value={kpi.todayDeliveries} variant={kpi.todayDeliveries > 0 ? "today" : "default"} />
       </div>
 
-      {todayOrders.length > 0 && (
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-semibold">Da consegnare oggi</CardTitle>
-            <span className="text-xs font-semibold bg-muted border border-border rounded-full px-2.5 py-0.5 text-muted-foreground">
-              {todayOrders.length}
-            </span>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {todayOrders.map((o) => (
-              <Link
-                key={o.id}
-                href={`/orders/${o.id}`}
-                className="flex items-center justify-between bg-background rounded-lg px-4 py-3 hover:bg-muted/60 transition-colors group"
-              >
-                <div>
-                  <p className="font-semibold text-sm text-foreground">{o.cosa_ordinato}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {[o.nome, o.cognome].filter(Boolean).join(" ")}
-                  </p>
-                </div>
-                <span className="text-muted-foreground/50 group-hover:text-muted-foreground text-sm">›</span>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <DashboardListCard
+        title="Da consegnare oggi"
+        items={todayOrders}
+        badgeClassName="bg-muted border-border text-muted-foreground"
+        chevron
+      />
 
-      {deliveredToday.length > 0 && (
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-semibold">Consegnati oggi</CardTitle>
-            <span className="text-xs font-semibold bg-sage border border-[#3a5a2e]/30 rounded-full px-2.5 py-0.5 text-[#3a5a2e]">
-              {deliveredToday.length}
-            </span>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {deliveredToday.map((o) => (
-              <Link
-                key={o.id}
-                href={`/orders/${o.id}`}
-                className="flex items-center gap-3 bg-background rounded-lg px-4 py-3 hover:bg-muted/60 transition-colors group"
-              >
-                <CheckCircle2 className="w-4 h-4 text-[#3a5a2e] shrink-0" />
-                <div>
-                  <p className="font-semibold text-sm text-foreground">{o.cosa_ordinato}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {[o.nome, o.cognome].filter(Boolean).join(" ")}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <DashboardListCard
+        title="Consegnati oggi"
+        items={deliveredToday}
+        badgeClassName="bg-sage border-[#3a5a2e]/30 text-[#3a5a2e]"
+        icon={CheckCircle2}
+      />
 
-      {materialeDaOrdinare.length > 0 && (
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-semibold">Materiale da ordinare</CardTitle>
-            <span className="text-xs font-semibold bg-terracotta/15 border border-terracotta/30 rounded-full px-2.5 py-0.5 text-terracotta">
-              {materialeDaOrdinare.length}
-            </span>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {materialeDaOrdinare.map((o) => (
-              <Link
-                key={o.id}
-                href={`/orders/${o.id}`}
-                className="flex items-center justify-between bg-background rounded-lg px-4 py-3 hover:bg-muted/60 transition-colors group"
-              >
-                <div>
-                  <p className="font-semibold text-sm text-foreground">{o.cosa_ordinato}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {[o.nome, o.cognome].filter(Boolean).join(" ")}
-                  </p>
-                </div>
-                <span className="text-muted-foreground/50 group-hover:text-muted-foreground text-sm">›</span>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <DashboardListCard
+        title="Materiale da ordinare"
+        items={materialeDaOrdinare}
+        badgeClassName="bg-terracotta/15 border-terracotta/30 text-terracotta"
+        chevron
+      />
 
-      {materialeOrdinatoOggi.length > 0 && (
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-semibold">Materiale ordinato oggi</CardTitle>
-            <span className="text-xs font-semibold bg-sage border border-[#3a5a2e]/30 rounded-full px-2.5 py-0.5 text-[#3a5a2e]">
-              {materialeOrdinatoOggi.length}
-            </span>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {materialeOrdinatoOggi.map((o) => (
-              <Link
-                key={o.id}
-                href={`/orders/${o.id}`}
-                className="flex items-center gap-3 bg-background rounded-lg px-4 py-3 hover:bg-muted/60 transition-colors group"
-              >
-                <Package className="w-4 h-4 text-[#3a5a2e] shrink-0" />
-                <div>
-                  <p className="font-semibold text-sm text-foreground">{o.cosa_ordinato}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {[o.nome, o.cognome].filter(Boolean).join(" ")}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <DashboardListCard
+        title="Materiale ordinato oggi"
+        items={materialeOrdinatoOggi}
+        badgeClassName="bg-sage border-[#3a5a2e]/30 text-[#3a5a2e]"
+        icon={Package}
+      />
 
       {reminders.length > 0 && (
         <Card>
@@ -226,6 +135,51 @@ export function TodayBoard() {
         <p className="text-sm text-muted-foreground">Nessuna scadenza per oggi. Ottimo lavoro!</p>
       )}
     </div>
+  )
+}
+
+function DashboardListCard({
+  title,
+  items,
+  badgeClassName,
+  icon: Icon,
+  chevron = false,
+}: {
+  title: string
+  items: OrderSummary[]
+  badgeClassName: string
+  icon?: ComponentType<{ className?: string }>
+  chevron?: boolean
+}) {
+  if (items.length === 0) return null
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+        <span className={`text-xs font-semibold rounded-full px-2.5 py-0.5 border ${badgeClassName}`}>
+          {items.length}
+        </span>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {items.map((o) => (
+          <Link
+            key={o.id}
+            href={`/orders/${o.id}`}
+            className={`flex items-center bg-background rounded-lg px-4 py-3 hover:bg-muted/60 transition-colors group ${Icon ? "gap-3" : "justify-between"}`}
+          >
+            {Icon && <Icon className="w-4 h-4 text-[#3a5a2e] shrink-0" />}
+            <div>
+              <p className="font-semibold text-sm text-foreground">{o.cosa_ordinato}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {[o.nome, o.cognome].filter(Boolean).join(" ")}
+              </p>
+            </div>
+            {chevron && <span className="text-muted-foreground/50 group-hover:text-muted-foreground text-sm">›</span>}
+          </Link>
+        ))}
+      </CardContent>
+    </Card>
   )
 }
 
