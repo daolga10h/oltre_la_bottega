@@ -62,7 +62,7 @@ Il design si ispira a un **registro finanziario artigianale**: superfici neutre 
 | Status stepper pill | 100px | `rounded-full` |
 | Logo mark | 6px | `rounded-md` |
 
-**Niente forme completamente circolari** eccetto per i dot (●) e pill indicatori di stato.
+**Niente forme completamente circolari** eccetto per i dot (●) e pill indicatori di stato, e il bottone flottante della Calcolatrice (vedere "Componenti chiave").
 
 ---
 
@@ -123,11 +123,18 @@ Lo stesso marchio (quadrato espresso, testo cream "OB") va ripetuto ovunque il b
 - Hover: `hover:bg-muted/60`
 - Freccia › a destra `text-muted-foreground/50`
 
-### Valore in box (Qtà, Prezzo, Acconto, Saldo)
+### Valore in box (Prezzo, Acconto, Saldo)
 - Ogni valore in un box separato: `border border-border bg-card rounded-lg px-3 py-3 text-center`, ombra standard
 - Numero `text-base font-semibold` (non `text-lg font-bold` — risulta più elegante e meno "urlato")
 - Label sopra `text-xs text-muted-foreground`
 - Importi sempre con 2 decimali (`formatEUR` da `lib/utils.ts`), mai numeri interi grezzi
+- Non aggiungere un box "Qtà": rimosso il 2026-07-09 perché il Saldo non l'ha mai moltiplicata (resta sempre `prezzo - acconto`), risultava fuorviante
+
+### Bottone flottante + pannello (Calcolatrice)
+- Unico caso d'uso di forma completamente circolare in tutta l'interfaccia (eccezione esplicita alla regola generale, vedere "Cosa NON fare"): `rounded-full h-12 w-12 bg-espresso text-cream`, icona centrata, nessun testo
+- Posizione fissa `fixed left-4 bottom-20 md:bottom-4 z-50` — offset maggiore su mobile per non sovrapporsi a `BottomNav`
+- Il pannello si apre ancorato sopra il bottone (`absolute bottom-full left-0 mb-2`), mai come modale centrato con overlay scuro
+- Tasti operatore nel pannello: `bg-honey text-bark` (stesso token dei badge stato attivo), tasto azione principale (`=`): `bg-espresso text-cream`, tasto distruttivo (`C`): `bg-destructive/10 text-destructive`
 
 ### Menu a tendina (Select)
 - Usare sempre `@/components/ui/select` (basato su `@base-ui/react/select`), **mai** l'elemento `<select>` nativo
@@ -170,6 +177,6 @@ Lo stesso marchio (quadrato espresso, testo cream "OB") va ripetuto ovunque il b
 - ❌ Non usare `#000000` per testo — sempre `text-foreground` (`#261b07`)
 - ❌ Non usare `slate-*` — rimpiazzare con `muted-foreground`, `foreground`, `border`, `background`
 - ❌ Non usare ombre con tinte fredde (`rgba(0,0,0,...)`) — sempre tinta warm-brown
-- ❌ Non usare `rounded-full` su card o bottoni
+- ❌ Non usare `rounded-full` su card o bottoni (eccezione esplicita: il bottone flottante della Calcolatrice, unico caso di forma completamente circolare)
 - ❌ Non usare più colori cromatici pieni nei bottoni — solo espresso (default) o amber
 - ❌ Non ripetere la stessa parola in titolo sezione + etichetta campo + placeholder (es. sezione "Note" con label "Note interne" e placeholder "Note interne...") — se la sezione ha un solo campo, il titolo di sezione basta

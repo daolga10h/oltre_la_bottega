@@ -245,18 +245,30 @@ Migrations in `supabase/migrations/` — applicare in ordine numerico.
 ### orders (tabella centrale)
 
 Anagrafica cliente embedded:
-- id, nome*, cognome, telefono, email_cliente, canale, consenso_marketing
+- id, nome*, cognome*, telefono*, email_cliente, canale, consenso_marketing
+  (* obbligatori solo lato form — nessun vincolo NOT NULL a database, gli
+  ordini già esistenti senza questi dati restano validi)
 
 Lavorazione:
 - cosa_ordinato*, testo_da_scrivere, tipo_lavorazione, dettagli_grafici
-- quantita (default 1), bozza_grafica (non_serve/da_fare/inviata/approvata)
+- quantita (default 1) — colonna presente ma non più esposta in UI dal
+  2026-07-09 (box "Qtà" rimosso dal riquadro pagamento: il Saldo non l'ha
+  mai moltiplicata, confondeva più che aiutare)
+- bozza_grafica (non_serve/da_fare/inviata/modificata/approvata)
+- preventivo (non_inviare/da_inviare/inviato/approvato) — sottostato
+  indipendente da `status`
+- materiale (non_serve/da_ordinare/ordinato/arrivato), materiale_fornitore,
+  materiale_cosa_manca, materiale_data_ordine — sottostato materiale da
+  ordinare al fornitore, indipendente da `status`; "arrivato" con status
+  "da_fare" avanza automaticamente a "in_lavorazione"
 - foto_oggetto, file_cliente, note
 
 Date:
-- data_ordine (default today), data_consegna, data_consegnato
+- data_ordine (default today), data_consegna*, data_consegnato
+  (* obbligatoria solo lato form, stessa logica di nome/telefono/cognome)
 
 Stato:
-- status: preventivo → bozza_grafica → in_lavorazione → pronto → consegnato
+- status: preventivo → bozza_grafica → da_fare → in_lavorazione → pronto → consegnato
 
 Pagamento:
 - prezzo, acconto, saldo (tutti numeric)
