@@ -252,8 +252,8 @@ export function OrderForm({ order }: Props) {
             </Select>
           </div>
           <div>
-            <Label htmlFor="data_consegna">Data consegna</Label>
-            <Input id="data_consegna" name="data_consegna" type="date" defaultValue={order?.data_consegna ?? ""} />
+            <Label htmlFor="data_consegna">Data consegna *</Label>
+            <Input id="data_consegna" name="data_consegna" type="date" required defaultValue={order?.data_consegna ?? ""} />
           </div>
         </div>
         <div className="flex items-center gap-2">
