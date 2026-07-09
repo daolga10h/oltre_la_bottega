@@ -27,6 +27,12 @@ const PREVENTIVO_OPTIONS = [
   { value: "inviato", label: "Inviato" },
   { value: "approvato", label: "Approvato" },
 ]
+const MATERIALE_OPTIONS = [
+  { value: "non_serve", label: "Non serve" },
+  { value: "da_ordinare", label: "Da ordinare" },
+  { value: "ordinato", label: "Ordinato" },
+  { value: "arrivato", label: "Arrivato" },
+]
 
 const numClass = "w-full h-9 rounded-lg border border-input bg-card px-2 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 
@@ -95,6 +101,9 @@ export function OrderForm({ order }: Props) {
   const [tipoLavorazione, setTipoLavorazione] = useState(order?.tipo_lavorazione ?? "")
   const [bozza, setBozza] = useState(order?.bozza_grafica ?? "non_serve")
   const [preventivo, setPreventivo] = useState(order?.preventivo ?? "non_inviare")
+  const [materiale, setMateriale] = useState(order?.materiale ?? "non_serve")
+  const [materialeFornitore, setMaterialeFornitore] = useState(order?.materiale_fornitore ?? "")
+  const [materialeCosaManca, setMaterialeCosaManca] = useState(order?.materiale_cosa_manca ?? "")
   const [prezzoText, setPrezzoText] = useState(order?.prezzo ? order.prezzo.toFixed(2) : "")
   const [accontoText, setAccontoText] = useState(order?.acconto ? order.acconto.toFixed(2) : "")
   const prezzo = parseFloat(prezzoText) || 0
@@ -128,6 +137,10 @@ export function OrderForm({ order }: Props) {
       tipo_lavorazione: tipoLavorazione || null,
       quantita: Number(fd.get("quantita") ?? 1),
       bozza_grafica: bozza,
+      materiale,
+      materiale_fornitore: materialeFornitore.trim() || null,
+      materiale_cosa_manca: materialeCosaManca.trim() || null,
+      materiale_data_ordine: isEdit ? (order.materiale_data_ordine ?? null) : undefined,
       foto_oggetto: v("foto_oggetto"),
       dettagli_grafici: v("dettagli_grafici"),
       file_cliente: fileCliente || null,
@@ -307,6 +320,32 @@ export function OrderForm({ order }: Props) {
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <Label htmlFor="materiale">Materiale fornitore</Label>
+            <Select items={MATERIALE_OPTIONS} value={materiale} onValueChange={(v) => v && setMateriale(v)}>
+              <SelectTrigger id="materiale" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MATERIALE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          {materiale !== "non_serve" && (
+            <>
+              <div>
+                <Label htmlFor="materiale_fornitore">Fornitore</Label>
+                <Input id="materiale_fornitore" value={materialeFornitore} onChange={(e) => setMaterialeFornitore(e.target.value)} placeholder="Nome fornitore" />
+              </div>
+              <div>
+                <Label htmlFor="materiale_cosa_manca">Cosa manca</Label>
+                <Input id="materiale_cosa_manca" value={materialeCosaManca} onChange={(e) => setMaterialeCosaManca(e.target.value)} placeholder="Es. cartoncino 300gr" />
+              </div>
+            </>
+          )}
         </div>
 
         <div className="grid grid-cols-3 gap-3">
