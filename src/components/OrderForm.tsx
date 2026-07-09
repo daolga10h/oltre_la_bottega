@@ -325,7 +325,14 @@ export function OrderForm({ order }: Props) {
         <div className="grid grid-cols-3 gap-3">
           <div>
             <Label htmlFor="materiale">Materiale fornitore</Label>
-            <Select items={MATERIALE_OPTIONS} value={materiale} onValueChange={(v) => v && setMateriale(v)}>
+            <Select items={MATERIALE_OPTIONS} value={materiale} onValueChange={(v) => {
+              if (!v) return
+              setMateriale(v)
+              if (v === "non_serve") {
+                setMaterialeFornitore("")
+                setMaterialeCosaManca("")
+              }
+            }}>
               <SelectTrigger id="materiale" className="w-full">
                 <SelectValue />
               </SelectTrigger>
