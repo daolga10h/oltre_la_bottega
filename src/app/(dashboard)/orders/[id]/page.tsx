@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore } from "@/actions/orders"
-import { STATUS_LABELS, STATUS_ORDER } from "@/lib/orderConstants"
+import { STATUS_LABELS, STATUS_ORDER, preventivoStage, bozzaStage, materialeStage, type Stage } from "@/lib/orderConstants"
 import { StatusBadge } from "@/components/OrderCard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
@@ -11,6 +11,13 @@ import { cn } from "@/lib/utils"
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { getShopName } from "@/lib/shop-name"
+
+const PILL_STAGE_CLASSES: Record<Stage, string> = {
+  red: "bg-terracotta/15 text-terracotta border-terracotta/30",
+  yellow: "bg-honey text-bark border-gold/40",
+  green: "bg-sage text-[#3a5a2e] border-sage",
+}
+const PILL_OFF_CLASS = "bg-card text-foreground border-border hover:border-foreground/30"
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -175,8 +182,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   <button type="submit" className={cn(
                     "px-3 py-1 rounded-full text-xs font-semibold border transition-colors",
                     (order as any).preventivo === v
-                      ? "bg-espresso text-cream border-espresso"
-                      : "bg-card text-foreground border-border hover:border-foreground/30"
+                      ? PILL_STAGE_CLASSES[preventivoStage(v) ?? "yellow"]
+                      : PILL_OFF_CLASS
                   )}>{label}</button>
                 </form>
               ))}
@@ -193,8 +200,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   <button type="submit" className={cn(
                     "px-3 py-1 rounded-full text-xs font-semibold border transition-colors",
                     order.bozza_grafica === v
-                      ? "bg-sage text-[#3a5a2e] border-sage"
-                      : "bg-card text-foreground border-border hover:border-foreground/30"
+                      ? PILL_STAGE_CLASSES[bozzaStage(v) ?? "yellow"]
+                      : PILL_OFF_CLASS
                   )}>{label}</button>
                 </form>
               ))}
@@ -211,8 +218,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   <button type="submit" className={cn(
                     "px-3 py-1 rounded-full text-xs font-semibold border transition-colors",
                     order.materiale === v
-                      ? "bg-honey text-bark border-gold/40"
-                      : "bg-card text-foreground border-border hover:border-foreground/30"
+                      ? PILL_STAGE_CLASSES[materialeStage(v) ?? "yellow"]
+                      : PILL_OFF_CLASS
                   )}>{label}</button>
                 </form>
               ))}
