@@ -25,6 +25,10 @@ export type OrderRow = {
   quantita: number
   bozza_grafica: string
   preventivo: string
+  materiale: string
+  materiale_fornitore: string | null
+  materiale_cosa_manca: string | null
+  materiale_data_ordine: string | null
   dettagli_grafici: string | null
   foto_oggetto: string | null
   file_cliente: string | null
@@ -157,6 +161,13 @@ const PREVENTIVO_LABELS: Record<string, string> = {
   approvato: "Preventivo approvato",
 }
 
+const MATERIALE_LABELS: Record<string, string> = {
+  non_serve: "Materiale non serve",
+  da_ordinare: "Materiale da ordinare",
+  ordinato: "Materiale ordinato al fornitore",
+  arrivato: "Materiale arrivato",
+}
+
 export async function updatePreventivo(id: string, value: string): Promise<void> {
   const supabase = await createClient()
   const updates: Record<string, unknown> = { preventivo: value }
@@ -198,6 +209,33 @@ export async function updateBozzaGrafica(id: string, value: string): Promise<voi
     order_id: id,
     event_type: "bozza_change",
     note: BOZZA_LABELS[value] ?? value,
+  })
+}
+
+export async function updateMaterialeFornitore(id: string, value: string): Promise<void> {
+  const supabase = await createClient()
+  const updates: Record<string, unknown> = { materiale: value }
+  if (value === "ordinato") updates.materiale_data_ordine = new Date().toISOString().split("T")[0]
+  if (value === "arrivato") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: order } = await (supabase as any)
+      .from("orders")
+      .select("status")
+      .eq("id", id)
+      .single()
+    if (order?.status === "da_fare") updates.status = "in_lavorazione"
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from("orders").update(updates).eq("id", id)
+  if (error) {
+    logError("updateMaterialeFornitore", error, { id, value })
+    throw new Error(USER_MESSAGES.saveFailed)
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from("order_events").insert({
+    order_id: id,
+    event_type: "materiale_change",
+    note: MATERIALE_LABELS[value] ?? value,
   })
 }
 

@@ -6,7 +6,7 @@ jest.mock("@/lib/supabase/server", () => ({
 }))
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }))
 
-import { getOrders, updateOrderStatus, updateBozzaGrafica, updatePreventivo, createOrder } from "../orders"
+import { getOrders, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore, createOrder } from "../orders"
 
 describe("getOrders filters", () => {
   afterEach(() => jest.clearAllMocks())
@@ -234,6 +234,98 @@ describe("updatePreventivo", () => {
     const builder = client.from.mock.results[0].value
     const updatePayload = builder.update.mock.calls[0][0]
     expect(updatePayload).toEqual({ preventivo: "inviato" })
+  })
+})
+
+describe("updateMaterialeFornitore", () => {
+  afterEach(() => jest.clearAllMocks())
+
+  it("stamps materiale_data_ordine with today's date only when moving to ordinato", async () => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-07-07T10:00:00Z"))
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await updateMaterialeFornitore("id1", "ordinato")
+
+    const builder = client.from.mock.results[0].value
+    const updatePayload = builder.update.mock.calls[0][0]
+    expect(updatePayload).toEqual({ materiale: "ordinato", materiale_data_ordine: "2026-07-07" })
+
+    jest.useRealTimers()
+  })
+
+  it("does not touch materiale_data_ordine for da_ordinare", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await updateMaterialeFornitore("id1", "da_ordinare")
+
+    const builder = client.from.mock.results[0].value
+    const updatePayload = builder.update.mock.calls[0][0]
+    expect(updatePayload).toEqual({ materiale: "da_ordinare" })
+  })
+
+  it("advances status to in_lavorazione when materiale arrives and the order was da_fare", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: { status: "da_fare" }, error: null }, { data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await updateMaterialeFornitore("id1", "arrivato")
+
+    const updateBuilder = client.from.mock.results[1].value
+    const updatePayload = updateBuilder.update.mock.calls[0][0]
+    expect(updatePayload).toEqual({ materiale: "arrivato", status: "in_lavorazione" })
+  })
+
+  it("does not advance status when materiale arrives but the order is still waiting on preventivo/bozza approval", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: { status: "bozza_grafica" }, error: null }, { data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await updateMaterialeFornitore("id1", "arrivato")
+
+    const updateBuilder = client.from.mock.results[1].value
+    const updatePayload = updateBuilder.update.mock.calls[0][0]
+    expect(updatePayload).toEqual({ materiale: "arrivato" })
+  })
+
+  it("does not advance status when materiale arrives but the order is already past da_fare", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: { status: "in_lavorazione" }, error: null }, { data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await updateMaterialeFornitore("id1", "arrivato")
+
+    const updateBuilder = client.from.mock.results[1].value
+    const updatePayload = updateBuilder.update.mock.calls[0][0]
+    expect(updatePayload).toEqual({ materiale: "arrivato" })
+  })
+
+  it("logs a human-readable Italian event for every materiale value", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await updateMaterialeFornitore("id1", "da_ordinare")
+
+    const eventsBuilder = client.from.mock.results[1].value
+    expect(client.from).toHaveBeenNthCalledWith(2, "order_events")
+    const eventPayload = eventsBuilder.insert.mock.calls[0][0]
+    expect(eventPayload.note).toBe("Materiale da ordinare")
   })
 })
 
