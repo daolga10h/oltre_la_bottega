@@ -44,3 +44,54 @@ describe("computeSaldo", () => {
     expect(computeSaldo(19.9, 19.9)).toBe(0)
   })
 })
+
+import { preventivoStage, bozzaStage, materialeStage } from "../orderConstants"
+
+describe("preventivoStage", () => {
+  it("maps da_inviare to red", () => {
+    expect(preventivoStage("da_inviare")).toBe("red")
+  })
+  it("maps inviato to yellow", () => {
+    expect(preventivoStage("inviato")).toBe("yellow")
+  })
+  it("maps approvato to green", () => {
+    expect(preventivoStage("approvato")).toBe("green")
+  })
+  it("returns null for non_inviare and unknown values", () => {
+    expect(preventivoStage("non_inviare")).toBeNull()
+    expect(preventivoStage("qualcosa")).toBeNull()
+  })
+})
+
+describe("bozzaStage", () => {
+  it("maps da_fare to red", () => {
+    expect(bozzaStage("da_fare")).toBe("red")
+  })
+  it("maps inviata and modificata to yellow", () => {
+    expect(bozzaStage("inviata")).toBe("yellow")
+    expect(bozzaStage("modificata")).toBe("yellow")
+  })
+  it("maps approvata to green", () => {
+    expect(bozzaStage("approvata")).toBe("green")
+  })
+  it("returns null for non_serve and unknown values", () => {
+    expect(bozzaStage("non_serve")).toBeNull()
+    expect(bozzaStage("qualcosa")).toBeNull()
+  })
+})
+
+describe("materialeStage", () => {
+  it("maps da_ordinare to red", () => {
+    expect(materialeStage("da_ordinare")).toBe("red")
+  })
+  it("maps ordinato to yellow", () => {
+    expect(materialeStage("ordinato")).toBe("yellow")
+  })
+  it("maps arrivato to green", () => {
+    expect(materialeStage("arrivato")).toBe("green")
+  })
+  it("returns null for non_serve and unknown values", () => {
+    expect(materialeStage("non_serve")).toBeNull()
+    expect(materialeStage("qualcosa")).toBeNull()
+  })
+})

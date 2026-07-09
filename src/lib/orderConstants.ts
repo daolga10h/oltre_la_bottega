@@ -23,3 +23,26 @@ export function computeOrderStatus(preventivo: string, bozza: string): string {
 export function computeSaldo(prezzo: number, acconto: number): number {
   return Math.max(0, prezzo - acconto)
 }
+
+export type Stage = "red" | "yellow" | "green"
+
+export function preventivoStage(value: string): Stage | null {
+  if (value === "da_inviare") return "red"
+  if (value === "inviato") return "yellow"
+  if (value === "approvato") return "green"
+  return null
+}
+
+export function bozzaStage(value: string): Stage | null {
+  if (value === "da_fare") return "red"
+  if (value === "inviata" || value === "modificata") return "yellow"
+  if (value === "approvata") return "green"
+  return null
+}
+
+export function materialeStage(value: string): Stage | null {
+  if (value === "da_ordinare") return "red"
+  if (value === "ordinato") return "yellow"
+  if (value === "arrivato") return "green"
+  return null
+}
