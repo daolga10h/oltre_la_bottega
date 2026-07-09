@@ -139,27 +139,30 @@ const BADGE_STAGE_CLASSES: Record<"red" | "yellow", string> = {
 }
 
 export function StageBadge({
-  icon: Icon,
   label,
   tone,
 }: {
-  icon: React.ComponentType<{ className?: string }>
   label: string
   tone: "red" | "yellow"
 }) {
   return (
     <span className={cn(
-      "inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded whitespace-nowrap",
+      "inline-flex items-center text-xs px-1.5 py-0.5 rounded whitespace-nowrap",
       BADGE_STAGE_CLASSES[tone]
     )}>
-      <Icon className="w-3 h-3" />{label}
+      {label}
     </span>
   )
 }
 ```
 
-Etichette per badge (icona invariata: `Package` per materiale, `Clock`
-per bozza/preventivo):
+Nessuna icona (niente `Clock`/`Package`): solo testo su sfondo colorato,
+su richiesta esplicita — le iconcine abbassavano la percezione qualitativa
+delle card. Le icone `Clock`/`Package` restano importate nel file solo se
+usate altrove (verificare in fase di implementazione se rimuovere
+l'import diventa necessario per evitare un import inutilizzato).
+
+Etichette per badge:
 
 | Badge | Stadio rosso | Stadio giallo |
 |---|---|---|
