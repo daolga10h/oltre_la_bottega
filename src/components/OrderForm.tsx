@@ -135,7 +135,6 @@ export function OrderForm({ order }: Props) {
       cosa_ordinato: (fd.get("cosa_ordinato") as string).trim(),
       testo_da_scrivere: v("testo_da_scrivere"),
       tipo_lavorazione: tipoLavorazione || null,
-      quantita: Number(fd.get("quantita") ?? 1),
       bozza_grafica: bozza,
       materiale,
       materiale_fornitore: materialeFornitore.trim() || null,
@@ -385,15 +384,10 @@ export function OrderForm({ order }: Props) {
         </section>
       )}
 
-      {/* PAGAMENTO — quantità + prezzo + acconto + saldo stessa riga */}
+      {/* PAGAMENTO — prezzo + acconto + saldo stessa riga */}
       <section className="space-y-4">
         <h2 className="font-semibold text-foreground border-b pb-1">Pagamento</h2>
-        <div className="grid grid-cols-4 gap-3">
-          <div>
-            <Label htmlFor="quantita">Qta</Label>
-            <input id="quantita" name="quantita" type="number" min="1" max="9999" defaultValue={order?.quantita ?? 1}
-              className={numClass} />
-          </div>
+        <div className="grid grid-cols-3 gap-3">
           <div>
             <Label htmlFor="prezzo">Prezzo €</Label>
             <input id="prezzo" type="number" inputMode="decimal" step="0.01" min="0" max="99999"

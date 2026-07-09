@@ -248,11 +248,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       )}
 
       {/* Payment */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-lg border border-border bg-card px-3 py-3 text-center shadow-[0px_4px_8px_0px_rgba(38,27,7,0.06)]">
-          <p className="text-xs text-muted-foreground">Qtà</p>
-          <p className="font-semibold text-base text-foreground">{order.quantita}</p>
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <div className="rounded-lg border border-border bg-card px-3 py-3 text-center shadow-[0px_4px_8px_0px_rgba(38,27,7,0.06)]">
           <p className="text-xs text-muted-foreground">Prezzo</p>
           <p className="font-semibold text-base text-foreground">€{formatEUR(order.prezzo)}</p>
