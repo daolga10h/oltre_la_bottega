@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo } from "@/actions/orders"
+import { getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore } from "@/actions/orders"
 import { STATUS_LABELS, STATUS_ORDER } from "@/lib/orderConstants"
 import { StatusBadge } from "@/components/OrderCard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -42,6 +42,15 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     const value = formData.get("preventivo") as string
     await updatePreventivo(id, value)
     revalidatePath(`/orders/${id}`)
+  }
+
+  async function changeMateriale(formData: FormData) {
+    "use server"
+    const value = formData.get("materiale") as string
+    await updateMaterialeFornitore(id, value)
+    revalidatePath(`/orders/${id}`)
+    revalidatePath("/orders")
+    revalidatePath("/dashboard")
   }
 
   const currentIdx = STATUS_ORDER.indexOf(order.status)
@@ -190,6 +199,30 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 </form>
               ))}
             </div>
+          </div>
+        )}
+        {order.materiale !== "non_serve" && (
+          <div className="sm:col-span-3">
+            <span className="text-muted-foreground block text-xs mb-1">Materiale fornitore</span>
+            <div className="flex gap-2 flex-wrap">
+              {([["da_ordinare", "Da ordinare"], ["ordinato", "Ordinato"], ["arrivato", "Arrivato"]] as const).map(([v, label]) => (
+                <form key={v} action={changeMateriale}>
+                  <input type="hidden" name="materiale" value={v} />
+                  <button type="submit" className={cn(
+                    "px-3 py-1 rounded-full text-xs font-semibold border transition-colors",
+                    order.materiale === v
+                      ? "bg-honey text-bark border-gold/40"
+                      : "bg-card text-foreground border-border hover:border-foreground/30"
+                  )}>{label}</button>
+                </form>
+              ))}
+            </div>
+            {(order.materiale_fornitore || order.materiale_cosa_manca) && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {[order.materiale_cosa_manca, order.materiale_fornitore].filter(Boolean).join(" — ")}
+                {order.materiale_data_ordine && ` · ordinato il ${formatDate(order.materiale_data_ordine)}`}
+              </p>
+            )}
           </div>
         )}
       </div>
