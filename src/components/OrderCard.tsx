@@ -32,6 +32,22 @@ export function StatusBadge({ status }: { status: string }) {
   )
 }
 
+const BADGE_STAGE_CLASSES: Record<"red" | "yellow", string> = {
+  red: "bg-terracotta/15 text-terracotta",
+  yellow: "bg-honey text-bark",
+}
+
+export function StageBadge({ label, tone }: { label: string; tone: "red" | "yellow" }) {
+  return (
+    <span className={cn(
+      "inline-flex items-center text-xs px-1.5 py-0.5 rounded whitespace-nowrap",
+      BADGE_STAGE_CLASSES[tone]
+    )}>
+      {label}
+    </span>
+  )
+}
+
 export function OrderCard({ order }: { order: OrderRow }) {
   const overdue = order.data_consegna ? isOverdue(order.data_consegna) : false
   const clientName = [order.nome, order.cognome].filter(Boolean).join(" ")
