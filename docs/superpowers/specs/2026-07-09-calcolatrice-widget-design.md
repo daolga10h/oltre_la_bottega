@@ -35,7 +35,9 @@ lavoro).
 
 ### Bottone
 
-Cerchio flottante fisso in basso a sinistra, icona `Calculator` (lucide-react).
+Cerchio flottante fisso in basso a sinistra, solo icona `Calculator`
+(lucide-react — un disegno stilizzato di una calcolatrice), nessuna
+etichetta testuale.
 Posizione: `fixed left-4 z-50`, con offset verticale diverso su mobile per
 non sovrapporsi a `BottomNav` (che è `fixed bottom-0` e visibile solo sotto
 `md:`): `bottom-20 md:bottom-4` (20 = spazio sufficiente sopra la bottom
