@@ -7,7 +7,7 @@ import { formatDate, cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
-import { Clock } from "lucide-react"
+import { Clock, Package } from "lucide-react"
 import type { OrderRow } from "@/actions/orders"
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
@@ -65,13 +65,21 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
                     >
                       <div className="flex items-start justify-between gap-1">
                         <p className="font-semibold text-sm text-foreground">{clientName}</p>
-                        {((order.status === "preventivo" && (order as any).preventivo === "inviato") ||
-                          (order.status === "bozza_grafica" && (order.bozza_grafica === "inviata" || order.bozza_grafica === "modificata"))) && (
-                          <span className="inline-flex items-center gap-1 text-xs bg-honey text-bark px-1.5 py-0.5 rounded whitespace-nowrap">
-                            <Clock className="w-3 h-3" />
-                            attesa
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {(order.materiale === "da_ordinare" || order.materiale === "ordinato") && (
+                            <span className="inline-flex items-center gap-1 text-xs bg-honey text-bark px-1.5 py-0.5 rounded whitespace-nowrap">
+                              <Package className="w-3 h-3" />
+                              materiale
+                            </span>
+                          )}
+                          {((order.status === "preventivo" && (order as any).preventivo === "inviato") ||
+                            (order.status === "bozza_grafica" && (order.bozza_grafica === "inviata" || order.bozza_grafica === "modificata"))) && (
+                            <span className="inline-flex items-center gap-1 text-xs bg-honey text-bark px-1.5 py-0.5 rounded whitespace-nowrap">
+                              <Clock className="w-3 h-3" />
+                              attesa
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <p className="text-sm text-bark leading-tight">
                         {order.cosa_ordinato}

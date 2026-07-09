@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { Package } from "lucide-react"
 import { cn, formatDate, formatEUR, isOverdue } from "@/lib/utils"
 import type { OrderRow } from "@/actions/orders"
 
@@ -43,7 +44,14 @@ export function OrderCard({ order }: { order: OrderRow }) {
       )}>
         <div className="flex items-start justify-between gap-2">
           <p className="font-semibold text-sm text-foreground">{clientName}</p>
-          <StatusBadge status={order.status} />
+          <div className="flex items-center gap-1 shrink-0">
+            {(order.materiale === "da_ordinare" || order.materiale === "ordinato") && (
+              <span className="inline-flex items-center gap-1 text-xs bg-honey text-bark px-1.5 py-0.5 rounded whitespace-nowrap">
+                <Package className="w-3 h-3" />materiale
+              </span>
+            )}
+            <StatusBadge status={order.status} />
+          </div>
         </div>
         <p className="text-sm text-bark leading-tight">{order.cosa_ordinato}</p>
         <div className="flex items-center gap-3 text-xs text-muted-foreground pt-0.5">
