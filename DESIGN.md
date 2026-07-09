@@ -21,7 +21,7 @@ Il design si ispira a un **registro finanziario artigianale**: superfici neutre 
 | Warm Ash | `#aca89f` | `text-warm-ash` | Label sezioni nav, placeholder |
 | Driftwood | `#8f897e` | `text-driftwood` / `text-muted-foreground` | Testo secondario, metadata |
 | Bark | `#61594a` | `text-bark` | Corpo testo, descrizioni ordini |
-| Espresso | `#261b07` | `text-espresso` / `text-foreground` | Titoli, testo principale, bottone primario |
+| Espresso | `#3b2716` | `text-espresso` / `text-foreground` | Titoli, testo principale, bottone primario |
 | Amber Signal | `#f9a600` | `bg-amber` | Solo CTA primario (`variant="amber"`) |
 | Burnished Gold | `#e89b01` | `bg-gold` / `text-gold` | Accento sidebar, saldo, striscia KPI oggi |
 | Terracotta | `#f0624f` | `text-terracotta` / `bg-terracotta` | Errori, "In ritardo", stati urgenti |
@@ -31,9 +31,9 @@ Il design si ispira a un **registro finanziario artigianale**: superfici neutre 
 ### Regole cromatiche
 
 - **Un solo colore cromatico per bottone primario**: solo `bg-espresso` (azione principale) o `bg-amber` (variante alternativa). Mai altri colori pieni.
-- **Mai il nero puro `#000000`**: usare sempre `#261b07` (espresso) per testo e icone.
+- **Mai il nero puro `#000000`**: usare sempre `#3b2716` (espresso) per testo e icone.
 - **Niente blu o viola come colori interfaccia**: usare honey/sage/linen per badge stati, terracotta per errori/urgenze. Il verde salvia (sage) è l'unica eccezione cromatica, riservato a "bozza grafica" e agli stati di completamento (approvato, consegnato).
-- **Ombre sempre con tinta calda**: `rgba(38,27,7,0.06)` mai grigi freddi.
+- **Ombre sempre con tinta calda**: `rgba(59,39,22,0.06)` mai grigi freddi.
 
 ---
 
@@ -70,12 +70,12 @@ Il design si ispira a un **registro finanziario artigianale**: superfici neutre 
 
 ```css
 /* Card standard */
-box-shadow: rgba(38, 27, 7, 0.06) 0px 4px 8px 0px;
+box-shadow: rgba(59,39,22,0.06) 0px 4px 8px 0px;
 
 /* Bottone primario */
 box-shadow: inset 0px 1px 2px rgba(255,255,255,0.18),
-            0px 2px 6px rgba(38,27,7,0.32),
-            0px 1px 2px rgba(38,27,7,0.12);
+            0px 2px 6px rgba(59,39,22,0.32),
+            0px 1px 2px rgba(59,39,22,0.12);
 ```
 
 ---
@@ -153,9 +153,9 @@ Lo stesso marchio (quadrato espresso, testo cream "OB") va ripetuto ovunque il b
 ```css
 :root {
   --background: #f8f7f5;    /* cream canvas */
-  --foreground: #261b07;    /* espresso */
+  --foreground: #3b2716;    /* espresso */
   --card: #ffffff;          /* pure paper */
-  --primary: #261b07;       /* espresso button */
+  --primary: #3b2716;       /* espresso button */
   --primary-foreground: #f8f7f5;
   --muted: #f8f7f5;
   --muted-foreground: #8f897e;  /* driftwood */
@@ -174,7 +174,7 @@ Lo stesso marchio (quadrato espresso, testo cream "OB") va ripetuto ovunque il b
 ## Cosa NON fare
 
 - ❌ Non usare `blue-*`, `purple-*` come colori interfaccia decorativi (eccetto `sage` per bozza/stati completati)
-- ❌ Non usare `#000000` per testo — sempre `text-foreground` (`#261b07`)
+- ❌ Non usare `#000000` per testo — sempre `text-foreground` (`#3b2716`)
 - ❌ Non usare `slate-*` — rimpiazzare con `muted-foreground`, `foreground`, `border`, `background`
 - ❌ Non usare ombre con tinte fredde (`rgba(0,0,0,...)`) — sempre tinta warm-brown
 - ❌ Non usare `rounded-full` su card o bottoni (eccezione esplicita: il bottone flottante della Calcolatrice, unico caso di forma completamente circolare)

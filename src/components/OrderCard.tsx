@@ -39,7 +39,7 @@ export function OrderCard({ order }: { order: OrderRow }) {
   return (
     <Link href={`/orders/${order.id}`}>
       <div className={cn(
-        "bg-card rounded-lg border border-border px-4 py-3 hover:shadow-[0px_4px_8px_0px_rgba(38,27,7,0.08)] transition-shadow space-y-1.5",
+        "bg-card rounded-lg border border-border px-4 py-3 hover:shadow-[0px_4px_8px_0px_rgba(59,39,22,0.08)] transition-shadow space-y-1.5",
         overdue && order.status !== "consegnato" && "border-terracotta/40 bg-[#fdf0ef]"
       )}>
         <div className="flex items-start justify-between gap-2">

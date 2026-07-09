@@ -193,7 +193,7 @@ function KpiCard({
   variant?: "default" | "danger" | "today"
 }) {
   return (
-    <div className="relative bg-card border border-border rounded-lg px-5 py-4 overflow-hidden shadow-[0px_4px_8px_0px_rgba(38,27,7,0.06)]">
+    <div className="relative bg-card border border-border rounded-lg px-5 py-4 overflow-hidden shadow-[0px_4px_8px_0px_rgba(59,39,22,0.06)]">
       {variant === "danger" && (
         <span className="absolute top-0 left-0 right-0 h-0.5 bg-terracotta rounded-t-lg" />
       )}

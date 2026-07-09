@@ -61,7 +61,7 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
                   return (
                     <div
                       key={order.id}
-                      className="bg-card border border-border rounded-lg p-3 shadow-[0px_2px_4px_0px_rgba(38,27,7,0.05)] hover:shadow-[0px_4px_10px_0px_rgba(38,27,7,0.1)] transition-shadow space-y-2"
+                      className="bg-card border border-border rounded-lg p-3 shadow-[0px_2px_4px_0px_rgba(59,39,22,0.05)] hover:shadow-[0px_4px_10px_0px_rgba(59,39,22,0.1)] transition-shadow space-y-2"
                     >
                       <div className="flex items-start justify-between gap-1">
                         <p className="font-semibold text-sm text-foreground">{clientName}</p>

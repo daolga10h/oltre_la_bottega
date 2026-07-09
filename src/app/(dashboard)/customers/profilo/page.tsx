@@ -35,11 +35,11 @@ export default async function CustomerProfiloPage({ searchParams }: Props) {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-lg border border-border bg-card px-4 py-3 text-center shadow-[0px_4px_8px_0px_rgba(38,27,7,0.06)]">
+        <div className="rounded-lg border border-border bg-card px-4 py-3 text-center shadow-[0px_4px_8px_0px_rgba(59,39,22,0.06)]">
           <p className="text-xs text-muted-foreground">Ordini totali</p>
           <p className="text-xl font-bold text-foreground">{orders.length}</p>
         </div>
-        <div className="rounded-lg border border-border bg-card px-4 py-3 text-center shadow-[0px_4px_8px_0px_rgba(38,27,7,0.06)]">
+        <div className="rounded-lg border border-border bg-card px-4 py-3 text-center shadow-[0px_4px_8px_0px_rgba(59,39,22,0.06)]">
           <p className="text-xs text-muted-foreground">Totale speso</p>
           <p className="text-xl font-bold text-foreground">€{formatEUR(totalSpeso)}</p>
         </div>
@@ -58,7 +58,7 @@ export default async function CustomerProfiloPage({ searchParams }: Props) {
           <Link
             key={o.id}
             href={`/orders/${o.id}`}
-            className="block bg-card border border-border rounded-lg p-4 hover:shadow-[0px_4px_10px_0px_rgba(38,27,7,0.1)] transition-shadow space-y-1.5"
+            className="block bg-card border border-border rounded-lg p-4 hover:shadow-[0px_4px_10px_0px_rgba(59,39,22,0.1)] transition-shadow space-y-1.5"
           >
             <div className="flex items-start justify-between gap-2">
               <p className="font-semibold text-sm">{o.cosa_ordinato}</p>

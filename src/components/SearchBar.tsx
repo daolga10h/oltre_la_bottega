@@ -61,7 +61,7 @@ export function SearchBar() {
         className="pl-9"
       />
       {open && hasResults && (
-        <div className="absolute top-full mt-1 w-full bg-card border border-border rounded-lg shadow-[0px_4px_8px_0px_rgba(38,27,7,0.08)] z-50 overflow-hidden">
+        <div className="absolute top-full mt-1 w-full bg-card border border-border rounded-lg shadow-[0px_4px_8px_0px_rgba(59,39,22,0.08)] z-50 overflow-hidden">
           <p className="px-3 py-1.5 text-xs font-semibold text-muted-foreground bg-background uppercase tracking-widest">
             Ordini
           </p>

@@ -249,15 +249,15 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
       {/* Payment */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <div className="rounded-lg border border-border bg-card px-3 py-3 text-center shadow-[0px_4px_8px_0px_rgba(38,27,7,0.06)]">
+        <div className="rounded-lg border border-border bg-card px-3 py-3 text-center shadow-[0px_4px_8px_0px_rgba(59,39,22,0.06)]">
           <p className="text-xs text-muted-foreground">Prezzo</p>
           <p className="font-semibold text-base text-foreground">€{formatEUR(order.prezzo)}</p>
         </div>
-        <div className="rounded-lg border border-border bg-card px-3 py-3 text-center shadow-[0px_4px_8px_0px_rgba(38,27,7,0.06)]">
+        <div className="rounded-lg border border-border bg-card px-3 py-3 text-center shadow-[0px_4px_8px_0px_rgba(59,39,22,0.06)]">
           <p className="text-xs text-muted-foreground">Acconto</p>
           <p className="font-semibold text-base text-foreground">€{formatEUR(order.acconto)}</p>
         </div>
-        <div className="rounded-lg border border-border bg-card px-3 py-3 text-center shadow-[0px_4px_8px_0px_rgba(38,27,7,0.06)]">
+        <div className="rounded-lg border border-border bg-card px-3 py-3 text-center shadow-[0px_4px_8px_0px_rgba(59,39,22,0.06)]">
           <p className="text-xs text-muted-foreground">Saldo</p>
           <p className="font-semibold text-base text-gold">€{formatEUR(order.saldo)}</p>
         </div>

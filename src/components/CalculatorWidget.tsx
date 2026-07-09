@@ -115,7 +115,7 @@ export function CalculatorWidget() {
       {open && (
         <div
           ref={panelRef}
-          className="absolute bottom-full left-0 mb-2 w-56 rounded-lg border border-border bg-card shadow-[0px_8px_24px_0px_rgba(38,27,7,0.18)] p-3 space-y-2"
+          className="absolute bottom-full left-0 mb-2 w-56 rounded-lg border border-border bg-card shadow-[0px_8px_24px_0px_rgba(59,39,22,0.18)] p-3 space-y-2"
         >
           <div className="h-10 rounded-lg border border-border bg-background px-3 flex items-center justify-end text-lg font-semibold text-foreground overflow-hidden">
             {display}
@@ -156,7 +156,7 @@ export function CalculatorWidget() {
         onClick={() => setOpen((o) => !o)}
         aria-label="Calcolatrice"
         title="Calcolatrice"
-        className="h-12 w-12 rounded-full bg-espresso text-cream shadow-[0px_4px_12px_0px_rgba(38,27,7,0.32)] flex items-center justify-center hover:bg-espresso/90 transition-colors"
+        className="h-12 w-12 rounded-full bg-espresso text-cream shadow-[0px_4px_12px_0px_rgba(59,39,22,0.32)] flex items-center justify-center hover:bg-espresso/90 transition-colors"
       >
         <Calculator className="w-5 h-5" />
       </button>

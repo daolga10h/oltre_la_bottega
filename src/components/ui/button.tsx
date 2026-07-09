@@ -9,7 +9,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-espresso text-primary-foreground shadow-[inset_0px_1px_2px_rgba(255,255,255,0.18),0px_2px_6px_rgba(38,27,7,0.32),0px_1px_2px_rgba(38,27,7,0.12)] hover:bg-espresso/90",
+          "bg-espresso text-primary-foreground shadow-[inset_0px_1px_2px_rgba(255,255,255,0.18),0px_2px_6px_rgba(59,39,22,0.32),0px_1px_2px_rgba(59,39,22,0.12)] hover:bg-espresso/90",
         outline:
           "border-border bg-card hover:bg-muted text-foreground",
         secondary:
@@ -20,7 +20,7 @@ const buttonVariants = cva(
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20",
         link: "text-primary underline-offset-4 hover:underline",
         amber:
-          "bg-amber text-espresso shadow-[inset_0px_1px_2px_rgba(255,255,255,0.18),0px_2px_6px_rgba(38,27,7,0.32),0px_1px_2px_rgba(38,27,7,0.12)] hover:bg-gold",
+          "bg-amber text-espresso shadow-[inset_0px_1px_2px_rgba(255,255,255,0.18),0px_2px_6px_rgba(59,39,22,0.32),0px_1px_2px_rgba(59,39,22,0.12)] hover:bg-gold",
       },
       size: {
         default:
