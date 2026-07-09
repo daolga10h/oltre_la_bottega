@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
-import { Clock, CheckCircle2 } from "lucide-react"
+import { Clock, CheckCircle2, Package } from "lucide-react"
 import Link from "next/link"
 
 interface KPI {
@@ -36,10 +36,19 @@ interface DeliveredOrder {
   cognome: string | null
 }
 
+interface MaterialeOrder {
+  id: string
+  cosa_ordinato: string
+  nome: string
+  cognome: string | null
+}
+
 interface DashboardData {
   kpi: KPI
   todayOrders: TodayOrder[]
   deliveredToday: DeliveredOrder[]
+  materialeDaOrdinare: MaterialeOrder[]
+  materialeOrdinatoOggi: MaterialeOrder[]
   reminders: Reminder[]
 }
 
@@ -71,7 +80,7 @@ export function TodayBoard() {
     return <ErrorMessage message={error} />
   }
 
-  const { kpi, todayOrders, deliveredToday, reminders } = data!
+  const { kpi, todayOrders, deliveredToday, materialeDaOrdinare, materialeOrdinatoOggi, reminders } = data!
 
   return (
     <div className="space-y-6">
@@ -138,6 +147,62 @@ export function TodayBoard() {
         </Card>
       )}
 
+      {materialeDaOrdinare.length > 0 && (
+        <Card>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-sm font-semibold">Materiale da ordinare</CardTitle>
+            <span className="text-xs font-semibold bg-terracotta/15 border border-terracotta/30 rounded-full px-2.5 py-0.5 text-terracotta">
+              {materialeDaOrdinare.length}
+            </span>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {materialeDaOrdinare.map((o) => (
+              <Link
+                key={o.id}
+                href={`/orders/${o.id}`}
+                className="flex items-center justify-between bg-background rounded-lg px-4 py-3 hover:bg-muted/60 transition-colors group"
+              >
+                <div>
+                  <p className="font-semibold text-sm text-foreground">{o.cosa_ordinato}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {[o.nome, o.cognome].filter(Boolean).join(" ")}
+                  </p>
+                </div>
+                <span className="text-muted-foreground/50 group-hover:text-muted-foreground text-sm">›</span>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {materialeOrdinatoOggi.length > 0 && (
+        <Card>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-sm font-semibold">Materiale ordinato oggi</CardTitle>
+            <span className="text-xs font-semibold bg-sage border border-[#3a5a2e]/30 rounded-full px-2.5 py-0.5 text-[#3a5a2e]">
+              {materialeOrdinatoOggi.length}
+            </span>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {materialeOrdinatoOggi.map((o) => (
+              <Link
+                key={o.id}
+                href={`/orders/${o.id}`}
+                className="flex items-center gap-3 bg-background rounded-lg px-4 py-3 hover:bg-muted/60 transition-colors group"
+              >
+                <Package className="w-4 h-4 text-[#3a5a2e] shrink-0" />
+                <div>
+                  <p className="font-semibold text-sm text-foreground">{o.cosa_ordinato}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {[o.nome, o.cognome].filter(Boolean).join(" ")}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {reminders.length > 0 && (
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
@@ -157,7 +222,7 @@ export function TodayBoard() {
         </Card>
       )}
 
-      {todayOrders.length === 0 && deliveredToday.length === 0 && reminders.length === 0 && (
+      {todayOrders.length === 0 && deliveredToday.length === 0 && materialeDaOrdinare.length === 0 && materialeOrdinatoOggi.length === 0 && reminders.length === 0 && (
         <p className="text-sm text-muted-foreground">Nessuna scadenza per oggi. Ottimo lavoro!</p>
       )}
     </div>
