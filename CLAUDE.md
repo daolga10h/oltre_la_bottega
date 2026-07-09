@@ -117,6 +117,7 @@ Tabelle principali in PostgreSQL (schema v2, vedere `supabase/migrations/`):
 - Stato principale: `status` (preventivo → bozza_grafica → da_fare → in_lavorazione → pronto → consegnato)
 - Sottostato preventivo: `preventivo` (da_inviare → inviato → approvato)
 - Sottostato bozza: `bozza_grafica` (non_serve | da_fare | inviata | modificata | approvata)
+- Sottostato materiale: `materiale` (non_serve | da_ordinare | ordinato | arrivato), `materiale_fornitore`, `materiale_cosa_manca`, `materiale_data_ordine`
 - Pagamento: `prezzo`, `acconto`, `saldo` (calcolato)
 - Flag: `msg_pronto_inviato`, `chiedere_recensione`, `recensione_richiesta`, `recensione_ricevuta`, `consenso_marketing`
 
@@ -133,6 +134,7 @@ Migrations da applicare in ordine:
 4. `20260629000001_add_preventivo_bozza_modificata.sql` — colonna preventivo + aggiorna constraint bozza
 5. `20260702000001_add_reminder_completed_at.sql` — colonna `completed_at` su `reminders`
 6. `20260702000002_add_da_fare_status.sql` — aggiunge `da_fare` al constraint `orders_status_check`
+7. `20260707000001_add_materiale_fornitore.sql` — colonne materiale fornitore su `orders`
 
 Vincoli critici:
 - Niente `shop_id` — installazione dedicata per bottega
@@ -186,6 +188,10 @@ Vincoli critici:
 | Bottone "Chiedi su WhatsApp" nella pagina Recensioni, invece di un'integrazione WhatsApp vera | `buildWhatsAppLink()` in `lib/utils.ts` genera un link `wa.me` con messaggio precompilato (nome cliente + nome bottega), senza API/costi/configurazione. Nasce da un'esigenza reale: senza un modo comodo per chiedere la recensione, l'utente ammette di non farlo mai. Non è ancora un'integrazione (nessun webhook, nessuna automazione) — coerente con l'approccio "soluzione minima" già usato per gli allegati |
 | Riquadro "Avvisa il cliente" (WhatsApp + Email) nella scheda ordine quando status = "pronto" | Stessa logica del bottone recensioni: mostra sempre entrambi i link se telefono/email sono presenti, indipendentemente dal `canale` d'origine dell'ordine (un ordine arrivato per telefono può comunque avere un numero WhatsApp valido) — scelta esplicita dell'utente per evitare falsi negativi. Sparisce quando `msg_pronto_inviato` è già true; il flag va comunque marcato a mano da "Modifica" dopo l'invio, nessuna automazione |
 | Telefono cliente obbligatorio nel form ordine | Senza numero salvato il riquadro "Avvisa il cliente" non ha nulla a cui collegarsi e resta invisibile (successo in produzione con l'ordine di Alfonso, privo di telefono). Validazione solo lato form (attributo `required`, come già per `nome`/`cosa_ordinato`), nessun vincolo `NOT NULL` a livello di database — gli ordini già esistenti senza telefono restano validi finché non vengono modificati |
+| Materiale fornitore = sottostato indipendente da `status` (come preventivo/bozza) | Situazione ricorrente (ordini che richiedono materiale dal fornitore prima di essere lavorati), quasi sempre nota alla creazione ma a volte scoperta durante la lavorazione. Non blocca il cambio di stato manuale — il lavoro può procedere in parte (es. bozze grafiche) anche senza materiale, coerente con l'assenza di blocchi rigidi nel resto dell'app |
+| Materiale "arrivato" + status "da_fare" → avanza automaticamente a "in_lavorazione" | Evita un passaggio manuale quando l'unico motivo per cui l'ordine era fermo era il materiale mancante. Non scatta se lo status è ancora "preventivo"/"bozza_grafica" (in attesa del cliente), perché "da_fare" si raggiunge solo dopo che questi passaggi sono già risolti |
+| Dashboard "Oggi": schede "Materiale da ordinare" / "Materiale ordinato oggi" | Stessa logica di "Consegnati oggi": la seconda scheda resta visibile solo fino a fine giornata (filtrata su `materiale_data_ordine = oggi`), dà conferma visiva del lavoro amministrativo fatto |
+| `TodayBoard.tsx`: le 4 sezioni "oggi" (da consegnare/consegnati/materiale da ordinare/materiale ordinato) condivise tramite `DashboardListCard` | Con l'aggiunta delle due sezioni materiale, il file aveva 4 blocchi `<Card>` quasi identici (~27 righe ciascuno); estratto un componente condiviso con props `title`/`items`/`badgeClassName`/`icon`/`chevron` per eliminare la duplicazione, nessun cambiamento visivo |
 
 **Regola guida di prodotto**: massimo 3–4 passi per ogni azione frequente. Se un flusso richiede più passaggi, va semplificato prima di essere implementato.
 
@@ -199,6 +205,7 @@ Vincoli critici:
 - **Code review (2026-07-03)**: nessun bug di correttezza aggiuntivo individuato sul diff (`getOrders` — ricerca ordini).
 - **Security review (2026-07-03)**: individuata e corretta una vulnerabilità di filter-injection PostgREST nel campo di ricerca ordini — `filters.search` veniva interpolato senza escaping in `.or()`, permettendo a un utente autenticato di alterare la sintassi del filtro tramite `,`/`()`/`"`. Corretto in `getOrders` (`src/actions/orders.ts`) escapando backslash e virgolette e racchiudendo il valore tra doppi apici (sintassi di quoting valori di PostgREST). Nessun segreto esposto nel repo o nella cronologia Git; RLS e controllo accessi invariati.
 - **Hardening pre-deploy (2026-07-07)**: aggiunto `.env.example` (nomi variabili, nessun valore) ed `engines.node` in `package.json`; rafforzato `.gitignore` per impedire il tracking di `.claude/settings.local.json`, che conteneva temporaneamente un service role key incollato in una regola di permesso locale — mai pubblicato su GitHub (repo pubblico, verificato sull'intera history), ma la chiave è stata comunque ruotata per precauzione (nuova chiave attiva in produzione su Vercel). Rimosso anche l'endpoint orfano `/api/auth/setup`, residuo del flusso di autenticazione a PIN abbandonato in favore del solo magic link.
+- **Feature (2026-07-07)**: tracciamento materiale da ordinare al fornitore (`materiale`/`materiale_fornitore`/`materiale_cosa_manca`/`materiale_data_ordine` su `orders`). Nuova server action `updateMaterialeFornitore` con 6 nuovi test unitari (data automatica, avanzamento condizionale a `in_lavorazione`, log eventi). Dashboard "Oggi" estesa con due sezioni ("Materiale da ordinare", "Materiale ordinato oggi") e relativi test sulla route `/api/dashboard/today`. Design in `docs/superpowers/specs/2026-07-07-materiale-fornitore-design.md`.
 
 **Flussi E2E da testare (Playwright o simile):**
 - Flusso A: apertura dashboard → lettura priorità (< 60 s) — implementato (`e2e/flusso-a-dashboard.spec.ts`)
