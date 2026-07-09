@@ -207,10 +207,11 @@ export function OrderForm({ order }: Props) {
             )}
           </div>
           <div>
-            <Label htmlFor="cognome">Cognome</Label>
+            <Label htmlFor="cognome">Cognome *</Label>
             <Input
               id="cognome"
               name="cognome"
+              required
               value={cognomeValue}
               onChange={(e) => setCognomeValue(e.target.value)}
               placeholder="Cognome"
