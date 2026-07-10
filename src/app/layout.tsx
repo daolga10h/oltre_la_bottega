@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -11,6 +11,15 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Oltre la Bottega",
   description: "Dashboard operativa per la tua bottega",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Oltre la Bottega",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#3b2716",
 };
 
 export default function RootLayout({
