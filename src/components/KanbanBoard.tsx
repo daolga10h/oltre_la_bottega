@@ -2,12 +2,12 @@
 
 import { useState, useTransition } from "react"
 import { updateOrderStatus } from "@/actions/orders"
-import { STATUS_ORDER, STATUS_LABELS } from "@/lib/orderConstants"
+import { STATUS_ORDER, STATUS_LABELS, preventivoStage, bozzaStage, materialeStage } from "@/lib/orderConstants"
 import { formatDate, cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
-import { Clock, Package } from "lucide-react"
+import { StageBadge } from "@/components/OrderCard"
 import type { OrderRow } from "@/actions/orders"
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
@@ -66,19 +66,12 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
                       <div className="flex items-start justify-between gap-1">
                         <p className="font-semibold text-sm text-foreground">{clientName}</p>
                         <div className="flex items-center gap-1 shrink-0">
-                          {(order.materiale === "da_ordinare" || order.materiale === "ordinato") && (
-                            <span className="inline-flex items-center gap-1 text-xs bg-honey text-bark px-1.5 py-0.5 rounded whitespace-nowrap">
-                              <Package className="w-3 h-3" />
-                              materiale
-                            </span>
-                          )}
-                          {((order.status === "preventivo" && (order as any).preventivo === "inviato") ||
-                            (order.status === "bozza_grafica" && (order.bozza_grafica === "inviata" || order.bozza_grafica === "modificata"))) && (
-                            <span className="inline-flex items-center gap-1 text-xs bg-honey text-bark px-1.5 py-0.5 rounded whitespace-nowrap">
-                              <Clock className="w-3 h-3" />
-                              attesa
-                            </span>
-                          )}
+                          {materialeStage(order.materiale) === "red" && <StageBadge label="da ordinare" tone="red" />}
+                          {materialeStage(order.materiale) === "yellow" && <StageBadge label="ordinato" tone="yellow" />}
+                          {order.status === "preventivo" && preventivoStage((order as any).preventivo) === "red" && <StageBadge label="da inviare" tone="red" />}
+                          {order.status === "preventivo" && preventivoStage((order as any).preventivo) === "yellow" && <StageBadge label="in attesa" tone="yellow" />}
+                          {order.status === "bozza_grafica" && bozzaStage(order.bozza_grafica) === "red" && <StageBadge label="da fare" tone="red" />}
+                          {order.status === "bozza_grafica" && bozzaStage(order.bozza_grafica) === "yellow" && <StageBadge label="in attesa" tone="yellow" />}
                         </div>
                       </div>
                       <p className="text-sm text-bark leading-tight">
