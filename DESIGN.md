@@ -98,6 +98,20 @@ box-shadow: inset 0px 1px 2px rgba(255,255,255,0.18),
 | pronto | `bg-honey text-bark` |
 | consegnato | `bg-linen text-muted-foreground` |
 
+### Colori per stadio (preventivo, bozza grafica, materiale fornitore)
+- Non un colore fisso per tutto il sottostato: il colore dipende dal
+  valore esatto — terracotta (non ancora iniziato), honey (in attesa),
+  sage (completato)
+- Classi pill (bottoni scheda ordine): `bg-terracotta/15 text-terracotta
+  border-terracotta/30` / `bg-honey text-bark border-gold/40` /
+  `bg-sage text-[#3a5a2e] border-sage`
+- Classi badge (card lista/bacheca, solo rosso/giallo — il verde non
+  serve badge, sparisce da solo): `bg-terracotta/15 text-terracotta` /
+  `bg-honey text-bark`
+- Nessuna icona nei badge di stadio: solo testo su sfondo colorato, su
+  richiesta esplicita (le iconcine abbassavano la percezione qualitativa
+  delle card)
+
 ### KPI Card
 - Sfondo `bg-card`, bordo `border-border`
 - Numero 34px bold espresso
@@ -117,6 +131,9 @@ Lo stesso marchio (quadrato espresso, testo cream "OB") va ripetuto ovunque il b
 - Login page (32×32px, con striscia ambra sopra la card)
 - Favicon — generato dinamicamente in `src/app/icon.tsx` via `next/og` `ImageResponse` (nessun file binario da mantenere)
 - Etichetta di stampa — versione bianco/nero 14×14px per compatibilità stampante termica monocromatica
+- Sidebar: **rimosso il 2026-07-09** — mostra solo il testo "Oltre la
+  Bottega", nessun quadratino né nome bottega personalizzato (resta
+  invece in login, etichetta di stampa e favicon)
 
 ### Righe liste (Oggi, Agenda)
 - Sfondo `bg-background` (cream), bordo-radius `rounded-lg`, padding `px-4 py-3`
