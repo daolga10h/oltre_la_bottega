@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { getRememberedEmail } from "@/lib/device-email"
+import { getRememberedEmail, setRememberedEmail } from "@/lib/device-email"
 import { getPostLoginRedirect } from "@/lib/shop-name"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -64,6 +64,7 @@ export default function LoginPage() {
       return
     }
 
+    setRememberedEmail(pinEmail)
     router.push(getPostLoginRedirect(data.user))
   }
 
