@@ -5,3 +5,7 @@ export function getShopName(user: User | null): string {
   const name = user.user_metadata.shop_name as string
   return name.trim() || "OB"
 }
+
+export function getPostLoginRedirect(user: User | null): string {
+  return getShopName(user) === "OB" ? "/auth/setup-shop" : "/dashboard"
+}
