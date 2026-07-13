@@ -1,11 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { setRememberedEmail } from "@/lib/device-email"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
-const EMAIL_KEY = "oltreBottegaEmail"
 
 export default function SetupPinPage() {
   const [step, setStep] = useState<"create" | "confirm">("create")
@@ -13,8 +12,15 @@ export default function SetupPinPage() {
   const [firstPin, setFirstPin] = useState("")
   const [message, setMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [isChanging, setIsChanging] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.user_metadata?.pin_set) setIsChanging(true)
+    })
+  }, [supabase])
 
   async function handleDigit(digit: string | number) {
     if (loading) return
@@ -56,17 +62,19 @@ export default function SetupPinPage() {
           return
         }
         await supabase.auth.updateUser({ data: { pin_set: true } })
-        localStorage.setItem(EMAIL_KEY, user.email)
+        setRememberedEmail(user.email)
         router.push("/dashboard")
       }
     }
   }
 
   const dots = Array.from({ length: 6 })
-  const title = step === "create" ? "Crea il tuo PIN" : "Conferma il PIN"
+  const title = step === "create"
+    ? (isChanging ? "Cambia il tuo PIN" : "Crea il tuo PIN")
+    : "Conferma il PIN"
   const subtitle =
     step === "create"
-      ? "Scegli 6 cifre — le userai ogni volta per accedere"
+      ? (isChanging ? "Scegli le nuove 6 cifre" : "Scegli 6 cifre — le userai ogni volta per accedere")
       : "Inserisci di nuovo le stesse 6 cifre"
 
   return (
