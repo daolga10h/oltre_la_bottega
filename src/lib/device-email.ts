@@ -6,5 +6,10 @@ export function getRememberedEmail(): string | null {
 }
 
 export function setRememberedEmail(email: string): void {
-  window.localStorage.setItem(STORAGE_KEY, email)
+  try {
+    window.localStorage.setItem(STORAGE_KEY, email)
+  } catch {
+    // Private browsing, quota exceeded, or storage disabled — the write is
+    // best-effort. Login must still succeed even if the email can't be remembered.
+  }
 }
