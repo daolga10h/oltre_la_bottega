@@ -17,10 +17,12 @@ export default function SetupPinPage() {
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    const checkPinStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
       if (user?.user_metadata?.pin_set) setIsChanging(true)
-    })
-  }, [supabase])
+    }
+    checkPinStatus()
+  }, [])
 
   async function handleDigit(digit: string | number) {
     if (loading) return
