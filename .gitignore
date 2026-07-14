@@ -48,3 +48,6 @@ test-results/
 
 # Claude Code local settings (may contain secrets pasted into permission rules)
 .claude/settings.local.json
+
+# git worktrees (superpowers)
+/.worktrees/
