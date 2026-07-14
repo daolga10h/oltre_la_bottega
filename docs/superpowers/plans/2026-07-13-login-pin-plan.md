@@ -108,17 +108,17 @@ Oggi `src/app/auth/callback/route.ts` calcola inline la destinazione post-login 
 
 **Files:** nessuno (solo verifica, nessuna modifica di codice)
 
-- [ ] **Step 1: Avvia il server di sviluppo**
-- [ ] **Step 2: Login via magic link (invariato)**
-- [ ] **Step 3: Imposta il PIN**
-- [ ] **Step 4: Login con PIN su sessione pulita**
-- [ ] **Step 5: Email ricordata**
-- [ ] **Step 6: PIN errato**
-- [ ] **Step 7: Titolo "Cambia PIN"**
+- [x] **Step 1: Avvia il server di sviluppo**
+- [x] **Step 2: Login via magic link (invariato)** — tab "Link via email" selezionato di default confermato; l'invio effettivo dell'OTP è stato bloccato dal rate limit email di Supabase per l'utente di test (`over_email_send_rate_limit`, verificato con chiamata diretta all'API, non un errore del codice) dopo le numerose chiamate `generateLink`/`signInWithOtp` di questa sessione di verifica — il percorso `handleSubmit` non è stato toccato da questo piano
+- [x] **Step 3: Imposta il PIN** — pulsante "Imposta PIN" quando `pin_set` è false, titolo "Crea il tuo PIN", conferma doppio inserimento, redirect a `/dashboard`
+- [x] **Step 4: Login con PIN su sessione pulita** — tab "PIN" su sessione senza cookie/localStorage chiede l'email, login con email+PIN corretti reindirizza a `/dashboard`
+- [x] **Step 5: Email ricordata** — dopo il login `localStorage.oltreBottegaEmail` è impostato; su una sessione senza cookie ma con lo stesso localStorage, il tab PIN mostra "Accesso come …" senza richiedere l'email
+- [x] **Step 6: PIN errato** — messaggio "PIN errato, riprova." mostrato, nessun accesso, resta su `/login`
+- [x] **Step 7: Titolo "Cambia PIN"** — dopo che `pin_set` è true, il pulsante in Impostazioni diventa "Cambia PIN" e il titolo di `/setup-pin` diventa "Cambia il tuo PIN"
 - [x] **Step 8: Test automatici e typecheck completi** — 75/75 test Jest verdi (72 esistenti + 3 nuovi), `npx tsc --noEmit` pulito
 - [x] **Step 9: Flussi E2E Playwright esistenti** — Flussi A, B, C invariati; 1 fallimento pre-esistente in Flusso D (`getByLabel('Nome *')` ambiguo, non collegato a questo lavoro — nessun file toccato da questo piano riguarda `OrderForm`/creazione ordine)
 
-Gli step 2-7 richiedono un login reale (magic link + PIN) su un progetto Supabase con credenziali vere e verifica visiva del comportamento — lasciati alla verifica manuale dell'utente sui dispositivi reali, che è comunque l'unico test che conta per il problema originale (tablet senza posta configurata).
+Verifica eseguita il 2026-07-14 con uno script Playwright temporaneo (non incluso nel commit) contro il server di sviluppo locale, autenticando l'utente di test `e2e-test@oltrelabottega.local` tramite Supabase Admin API — stesso pattern già usato da Flusso D. 11/12 controlli automatizzati superati; l'unico non superato (invio email magic link) è dovuto al rate limit di Supabase sull'ambiente di test, non a un difetto del codice.
 
 ---
 
