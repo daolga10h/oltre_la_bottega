@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
-import { getShopName } from "@/lib/shop-name"
+import { getPostLoginRedirect } from "@/lib/shop-name"
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -11,8 +11,7 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
       const { data: { user } } = await supabase.auth.getUser()
-      const shopName = getShopName(user)
-      const target = shopName === "OB" ? "/auth/setup-shop" : "/dashboard"
+      const target = getPostLoginRedirect(user)
       return NextResponse.redirect(`${origin}${target}`)
     }
   }
