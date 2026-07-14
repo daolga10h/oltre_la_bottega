@@ -40,10 +40,12 @@ src/
 │   │   ├── agenda/page.tsx          # Promemoria
 │   │   ├── recensioni/page.tsx
 │   │   ├── customers/               # Redirect a /orders
+│   │   ├── impostazioni/page.tsx    # PIN, elenco operatori (solo sidebar desktop)
 │   │   └── layout.tsx
 │   ├── (print)/                     # Layout minimale (no sidebar) per stampa
 │   │   └── orders/[id]/print/       # Pagina etichetta stampabile con QR code
-│   ├── (auth)/login/page.tsx
+│   ├── (auth)/login/page.tsx        # Tab "Link via email" + "PIN"
+│   ├── (auth)/setup-pin/page.tsx    # Crea/cambia PIN, collegata da Impostazioni
 │   ├── icon.tsx                     # Favicon generato dinamicamente (ImageResponse, marchio "OB")
 │   ├── apple-icon.tsx               # Icona 180x180 per "Aggiungi a schermata Home" su iOS
 │   ├── manifest.ts                  # Web manifest (display standalone) per installazione su tablet
@@ -210,14 +212,15 @@ Vincoli critici:
 
 ## Testing
 
-**Stato al 2026-07-07**: test unitari e correzione bug completati sull'ultima modifica (avanzamento automatico dello stato ordine su approvazione bozza/preventivo), verificata anche manualmente in produzione dall'utente.
-- **Test unitari**: 7 suite / 72 test (Jest) su `src/actions/orders.ts`, `src/actions/customers.ts`, `src/actions/reminders.ts`, `src/app/api/dashboard/today`, `src/lib/orderConstants.ts` — tutti verdi; `npx tsc --noEmit` pulito.
+**Stato al 2026-07-14**: 8 suite / 75 test (Jest) tutti verdi; `npx tsc --noEmit` pulito. Baseline precedente (2026-07-07): 7 suite / 72 test — la differenza è `src/lib/__tests__/shop-name.test.ts` (3 nuovi test) aggiunto dal login con PIN, vedere bullet Feature sotto.
+- **Test unitari**: copertura su `src/actions/orders.ts`, `src/actions/customers.ts`, `src/actions/reminders.ts`, `src/app/api/dashboard/today`, `src/lib/orderConstants.ts`, `src/lib/shop-name.ts`.
 - **Bug fix (2026-07-07)**: `updateBozzaGrafica` e `updatePreventivo` non facevano avanzare lo `status` principale dell'ordine dopo l'approvazione del sottostato — vedere riga corrispondente in Decisioni chiave. Corretto con TDD (test scritti per primi, poi fix minimo); 5 nuovi test coprono entrambe le funzioni.
 - **Code review (2026-07-03)**: nessun bug di correttezza aggiuntivo individuato sul diff (`getOrders` — ricerca ordini).
 - **Security review (2026-07-03)**: individuata e corretta una vulnerabilità di filter-injection PostgREST nel campo di ricerca ordini — `filters.search` veniva interpolato senza escaping in `.or()`, permettendo a un utente autenticato di alterare la sintassi del filtro tramite `,`/`()`/`"`. Corretto in `getOrders` (`src/actions/orders.ts`) escapando backslash e virgolette e racchiudendo il valore tra doppi apici (sintassi di quoting valori di PostgREST). Nessun segreto esposto nel repo o nella cronologia Git; RLS e controllo accessi invariati.
 - **Hardening pre-deploy (2026-07-07)**: aggiunto `.env.example` (nomi variabili, nessun valore) ed `engines.node` in `package.json`; rafforzato `.gitignore` per impedire il tracking di `.claude/settings.local.json`, che conteneva temporaneamente un service role key incollato in una regola di permesso locale — mai pubblicato su GitHub (repo pubblico, verificato sull'intera history), ma la chiave è stata comunque ruotata per precauzione (nuova chiave attiva in produzione su Vercel). Rimosso anche l'endpoint orfano `/api/auth/setup`, residuo del flusso di autenticazione a PIN abbandonato in favore del solo magic link.
 - **Feature (2026-07-07)**: tracciamento materiale da ordinare al fornitore (`materiale`/`materiale_fornitore`/`materiale_cosa_manca`/`materiale_data_ordine` su `orders`). Nuova server action `updateMaterialeFornitore` con 6 nuovi test unitari (data automatica, avanzamento condizionale a `in_lavorazione`, log eventi). Dashboard "Oggi" estesa con due sezioni ("Materiale da ordinare", "Materiale ordinato oggi") e relativi test sulla route `/api/dashboard/today`. Design in `docs/superpowers/specs/2026-07-07-materiale-fornitore-design.md`.
 - **Feature (2026-07-09)**: sidebar semplificato (solo testo "Oltre la Bottega", niente quadratino/nome bottega) e colori per stadio su preventivo/bozza grafica/materiale fornitore (terracotta/honey/sage in base al valore esatto, non più un colore fisso per l'intero sottostato) — vedere riga corrispondente in Decisioni chiave. Funzioni pure `preventivoStage`/`bozzaStage`/`materialeStage` in `src/lib/orderConstants.ts` con 12 nuovi test TDD; componente `StageBadge` condiviso (senza icone) riusato in scheda ordine, lista ordini e bacheca. Piano in `docs/superpowers/plans/2026-07-09-sidebar-e-colori-stadio-plan.md`.
+- **Feature (2026-07-13/14)**: login con PIN come metodo di accesso alternativo al magic link — vedere riga corrispondente in Decisioni chiave. Nuovo helper `getPostLoginRedirect` in `src/lib/shop-name.ts` (3 test TDD), `src/lib/device-email.ts` per l'email ricordata sul dispositivo, tab "PIN" in `/login`, pagina `/setup-pin` collegata da una nuova pagina "Impostazioni" (`/impostazioni`, solo sidebar desktop). Implementato in un worktree separato (`worktree-login-pin`), mergiato su `main` il 2026-07-14 dopo verifica manuale end-to-end (script Playwright temporaneo con utente di test autenticato via Supabase Admin API — stesso pattern di Flusso D): 11/12 controlli superati, l'unico non superato è l'invio email del magic link bloccato dal rate limit Supabase sull'ambiente di test, non un difetto del codice. Design in `docs/superpowers/specs/2026-07-13-login-pin-design.md`, piano in `docs/superpowers/plans/2026-07-13-login-pin-plan.md`.
 
 **Flussi E2E da testare (Playwright o simile):**
 - Flusso A: apertura dashboard → lettura priorità (< 60 s) — implementato (`e2e/flusso-a-dashboard.spec.ts`)
