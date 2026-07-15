@@ -16,6 +16,7 @@ export type OrderRow = {
   telefono: string | null
   email_cliente: string | null
   canale: string
+  operatore: string | null
   data_ordine: string | null
   data_consegna: string | null
   data_consegnato: string | null
