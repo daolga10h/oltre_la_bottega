@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
 import { computeOrderStatus, computeSaldo } from "@/lib/orderConstants"
+import { getRememberedOperator, setRememberedOperator } from "@/lib/device-operator"
+import Link from "next/link"
 
 const CANALI = ["negozio", "WhatsApp", "telefono", "mail", "sito", "altro"]
 const TIPI_LAVORAZIONE = ["Stampa UV", "Taglio + stampa", "Incisione/taglio laser", "Fresatura", "Stampa"]
@@ -38,9 +40,10 @@ const numClass = "w-full h-9 rounded-lg border border-input bg-card px-2 text-sm
 
 interface Props {
   order?: OrderRow
+  operatori?: string[]
 }
 
-export function OrderForm({ order }: Props) {
+export function OrderForm({ order, operatori = [] }: Props) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -98,6 +101,11 @@ export function OrderForm({ order }: Props) {
   }
 
   const [canale, setCanale] = useState(order?.canale ?? "negozio")
+  const [operatoreValue, setOperatoreValue] = useState<string>(() => {
+    if (isEdit) return ""
+    const remembered = getRememberedOperator()
+    return remembered && operatori.includes(remembered) ? remembered : ""
+  })
   const [tipoLavorazione, setTipoLavorazione] = useState(order?.tipo_lavorazione ?? "")
   const [bozza, setBozza] = useState(order?.bozza_grafica ?? "non_serve")
   const [preventivo, setPreventivo] = useState(order?.preventivo ?? "non_inviare")
@@ -129,6 +137,7 @@ export function OrderForm({ order }: Props) {
       telefono: telefonoValue.trim() || null,
       email_cliente: emailValue.trim() || null,
       canale,
+      operatore: isEdit ? undefined : operatoreValue,
       data_ordine: isEdit ? (order.data_ordine ?? null) : undefined,
       data_consegna: v("data_consegna"),
       data_consegnato: isEdit ? v("data_consegnato") : undefined,
@@ -161,6 +170,7 @@ export function OrderForm({ order }: Props) {
         window.location.href = `/orders/${order.id}`
       } else {
         const { id } = await createOrder(payload)
+        setRememberedOperator(operatoreValue)
         window.location.href = `/orders/${id}`
       }
     } catch (err) {
@@ -272,6 +282,30 @@ export function OrderForm({ order }: Props) {
       {/* ORDINE */}
       <section className="space-y-4">
         <h2 className="font-semibold text-foreground border-b pb-1">Ordine</h2>
+        {!isEdit && (
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label htmlFor="operatore">Operatore *</Label>
+              {operatori.length > 0 ? (
+                <Select value={operatoreValue} onValueChange={(v) => v && setOperatoreValue(v)}>
+                  <SelectTrigger id="operatore" className="w-full">
+                    <SelectValue placeholder="— Seleziona —" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {operatori.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="text-xs text-muted-foreground pt-2">
+                  Nessun operatore configurato.{" "}
+                  <Link href="/impostazioni" className="underline hover:text-foreground">
+                    Aggiungi operatori in Impostazioni
+                  </Link>
+                </p>
+              )}
+            </div>
+          </div>
+        )}
         <div>
           <Label htmlFor="cosa_ordinato">Cosa ordinato *</Label>
           <Input id="cosa_ordinato" name="cosa_ordinato" required autoComplete="off" defaultValue={order?.cosa_ordinato} placeholder="Es. targa plexiglass, timbro, portachiavi inciso..." />
@@ -441,7 +475,7 @@ export function OrderForm({ order }: Props) {
       </section>
 
       <div className="flex gap-3 pt-2">
-        <Button type="submit" disabled={saving}>
+        <Button type="submit" disabled={saving || (!isEdit && !operatoreValue)}>
           {saving ? "Salvataggio…" : isEdit ? "Salva modifiche" : "Crea ordine"}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()}>
