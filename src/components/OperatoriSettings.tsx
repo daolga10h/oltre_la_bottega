@@ -19,16 +19,17 @@ export function OperatoriSettings({ initialOperatori }: Props) {
   const [saving, setSaving] = useState(false)
   const supabase = createClient()
 
-  async function persist(next: string[]) {
+  async function persist(next: string[]): Promise<boolean> {
     setSaving(true)
     setError(null)
     const { error: err } = await supabase.auth.updateUser({ data: { operatori: next } })
     setSaving(false)
     if (err) {
       setError("Errore durante il salvataggio. Riprova.")
-      return
+      return false
     }
     setOperatori(next)
+    return true
   }
 
   async function handleAdd(e: React.FormEvent) {
@@ -38,8 +39,10 @@ export function OperatoriSettings({ initialOperatori }: Props) {
       setError(nome.trim() ? "Questo nome è già in elenco." : null)
       return
     }
-    setNome("")
-    await persist(next)
+    const success = await persist(next)
+    if (success) {
+      setNome("")
+    }
   }
 
   async function handleRemove(name: string) {
