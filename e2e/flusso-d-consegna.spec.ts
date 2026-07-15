@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test"
-import { getTestAuthCookies, deleteTestOrder } from "./helpers/auth"
+import { getTestAuthCookies, deleteTestOrder, TEST_OPERATOR } from "./helpers/auth"
 
 // Richiede NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY /
 // SUPABASE_SERVICE_ROLE_KEY in .env.local. Gira contro lo stesso progetto
@@ -26,6 +26,8 @@ test.describe("Flusso D — Consegna, pagamento e follow-up", () => {
     await page.goto("/orders/new")
     await page.getByLabel("Nome *").fill(nomeCliente)
     await page.getByLabel("Cosa ordinato *").fill("Targa incisa — test E2E")
+    await page.getByLabel("Operatore *").click()
+    await page.getByRole("option", { name: TEST_OPERATOR }).click()
     await page.getByLabel("Prezzo €").fill("50")
     await page.getByRole("button", { name: "Crea ordine" }).click()
 

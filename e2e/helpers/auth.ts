@@ -13,6 +13,7 @@ function loadEnvLocal() {
 }
 
 const TEST_EMAIL = process.env.E2E_TEST_EMAIL ?? "e2e-test@oltrelabottega.local"
+export const TEST_OPERATOR = "Operatore Test"
 
 export type AuthCookie = {
   name: string
@@ -54,8 +55,29 @@ export async function getTestAuthCookies(): Promise<AuthCookie[]> {
 
   // Idempotente: se l'utente di test esiste già, l'errore viene ignorato.
   await admin.auth.admin
-    .createUser({ email: TEST_EMAIL, email_confirm: true, user_metadata: { shop_name: "Bottega E2E" } })
+    .createUser({
+      email: TEST_EMAIL,
+      email_confirm: true,
+      user_metadata: { shop_name: "Bottega E2E", operatori: [TEST_OPERATOR] },
+    })
     .catch(() => {})
+
+  // L'utente di test può già esistere da esecuzioni precedenti (senza
+  // l'operatore, se creato prima di questo campo) — createUser sopra viene
+  // ignorata in quel caso, quindi qui ci assicuriamo che l'operatore di test
+  // sia comunque presente nei metadati.
+  const { data: existing } = await admin.auth.admin.listUsers()
+  const existingUser = existing?.users.find((u) => u.email === TEST_EMAIL)
+  if (existingUser) {
+    const current: string[] = Array.isArray(existingUser.user_metadata?.operatori)
+      ? existingUser.user_metadata.operatori
+      : []
+    if (!current.includes(TEST_OPERATOR)) {
+      await admin.auth.admin.updateUserById(existingUser.id, {
+        user_metadata: { ...existingUser.user_metadata, operatori: [...current, TEST_OPERATOR] },
+      })
+    }
+  }
 
   const { data, error } = await admin.auth.admin.generateLink({ type: "magiclink", email: TEST_EMAIL })
   if (error || !data?.properties?.hashed_token) {
