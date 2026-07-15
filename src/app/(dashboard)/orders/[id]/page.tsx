@@ -169,6 +169,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
       {/* Key info */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+        {order.operatore && (
+          <div><span className="text-muted-foreground block text-xs">Operatore</span>{order.operatore}</div>
+        )}
         {order.data_consegnato && (
           <div><span className="text-muted-foreground block text-xs">Consegnato il</span>{formatDate(order.data_consegnato)}</div>
         )}
