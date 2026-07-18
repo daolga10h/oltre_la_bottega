@@ -116,6 +116,7 @@ Tabelle principali in PostgreSQL (schema v2, vedere `supabase/migrations/`):
 
 **`orders`** — tabella centrale, dati cliente embedded (no entità customer separata):
 - Anagrafica cliente: `nome`*, `cognome`, `telefono`*, `email_cliente`, `canale`, `consenso_marketing`
+- Chi ha preso l'ordine: `operatore` (impostato solo alla creazione, non modificabile in seguito)
 - Lavorazione: `cosa_ordinato`*, `testo_da_scrivere`, `tipo_lavorazione`, `dettagli_grafici`, `quantita`, `bozza_grafica`, `foto_oggetto`, `file_cliente`, `note`
 - Date: `data_ordine` (default today), `data_consegna`, `data_consegnato`
 - Stato principale: `status` (preventivo → bozza_grafica → da_fare → in_lavorazione → pronto → consegnato)
@@ -139,6 +140,7 @@ Migrations da applicare in ordine:
 5. `20260702000001_add_reminder_completed_at.sql` — colonna `completed_at` su `reminders`
 6. `20260702000002_add_da_fare_status.sql` — aggiunge `da_fare` al constraint `orders_status_check`
 7. `20260707000001_add_materiale_fornitore.sql` — colonne materiale fornitore su `orders`
+8. `20260714000001_add_operatore.sql` — colonna `operatore` su `orders`
 
 Vincoli critici:
 - Niente `shop_id` — installazione dedicata per bottega
@@ -213,8 +215,8 @@ Vincoli critici:
 
 ## Testing
 
-**Stato al 2026-07-14**: 8 suite / 75 test (Jest) tutti verdi; `npx tsc --noEmit` pulito. Baseline precedente (2026-07-07): 7 suite / 72 test — la differenza è `src/lib/__tests__/shop-name.test.ts` (3 nuovi test) aggiunto dal login con PIN, vedere bullet Feature sotto.
-- **Test unitari**: copertura su `src/actions/orders.ts`, `src/actions/customers.ts`, `src/actions/reminders.ts`, `src/app/api/dashboard/today`, `src/lib/orderConstants.ts`, `src/lib/shop-name.ts`.
+**Stato al 2026-07-15**: 17 suite / 160 test (Jest) tutti verdi; `npx tsc --noEmit` pulito. Baseline precedente (2026-07-14): 8 suite / 75 test — la differenza è il campo Operatore (`src/lib/__tests__/operators.test.ts`, 10 nuovi test) più altre suite già esistenti ma non ricontate nell'ultimo aggiornamento, vedere bullet Feature sotto.
+- **Test unitari**: copertura su `src/actions/orders.ts`, `src/actions/customers.ts`, `src/actions/reminders.ts`, `src/app/api/dashboard/today`, `src/lib/orderConstants.ts`, `src/lib/shop-name.ts`, `src/lib/operators.ts`.
 - **Bug fix (2026-07-07)**: `updateBozzaGrafica` e `updatePreventivo` non facevano avanzare lo `status` principale dell'ordine dopo l'approvazione del sottostato — vedere riga corrispondente in Decisioni chiave. Corretto con TDD (test scritti per primi, poi fix minimo); 5 nuovi test coprono entrambe le funzioni.
 - **Code review (2026-07-03)**: nessun bug di correttezza aggiuntivo individuato sul diff (`getOrders` — ricerca ordini).
 - **Security review (2026-07-03)**: individuata e corretta una vulnerabilità di filter-injection PostgREST nel campo di ricerca ordini — `filters.search` veniva interpolato senza escaping in `.or()`, permettendo a un utente autenticato di alterare la sintassi del filtro tramite `,`/`()`/`"`. Corretto in `getOrders` (`src/actions/orders.ts`) escapando backslash e virgolette e racchiudendo il valore tra doppi apici (sintassi di quoting valori di PostgREST). Nessun segreto esposto nel repo o nella cronologia Git; RLS e controllo accessi invariati.
@@ -222,6 +224,7 @@ Vincoli critici:
 - **Feature (2026-07-07)**: tracciamento materiale da ordinare al fornitore (`materiale`/`materiale_fornitore`/`materiale_cosa_manca`/`materiale_data_ordine` su `orders`). Nuova server action `updateMaterialeFornitore` con 6 nuovi test unitari (data automatica, avanzamento condizionale a `in_lavorazione`, log eventi). Dashboard "Oggi" estesa con due sezioni ("Materiale da ordinare", "Materiale ordinato oggi") e relativi test sulla route `/api/dashboard/today`. Design in `docs/superpowers/specs/2026-07-07-materiale-fornitore-design.md`.
 - **Feature (2026-07-09)**: sidebar semplificato (solo testo "Oltre la Bottega", niente quadratino/nome bottega) e colori per stadio su preventivo/bozza grafica/materiale fornitore (terracotta/honey/sage in base al valore esatto, non più un colore fisso per l'intero sottostato) — vedere riga corrispondente in Decisioni chiave. Funzioni pure `preventivoStage`/`bozzaStage`/`materialeStage` in `src/lib/orderConstants.ts` con 12 nuovi test TDD; componente `StageBadge` condiviso (senza icone) riusato in scheda ordine, lista ordini e bacheca. Piano in `docs/superpowers/plans/2026-07-09-sidebar-e-colori-stadio-plan.md`.
 - **Feature (2026-07-13/14)**: login con PIN come metodo di accesso alternativo al magic link — vedere riga corrispondente in Decisioni chiave. Nuovo helper `getPostLoginRedirect` in `src/lib/shop-name.ts` (3 test TDD), `src/lib/device-email.ts` per l'email ricordata sul dispositivo, tab "PIN" in `/login`, pagina `/setup-pin` collegata da una nuova pagina "Impostazioni" (`/impostazioni`, solo sidebar desktop). Implementato in un worktree separato (`worktree-login-pin`), mergiato su `main` il 2026-07-14 dopo verifica manuale end-to-end (script Playwright temporaneo con utente di test autenticato via Supabase Admin API — stesso pattern di Flusso D): 11/12 controlli superati, l'unico non superato è l'invio email del magic link bloccato dal rate limit Supabase sull'ambiente di test, non un difetto del codice. Design in `docs/superpowers/specs/2026-07-13-login-pin-design.md`, piano in `docs/superpowers/plans/2026-07-13-login-pin-plan.md`.
+- **Feature (2026-07-14/15)**: campo "Operatore" obbligatorio in creazione ordine — vedere riga corrispondente in Decisioni chiave. Nuova colonna `orders.operatore` (migration `20260714000001_add_operatore.sql`), helper puri `getOperatorNames`/`addOperatorName`/`removeOperatorName` in `src/lib/operators.ts` (10 test TDD), `src/lib/device-operator.ts` per l'ultimo operatore ricordato sul dispositivo, nuovo componente `OperatoriSettings.tsx` in Impostazioni per gestire l'elenco. Implementato in un worktree separato (`feature/operatore-ordine`) con `superpowers:subagent-driven-development` (ogni task revisionato due volte, conformità alla spec e qualità del codice — un bug reale intercettato e corretto in corso d'opera, vedere commit `3b6b53d`), mergiato su `main` il 2026-07-15 dopo verifica manuale end-to-end (stesso pattern Playwright del login PIN): 15/15 controlli superati. Flusso D (Playwright) continua a fallire per il bug pre-esistente e non correlato `getByLabel('Nome *')` ambiguo, non per questo lavoro. Design in `docs/superpowers/specs/2026-07-14-operatore-ordine-design.md`, piano in `docs/superpowers/plans/2026-07-14-operatore-ordine-plan.md`.
 
 **Flussi E2E da testare (Playwright o simile):**
 - Flusso A: apertura dashboard → lettura priorità (< 60 s) — implementato (`e2e/flusso-a-dashboard.spec.ts`)
