@@ -5,7 +5,7 @@ import type { OrderRow } from "@/actions/orders"
 
 const STATUS_COLORS: Record<string, string> = {
   preventivo: "bg-linen text-bark",
-  bozza_grafica: "bg-sage text-[#3a5a2e]",
+  bozza_grafica: "bg-linen text-bark",
   da_fare: "bg-honey text-bark",
   in_lavorazione: "bg-honey text-bark",
   pronto: "bg-honey text-bark",
