@@ -56,7 +56,11 @@ export default function SetupPinPage() {
         }
         const { error } = await supabase.auth.updateUser({ password: newPin })
         if (error) {
-          setMessage("Errore durante il salvataggio del PIN. Riprova.")
+          setMessage(
+            error.code === "same_password"
+              ? "Queste 6 cifre sono già il tuo PIN attuale. Scegline di diverse per cambiarlo."
+              : "Errore durante il salvataggio del PIN. Riprova."
+          )
           setLoading(false)
           setPin("")
           setStep("create")
