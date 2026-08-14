@@ -36,4 +36,13 @@ describe("sendBackupEmail", () => {
     expect(call.to).toBe("bottega@example.com")
     expect(call.attachments[0].content).toBe(Buffer.from("a,b\n1,2").toString("base64"))
   })
+
+  it("throws when Resend returns an error", async () => {
+    process.env.RESEND_API_KEY = "test-key"
+    mockSend.mockResolvedValue({ data: null, error: { message: "invalid api key" } })
+
+    await expect(
+      sendBackupEmail({ to: "bottega@example.com", csv: "a,b\n1,2", shopName: "La Bottega" })
+    ).rejects.toThrow()
+  })
 })

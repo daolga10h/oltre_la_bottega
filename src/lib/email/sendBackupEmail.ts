@@ -12,7 +12,7 @@ export async function sendBackupEmail(params: {
   const from = process.env.BACKUP_EMAIL_FROM ?? "onboarding@resend.dev"
   const today = new Date().toISOString().split("T")[0]
 
-  await resend.emails.send({
+  const result = await resend.emails.send({
     from,
     to: params.to,
     subject: `Copia di sicurezza ordini — ${params.shopName} (${today})`,
@@ -21,7 +21,12 @@ export async function sendBackupEmail(params: {
       {
         filename: `ordini-${today}.csv`,
         content: Buffer.from(params.csv).toString("base64"),
+        contentType: "text/csv; charset=utf-8",
       },
     ],
   })
+
+  if (result.error) {
+    throw new Error(`Invio email di backup fallito: ${result.error.message}`)
+  }
 }
