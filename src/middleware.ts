@@ -43,6 +43,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // api/cron/: Vercel invoca i cron job senza sessione utente — ogni route
+    // sotto questo prefisso deve verificare da sé un proprio secret (es.
+    // CRON_SECRET, vedere api/cron/weekly-backup), il middleware non offre
+    // più protezione a queste rotte.
+    "/((?!_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest|api/cron/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 }
