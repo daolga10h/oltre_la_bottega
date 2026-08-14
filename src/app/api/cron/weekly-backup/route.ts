@@ -20,12 +20,10 @@ export async function GET(request: Request) {
       logError("cron/weekly-backup", usersError)
       return NextResponse.json({ error: "No shop user" }, { status: 500 })
     }
-    const shopUser = usersData?.users.length === 1 ? usersData.users[0] : null
+    const shopUsers = usersData?.users.filter((u) => !u.email?.endsWith("@oltrelabottega.local")) ?? []
+    const shopUser = shopUsers.length === 1 ? shopUsers[0] : null
     if (!shopUser?.email) {
-      logError(
-        "cron/weekly-backup",
-        new Error(`Atteso esattamente un utente per l'istanza, trovati ${usersData?.users.length ?? 0}`)
-      )
+      logError("cron/weekly-backup", new Error(`Atteso esattamente un utente bottega, trovati ${shopUsers.length}`))
       return NextResponse.json({ error: "No shop user" }, { status: 500 })
     }
 

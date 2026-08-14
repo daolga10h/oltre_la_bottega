@@ -16,17 +16,17 @@ function makeRequest(secret?: string): Request {
   })
 }
 
-function mockAdminClient(orders: unknown[], ordersError: unknown = null) {
+function mockAdminClient(
+  orders: unknown[],
+  ordersError: unknown = null,
+  users: unknown[] = [{ id: "u1", email: "bottega@example.com", user_metadata: { shop_name: "La Bottega" } }]
+) {
   return {
     auth: {
       admin: {
         listUsers: () =>
           Promise.resolve({
-            data: {
-              users: [
-                { id: "u1", email: "bottega@example.com", user_metadata: { shop_name: "La Bottega" } },
-              ],
-            },
+            data: { users },
             error: null,
           }),
       },
@@ -94,6 +94,32 @@ describe("GET /api/cron/weekly-backup", () => {
     expect(call.to).toBe("bottega@example.com")
     expect(call.shopName).toBe("La Bottega")
     expect(call.csv).toContain("Gigi")
+  })
+
+  it("ignores @oltrelabottega.local service/test accounts when picking the shop user", async () => {
+    mockCreateAdminClient.mockReturnValue(
+      mockAdminClient(
+        [
+          {
+            nome: "Gigi", cognome: "Rossi", telefono: null, email_cliente: null,
+            cosa_ordinato: "Targa", data_ordine: "2026-08-01", data_consegna: null,
+            data_consegnato: null, status: "pronto", operatore: "Maria",
+            prezzo: 10, acconto: 0, saldo: 10, note: null,
+          },
+        ],
+        null,
+        [
+          { id: "u1", email: "bottega@example.com", user_metadata: { shop_name: "La Bottega" } },
+          { id: "u2", email: "e2e-test@oltrelabottega.local", user_metadata: {} },
+        ]
+      )
+    )
+
+    const res = await GET(makeRequest("test-secret"))
+
+    expect(res.status).toBe(200)
+    expect(mockSendBackupEmail).toHaveBeenCalledTimes(1)
+    expect(mockSendBackupEmail.mock.calls[0][0].to).toBe("bottega@example.com")
   })
 
   it("returns 500 and does not send an email if the orders query fails", async () => {
