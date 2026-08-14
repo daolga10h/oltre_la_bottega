@@ -6,18 +6,26 @@ import { getShopName } from "@/lib/shop-name"
 import { logError, logInfo } from "@/lib/logger"
 
 export async function GET(request: Request) {
+  const secret = process.env.CRON_SECRET
   const authHeader = request.headers.get("authorization")
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!secret || authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
     const admin = createAdminClient()
 
-    const { data: usersData } = await admin.auth.admin.listUsers()
-    const shopUser = usersData?.users[0] ?? null
+    const { data: usersData, error: usersError } = await admin.auth.admin.listUsers()
+    if (usersError) {
+      logError("cron/weekly-backup", usersError)
+      return NextResponse.json({ error: "No shop user" }, { status: 500 })
+    }
+    const shopUser = usersData?.users.length === 1 ? usersData.users[0] : null
     if (!shopUser?.email) {
-      logError("cron/weekly-backup", new Error("Nessun utente trovato per l'istanza"))
+      logError(
+        "cron/weekly-backup",
+        new Error(`Atteso esattamente un utente per l'istanza, trovati ${usersData?.users.length ?? 0}`)
+      )
       return NextResponse.json({ error: "No shop user" }, { status: 500 })
     }
 
