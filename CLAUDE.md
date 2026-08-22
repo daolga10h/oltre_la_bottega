@@ -318,4 +318,4 @@ supabase gen types typescript --local > src/types/supabase.ts
 
 **Osservazioni emerse dalla verifica reale del backup settimanale (2026-08-14), rimandate a un prossimo passo:**
 - SimpleBackups (backup tecnico giornaliero + anti-pausa Supabase) non ancora configurato — vedere riga "Backup settimanale via email" in Decisioni chiave. Finché non è attivo, un'istanza inattiva per più di 7 giorni resta comunque a rischio di pausa automatica di Supabase.
-- La checklist pubblica "Cosa serve per usare Oltre la Bottega" non è ancora stata aggiornata con la voce sull'account Resend/backup email — da fare in una prossima sessione insieme a SimpleBackups, per aggiornarla una volta sola con tutte e due le voci invece che in due passaggi separati.
+- ~~La checklist pubblica "Cosa serve per usare Oltre la Bottega" non è ancora stata aggiornata con la voce sull'account Resend/backup email~~ — creata il 2026-08-22 in `docs/checklist-cliente-nuovo.md` (indispensabile/facoltativo), include già la voce Resend. SimpleBackups è elencato come facoltativo/non ancora configurato, da aggiornare quando verrà attivato.
