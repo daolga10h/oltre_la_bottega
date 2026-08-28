@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { QRCodeSVG } from "qrcode.react"
+import { formatEUR } from "@/lib/utils"
 
 interface Props {
   orderId: string
@@ -9,10 +10,11 @@ interface Props {
   cognome: string | null
   telefono: string | null
   dataConsegna: string | null
+  saldo: number
   shopName: string
 }
 
-export function PrintClient({ orderId, nome, cognome, telefono, dataConsegna, shopName }: Props) {
+export function PrintClient({ orderId, nome, cognome, telefono, dataConsegna, saldo, shopName }: Props) {
   const [url, setUrl] = useState("")
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export function PrintClient({ orderId, nome, cognome, telefono, dataConsegna, sh
     <div style={{
       fontFamily: "monospace",
       fontSize: "13px",
-      width: "58mm",
+      width: "62mm",
       padding: "3mm",
       lineHeight: 1.4,
     }}>
@@ -68,7 +70,8 @@ export function PrintClient({ orderId, nome, cognome, telefono, dataConsegna, sh
       </div>
       <p style={{ fontWeight: "bold", fontSize: "16px", margin: "0 0 4px 0" }}>{clientName}</p>
       {telefono && <p style={{ margin: "0 0 3px 0" }}>{telefono}</p>}
-      {date && <p style={{ margin: "0 0 8px 0" }}>{date}</p>}
+      {date && <p style={{ margin: "0 0 3px 0" }}>{date}</p>}
+      <p style={{ fontWeight: "bold", margin: "0 0 8px 0" }}>Da pagare: €{formatEUR(saldo)}</p>
       {url && <QRCodeSVG value={url} size={90} />}
     </div>
   )
