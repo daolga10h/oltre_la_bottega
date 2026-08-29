@@ -84,7 +84,7 @@ export async function getOrdersByCustomer(nome: string, telefono?: string | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query = (supabase as any)
     .from("orders")
-    .select("id, nome, cognome, telefono, email_cliente, cosa_ordinato, status, data_ordine, data_consegna, data_consegnato, prezzo, acconto, saldo")
+    .select("id, nome, cognome, azienda, telefono, email_cliente, cosa_ordinato, status, data_ordine, data_consegna, data_consegnato, prezzo, acconto, saldo")
     .order("data_ordine", { ascending: false })
 
   if (telefono) {

@@ -118,4 +118,16 @@ describe("getOrdersByCustomer", () => {
     const builder = client.from.mock.results[0].value
     expect(builder.ilike).toHaveBeenCalledWith("nome", "%Maria%")
   })
+
+  it("selects azienda so the profile header can show it", async () => {
+    const client = createSupabaseMock({ orders: [{ data: [], error: null }] })
+    mockCreateClient.mockResolvedValue(client)
+
+    await getOrdersByCustomer("Maria Rossi", "3331112222")
+
+    const builder = client.from.mock.results[0].value
+    expect(builder.select).toHaveBeenCalledWith(
+      expect.stringContaining("azienda")
+    )
+  })
 })
