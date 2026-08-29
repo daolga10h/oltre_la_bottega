@@ -41,3 +41,13 @@ export function buildMailtoLink(email: string | null, subject: string, body: str
   if (!email) return null
   return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 }
+
+/** Costruisce il nome cliente mostrato in card, bacheca, scheda ordine ed etichetta. */
+export function buildClientDisplayName(
+  nome: string,
+  cognome: string | null,
+  azienda?: string | null
+): string {
+  const name = [nome, cognome].filter(Boolean).join(" ")
+  return azienda ? `${name} — ${azienda}` : name
+}
