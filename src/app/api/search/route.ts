@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { logError } from "@/lib/logger"
+import { buildSearchOrClause } from "@/lib/search"
 import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
     const { data } = await supabase
       .from("orders")
       .select("id, cosa_ordinato, nome, cognome, status")
-      .or(`nome.ilike.%${q}%,cognome.ilike.%${q}%,cosa_ordinato.ilike.%${q}%,telefono.ilike.%${q}%`)
+      .or(buildSearchOrClause(q, ["nome", "cognome", "cosa_ordinato", "telefono", "azienda"]))
       .not("status", "eq", "consegnato")
       .limit(8)
 
