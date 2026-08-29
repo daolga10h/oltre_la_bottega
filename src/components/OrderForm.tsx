@@ -63,6 +63,7 @@ export function OrderForm({ order, operatori = [] }: Props) {
   // Campi cliente controllati (necessario per auto-fill da autocomplete)
   const [nomeValue, setNomeValue] = useState(order?.nome ?? "")
   const [cognomeValue, setCognomeValue] = useState(order?.cognome ?? "")
+  const [aziendaValue, setAziendaValue] = useState(order?.azienda ?? "")
   const [telefonoValue, setTelefonoValue] = useState(order?.telefono ?? "")
   const [emailValue, setEmailValue] = useState(order?.email_cliente ?? "")
 
@@ -86,6 +87,7 @@ export function OrderForm({ order, operatori = [] }: Props) {
     const v = value.toLowerCase()
     const matches = allCustomers.filter((c) =>
       `${c.nome} ${c.cognome ?? ""}`.toLowerCase().includes(v) ||
+      (c.azienda ?? "").toLowerCase().includes(v) ||
       (c.telefono ?? "").includes(value)
     ).slice(0, 6)
     setSuggestions(matches)
@@ -95,6 +97,7 @@ export function OrderForm({ order, operatori = [] }: Props) {
   function fillCustomer(c: CustomerSummary) {
     setNomeValue(c.nome)
     setCognomeValue(c.cognome ?? "")
+    setAziendaValue(c.azienda ?? "")
     setTelefonoValue(c.telefono ?? "")
     setEmailValue(c.email ?? "")
     setShowSugg(false)
@@ -134,6 +137,7 @@ export function OrderForm({ order, operatori = [] }: Props) {
     const payload = {
       nome: nomeValue.trim(),
       cognome: cognomeValue.trim() || null,
+      azienda: aziendaValue.trim() || null,
       telefono: telefonoValue.trim() || null,
       email_cliente: emailValue.trim() || null,
       canale,
@@ -208,7 +212,12 @@ export function OrderForm({ order, operatori = [] }: Props) {
                     onClick={() => fillCustomer(c)}
                     className="w-full text-left px-3 py-2 text-sm hover:bg-muted/60 flex items-center justify-between border-b border-border last:border-0"
                   >
-                    <span className="font-medium">{[c.nome, c.cognome].filter(Boolean).join(" ")}</span>
+                    <span className="font-medium">
+                      {[c.nome, c.cognome].filter(Boolean).join(" ")}
+                      {c.azienda && (
+                        <span className="text-muted-foreground font-normal"> — {c.azienda}</span>
+                      )}
+                    </span>
                     {c.telefono && <span className="text-muted-foreground text-xs">{c.telefono}</span>}
                   </button>
                 ))}
@@ -224,6 +233,16 @@ export function OrderForm({ order, operatori = [] }: Props) {
               value={cognomeValue}
               onChange={(e) => setCognomeValue(e.target.value)}
               placeholder="Cognome"
+            />
+          </div>
+          <div>
+            <Label htmlFor="azienda">Azienda</Label>
+            <Input
+              id="azienda"
+              name="azienda"
+              value={aziendaValue}
+              onChange={(e) => setAziendaValue(e.target.value)}
+              placeholder="Associazione, azienda... (facoltativo)"
             />
           </div>
           <div>
