@@ -69,6 +69,30 @@ describe("getCustomers", () => {
     const result = await getCustomers()
     expect(result.map((c) => c.nome)).toEqual(["New", "Old"])
   })
+
+  it("searches across nome, cognome, telefono and azienda with the shared escaping helper", async () => {
+    const client = createSupabaseMock({ orders: [{ data: [], error: null }] })
+    mockCreateClient.mockResolvedValue(client)
+
+    await getCustomers("Rossi, Mario")
+
+    const builder = client.from.mock.results[0].value
+    const orArg = builder.or.mock.calls[0][0] as string
+    expect(orArg).toBe(
+      'nome.ilike."%Rossi, Mario%",cognome.ilike."%Rossi, Mario%",telefono.ilike."%Rossi, Mario%",azienda.ilike."%Rossi, Mario%"'
+    )
+  })
+
+  it("carries azienda from each customer's most recent order", async () => {
+    const rows = [
+      { nome: "Maria", cognome: "Rossi", telefono: "333", email_cliente: null, consenso_marketing: false, data_ordine: "2026-06-20", azienda: "ASD Calcio Torino" },
+      { nome: "Maria", cognome: "Rossi", telefono: "333", email_cliente: null, consenso_marketing: false, data_ordine: "2026-06-01", azienda: null },
+    ]
+    mockCreateClient.mockResolvedValue(createSupabaseMock({ orders: [{ data: rows, error: null }] }))
+
+    const [customer] = await getCustomers()
+    expect(customer.azienda).toBe("ASD Calcio Torino")
+  })
 })
 
 describe("getOrdersByCustomer", () => {
