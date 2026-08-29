@@ -145,9 +145,13 @@ export async function createOrder(input: Partial<CreateOrderInput> & { nome: str
     throw new AppError(error.message, USER_MESSAGES.saveFailed)
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase as any).from("order_items").insert(
+  const { error: itemsError } = await (supabase as any).from("order_items").insert(
     items.map((item, idx) => ({ ...item, order_id: data.id, posizione: idx }))
   )
+  if (itemsError) {
+    logError("createOrder", itemsError, { input })
+    throw new AppError(itemsError.message, USER_MESSAGES.saveFailed)
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase as any).from("order_events").insert({
     order_id: data.id,
@@ -174,11 +178,19 @@ export async function updateOrder(id: string, input: Partial<CreateOrderInput> &
     throw new Error(USER_MESSAGES.saveFailed)
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase as any).from("order_items").delete().eq("order_id", id)
+  const { error: deleteError } = await (supabase as any).from("order_items").delete().eq("order_id", id)
+  if (deleteError) {
+    logError("updateOrder", deleteError, { id })
+    throw new AppError(deleteError.message, USER_MESSAGES.saveFailed)
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase as any).from("order_items").insert(
+  const { error: insertError } = await (supabase as any).from("order_items").insert(
     items.map((item, idx) => ({ ...item, order_id: id, posizione: idx }))
   )
+  if (insertError) {
+    logError("updateOrder", insertError, { id })
+    throw new AppError(insertError.message, USER_MESSAGES.saveFailed)
+  }
   revalidatePath("/orders")
   revalidatePath("/dashboard")
   revalidatePath(`/orders/${id}`)

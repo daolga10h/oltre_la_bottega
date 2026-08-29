@@ -401,6 +401,17 @@ describe("createOrder", () => {
     await expect(createOrder({ nome: "Gigi", items: [] })).rejects.toThrow()
     expect(client.from).not.toHaveBeenCalled()
   })
+
+  it("throws a save-failed AppError when the order_items insert fails", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: { id: "new-id" }, error: null }],
+      order_items: [{ data: null, error: { message: "constraint violation" } }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+    jest.spyOn(console, "error").mockImplementation(() => {})
+
+    await expect(createOrder({ nome: "Gigi", items })).rejects.toThrow()
+  })
 })
 
 describe("updateOrder items handling", () => {
@@ -439,6 +450,37 @@ describe("updateOrder items handling", () => {
 
     await expect(updateOrder("id1", { items: [] })).rejects.toThrow()
     expect(client.from).not.toHaveBeenCalled()
+  })
+
+  it("throws a save-failed AppError when the order_items delete fails", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: null }],
+      order_items: [{ data: null, error: { message: "delete failed" } }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+    jest.spyOn(console, "error").mockImplementation(() => {})
+
+    const items = [
+      { cosa_ordinato: "Targa", testo_da_scrivere: null, quantita: 3, prezzo_unitario: 6 },
+    ]
+    await expect(updateOrder("id1", { items })).rejects.toThrow()
+  })
+
+  it("throws a save-failed AppError when the order_items insert fails", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: null }],
+      order_items: [
+        { data: null, error: null },
+        { data: null, error: { message: "insert failed" } },
+      ],
+    })
+    mockCreateClient.mockResolvedValue(client)
+    jest.spyOn(console, "error").mockImplementation(() => {})
+
+    const items = [
+      { cosa_ordinato: "Targa", testo_da_scrivere: null, quantita: 3, prezzo_unitario: 6 },
+    ]
+    await expect(updateOrder("id1", { items })).rejects.toThrow()
   })
 })
 
