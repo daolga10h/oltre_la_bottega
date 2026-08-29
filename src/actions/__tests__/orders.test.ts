@@ -412,6 +412,22 @@ describe("createOrder", () => {
 
     await expect(createOrder({ nome: "Gigi", items })).rejects.toThrow()
   })
+
+  it("deletes the just-created order if the order_items insert fails, to avoid leaving an orphaned order with no line items", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: { id: "new-id" }, error: null }],
+      order_items: [{ data: null, error: { message: "insert failed" } }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+    jest.spyOn(console, "error").mockImplementation(() => {})
+
+    await expect(createOrder({ nome: "Gigi", items })).rejects.toThrow()
+
+    expect(client.from).toHaveBeenNthCalledWith(3, "orders")
+    const deleteBuilder = client.from.mock.results[2].value
+    expect(deleteBuilder.delete).toHaveBeenCalled()
+    expect(deleteBuilder.eq).toHaveBeenCalledWith("id", "new-id")
+  })
 })
 
 describe("updateOrder items handling", () => {

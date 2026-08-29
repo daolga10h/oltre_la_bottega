@@ -150,6 +150,10 @@ export async function createOrder(input: Partial<CreateOrderInput> & { nome: str
   )
   if (itemsError) {
     logError("createOrder", itemsError, { input })
+    // Compensating cleanup: no DB transaction spans these two inserts, so a failed
+    // order_items insert would otherwise leave behind an orphaned order with no line items.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from("orders").delete().eq("id", data.id)
     throw new AppError(itemsError.message, USER_MESSAGES.saveFailed)
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
