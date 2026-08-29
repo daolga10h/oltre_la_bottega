@@ -48,7 +48,7 @@ describe("getOrders filters", () => {
     expect(builder.neq).toHaveBeenCalledWith("status", "consegnato")
   })
 
-  it("searches across nome, cognome, cosa_ordinato and telefono", async () => {
+  it("searches across nome, cognome, cosa_ordinato, telefono and azienda", async () => {
     const client = createSupabaseMock({ orders: [{ data: [], error: null }] })
     mockCreateClient.mockResolvedValue(client)
 
@@ -56,7 +56,9 @@ describe("getOrders filters", () => {
 
     const builder = client.from.mock.results[0].value
     const orArg = builder.or.mock.calls[0][0] as string
-    expect(orArg).toBe('nome.ilike."%rossi%",cognome.ilike."%rossi%",cosa_ordinato.ilike."%rossi%",telefono.ilike."%rossi%"')
+    expect(orArg).toBe(
+      'nome.ilike."%rossi%",cognome.ilike."%rossi%",cosa_ordinato.ilike."%rossi%",telefono.ilike."%rossi%",azienda.ilike."%rossi%"'
+    )
   })
 
   it("quotes a search term containing a comma so it is treated as one literal value, not split into extra clauses", async () => {
@@ -71,7 +73,7 @@ describe("getOrders filters", () => {
     const builder = client.from.mock.results[0].value
     const orArg = builder.or.mock.calls[0][0] as string
     expect(orArg).toBe(
-      'nome.ilike."%Rossi, Mario%",cognome.ilike."%Rossi, Mario%",cosa_ordinato.ilike."%Rossi, Mario%",telefono.ilike."%Rossi, Mario%"'
+      'nome.ilike."%Rossi, Mario%",cognome.ilike."%Rossi, Mario%",cosa_ordinato.ilike."%Rossi, Mario%",telefono.ilike."%Rossi, Mario%",azienda.ilike."%Rossi, Mario%"'
     )
   })
 
@@ -84,6 +86,7 @@ describe("getOrders filters", () => {
     const builder = client.from.mock.results[0].value
     const orArg = builder.or.mock.calls[0][0] as string
     expect(orArg).toContain('nome.ilike."%targa \\"VIP\\"%"')
+    expect(orArg).toContain('azienda.ilike."%targa \\"VIP\\"%"')
   })
 
   it("also protects parentheses and periods in the search term from PostgREST's .or() grouping syntax", async () => {
@@ -95,6 +98,7 @@ describe("getOrders filters", () => {
     const builder = client.from.mock.results[0].value
     const orArg = builder.or.mock.calls[0][0] as string
     expect(orArg).toContain('nome.ilike."%Mario (VIP) sig.ra%"')
+    expect(orArg).toContain('azienda.ilike."%Mario (VIP) sig.ra%"')
   })
 })
 

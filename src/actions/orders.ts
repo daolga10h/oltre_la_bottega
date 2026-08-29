@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server"
 import { logError } from "@/lib/logger"
 import { AppError, USER_MESSAGES } from "@/lib/errors"
 import { STATUS_LABELS } from "@/lib/orderConstants"
+import { buildSearchOrClause } from "@/lib/search"
 
 // Re-exported for convenience — consumers can also import directly from @/lib/orderConstants
 // NOTE: cannot export non-async values from "use server" files, so pages import from orderConstants directly
@@ -13,6 +14,7 @@ export type OrderRow = {
   id: string
   nome: string
   cognome: string | null
+  azienda: string | null
   telefono: string | null
   email_cliente: string | null
   canale: string
@@ -73,13 +75,8 @@ export async function getOrders(filters?: {
       query = query.neq("status", "consegnato")
     }
     if (filters?.search) {
-      // PostgREST's .or() syntax uses "," and "()" as delimiters, so a search
-      // term containing them must be wrapped in double quotes (with internal
-      // backslashes/quotes backslash-escaped) to be treated as a literal value.
-      const escaped = filters.search.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
-      const term = `"%${escaped}%"`
       query = query.or(
-        `nome.ilike.${term},cognome.ilike.${term},cosa_ordinato.ilike.${term},telefono.ilike.${term}`
+        buildSearchOrClause(filters.search, ["nome", "cognome", "cosa_ordinato", "telefono", "azienda"])
       )
     }
     const { data, error } = await query
