@@ -1,5 +1,5 @@
 import { getCustomers } from "@/actions/customers"
-import { formatDate } from "@/lib/utils"
+import { formatDate, buildClientDisplayName } from "@/lib/utils"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
 import Link from "next/link"
@@ -77,6 +77,7 @@ export default async function CustomersPage({ searchParams }: Props) {
             <tbody>
               {customers.map((c, i) => {
                 const fullName = [c.nome, c.cognome].filter(Boolean).join(" ")
+                const displayName = buildClientDisplayName(c.nome, c.cognome, c.azienda)
                 const href =
                   `/customers/profilo?nome=${encodeURIComponent(fullName)}` +
                   (c.telefono ? `&tel=${encodeURIComponent(c.telefono)}` : "")
@@ -84,7 +85,7 @@ export default async function CustomersPage({ searchParams }: Props) {
                   <tr key={i} className="border-b last:border-0 hover:bg-muted/40">
                     <td className="px-4 py-3">
                       <Link href={href} className="font-bold hover:underline">
-                        {fullName}
+                        {displayName}
                       </Link>
                       {c.consenso_marketing && (
                         <span className="ml-2 text-xs bg-honey text-bark px-1.5 py-0.5 rounded">

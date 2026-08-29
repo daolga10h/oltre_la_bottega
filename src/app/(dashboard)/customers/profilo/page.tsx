@@ -1,6 +1,6 @@
 import { getOrdersByCustomer } from "@/actions/customers"
 import { StatusBadge } from "@/components/OrderCard"
-import { formatDate, formatEUR } from "@/lib/utils"
+import { formatDate, formatEUR, buildClientDisplayName } from "@/lib/utils"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
@@ -15,6 +15,9 @@ export default async function CustomerProfiloPage({ searchParams }: Props) {
   const firstOrder = orders[0]
   const email = firstOrder?.email_cliente
   const telefono = tel ?? firstOrder?.telefono
+  const displayName = firstOrder
+    ? buildClientDisplayName(firstOrder.nome, firstOrder.cognome, firstOrder.azienda)
+    : nome
   const totalSpeso = orders.reduce((sum, o) => sum + (o.prezzo ?? 0), 0)
 
   return (
@@ -27,7 +30,7 @@ export default async function CustomerProfiloPage({ searchParams }: Props) {
       </Link>
 
       <div>
-        <h1 className="text-2xl font-bold">{nome}</h1>
+        <h1 className="text-2xl font-bold">{displayName}</h1>
         <div className="flex flex-col gap-0.5 mt-1">
           {telefono && <p className="text-sm text-muted-foreground">{telefono}</p>}
           {email && <p className="text-sm text-muted-foreground">{email}</p>}
