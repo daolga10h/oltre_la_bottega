@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react"
 import { updateOrderStatus } from "@/actions/orders"
 import { STATUS_ORDER, STATUS_LABELS, preventivoStage, bozzaStage, materialeStage } from "@/lib/orderConstants"
-import { formatDate, cn } from "@/lib/utils"
+import { formatDate, cn, buildClientDisplayName } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
@@ -55,9 +55,7 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
             ) : (
               <div className="space-y-3">
                 {colOrders.map((order) => {
-                  const clientName = [order.nome, order.cognome]
-                    .filter(Boolean)
-                    .join(" ")
+                  const clientName = buildClientDisplayName(order.nome, order.cognome, order.azienda)
                   return (
                     <div
                       key={order.id}

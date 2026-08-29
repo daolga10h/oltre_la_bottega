@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowLeft, Edit, Printer, CalendarPlus, MessageCircle, Mail } from "lucide-react"
-import { formatDate, formatEUR, buildWhatsAppLink, buildMailtoLink } from "@/lib/utils"
+import { formatDate, formatEUR, buildWhatsAppLink, buildMailtoLink, buildClientDisplayName } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
@@ -61,7 +61,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   }
 
   const currentIdx = STATUS_ORDER.indexOf(order.status)
-  const clientName = [order.nome, order.cognome].filter(Boolean).join(" ")
+  const clientName = buildClientDisplayName(order.nome, order.cognome, order.azienda)
 
   const EVENT_LABELS: Record<string, string> = {
     created: "Ordine creato",

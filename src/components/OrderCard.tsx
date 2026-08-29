@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { cn, formatDate, formatEUR, isOverdue } from "@/lib/utils"
+import { cn, formatDate, formatEUR, isOverdue, buildClientDisplayName } from "@/lib/utils"
 import { preventivoStage, bozzaStage, materialeStage } from "@/lib/orderConstants"
 import type { OrderRow } from "@/actions/orders"
 
@@ -50,7 +50,7 @@ export function StageBadge({ label, tone }: { label: string; tone: "red" | "yell
 
 export function OrderCard({ order }: { order: OrderRow }) {
   const overdue = order.data_consegna ? isOverdue(order.data_consegna) : false
-  const clientName = [order.nome, order.cognome].filter(Boolean).join(" ")
+  const clientName = buildClientDisplayName(order.nome, order.cognome, order.azienda)
 
   return (
     <Link href={`/orders/${order.id}`}>
