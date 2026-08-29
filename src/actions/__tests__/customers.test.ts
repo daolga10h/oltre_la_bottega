@@ -83,15 +83,15 @@ describe("getCustomers", () => {
     )
   })
 
-  it("carries azienda from each customer's most recent order", async () => {
+  it("carries azienda from each customer's most recent order, not just any non-null value", async () => {
     const rows = [
-      { nome: "Maria", cognome: "Rossi", telefono: "333", email_cliente: null, consenso_marketing: false, data_ordine: "2026-06-20", azienda: "ASD Calcio Torino" },
-      { nome: "Maria", cognome: "Rossi", telefono: "333", email_cliente: null, consenso_marketing: false, data_ordine: "2026-06-01", azienda: null },
+      { nome: "Maria", cognome: "Rossi", telefono: "333", email_cliente: null, consenso_marketing: false, data_ordine: "2026-06-20", azienda: null },
+      { nome: "Maria", cognome: "Rossi", telefono: "333", email_cliente: null, consenso_marketing: false, data_ordine: "2026-06-01", azienda: "ASD Calcio Torino" },
     ]
     mockCreateClient.mockResolvedValue(createSupabaseMock({ orders: [{ data: rows, error: null }] }))
 
     const [customer] = await getCustomers()
-    expect(customer.azienda).toBe("ASD Calcio Torino")
+    expect(customer.azienda).toBeNull()
   })
 })
 
