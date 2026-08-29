@@ -94,6 +94,19 @@ describe("GET /api/dashboard/today", () => {
     expect(body.reminders).toEqual([])
   })
 
+  it("includes azienda in the select for todayOrders, deliveredToday, materialeDaOrdinare and materialeOrdinatoOggi", async () => {
+    const client = mockOrdersSequence({ open: 0, urgent: 0, overdue: 0 }, [], [])
+    mockCreateClient.mockResolvedValue(client)
+
+    await GET()
+
+    const results = client.from.mock.results
+    expect(results[3].value.select.mock.calls[0][0]).toContain("azienda")
+    expect(results[4].value.select.mock.calls[0][0]).toContain("azienda")
+    expect(results[5].value.select.mock.calls[0][0]).toContain("azienda")
+    expect(results[6].value.select.mock.calls[0][0]).toContain("azienda")
+  })
+
   it("returns 500 and does not leak internals if a query throws", async () => {
     mockCreateClient.mockImplementation(() => {
       throw new Error("supabase unreachable")

@@ -27,6 +27,17 @@ describe("GET /api/search", () => {
     expect(body).toEqual({ orders: [] })
   })
 
+  it("includes azienda in the select so results can be labeled with it", async () => {
+    const client = createSupabaseMock({ orders: [{ data: [], error: null }] })
+    mockCreateClient.mockResolvedValue(client)
+
+    const req = new Request("http://localhost/api/search?q=rossi")
+    await GET(req)
+
+    const builder = client.from.mock.results[0].value
+    expect(builder.select).toHaveBeenCalledWith(expect.stringContaining("azienda"))
+  })
+
   it("searches across nome, cognome, cosa_ordinato, telefono and azienda with escaping", async () => {
     const client = createSupabaseMock({ orders: [{ data: [], error: null }] })
     mockCreateClient.mockResolvedValue(client)

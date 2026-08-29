@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 import { useDebounce } from "@/lib/hooks/useDebounce"
+import { buildClientDisplayName } from "@/lib/utils"
 
 interface SearchResult {
-  orders: Array<{ id: string; cosa_ordinato: string; nome: string; cognome: string | null; status: string }>
+  orders: Array<{ id: string; cosa_ordinato: string; nome: string; cognome: string | null; azienda: string | null; status: string }>
 }
 
 export function SearchBar() {
@@ -73,7 +74,7 @@ export function SearchBar() {
             >
               <span className="font-medium">{o.cosa_ordinato}</span>
               <span className="text-muted-foreground ml-2 text-xs">
-                {[o.nome, o.cognome].filter(Boolean).join(" ")}
+                {buildClientDisplayName(o.nome, o.cognome, o.azienda)}
               </span>
             </button>
           ))}

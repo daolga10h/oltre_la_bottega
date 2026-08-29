@@ -4,6 +4,7 @@ import { useEffect, useState, type ComponentType } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
+import { buildClientDisplayName } from "@/lib/utils"
 import { Clock, CheckCircle2, Package } from "lucide-react"
 import Link from "next/link"
 
@@ -19,6 +20,7 @@ interface TodayOrder {
   cosa_ordinato: string
   nome: string
   cognome: string | null
+  azienda: string | null
   status: string
   data_consegna: string | null
 }
@@ -34,6 +36,7 @@ interface OrderSummary {
   cosa_ordinato: string
   nome: string
   cognome: string | null
+  azienda: string | null
 }
 
 interface DashboardData {
@@ -172,7 +175,7 @@ function DashboardListCard({
             <div>
               <p className="font-semibold text-sm text-foreground">{o.cosa_ordinato}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {[o.nome, o.cognome].filter(Boolean).join(" ")}
+                {buildClientDisplayName(o.nome, o.cognome, o.azienda)}
               </p>
             </div>
             {chevron && <span className="text-muted-foreground/50 group-hover:text-muted-foreground text-sm">›</span>}
