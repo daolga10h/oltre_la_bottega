@@ -8,13 +8,14 @@ interface Props {
   orderId: string
   nome: string
   cognome: string | null
+  azienda: string | null
   telefono: string | null
   dataConsegna: string | null
   saldo: number
   shopName: string
 }
 
-export function PrintClient({ orderId, nome, cognome, telefono, dataConsegna, saldo, shopName }: Props) {
+export function PrintClient({ orderId, nome, cognome, azienda, telefono, dataConsegna, saldo, shopName }: Props) {
   const [url, setUrl] = useState("")
 
   useEffect(() => {
@@ -69,6 +70,7 @@ export function PrintClient({ orderId, nome, cognome, telefono, dataConsegna, sa
         </span>
       </div>
       <p style={{ fontWeight: "bold", fontSize: "16px", margin: "0 0 4px 0" }}>{clientName}</p>
+      {azienda && <p style={{ fontSize: "11px", margin: "0 0 3px 0" }}>{azienda}</p>}
       {telefono && <p style={{ margin: "0 0 3px 0" }}>{telefono}</p>}
       {date && <p style={{ margin: "0 0 3px 0" }}>{date}</p>}
       <p style={{ fontWeight: "bold", margin: "0 0 8px 0" }}>Da pagare: €{formatEUR(saldo)}</p>
