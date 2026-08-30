@@ -8,10 +8,9 @@ import { STATUS_LABELS } from "@/lib/orderConstants"
 import { buildSearchOrClause } from "@/lib/search"
 import { computeOrderSummary, type OrderItemInput } from "@/lib/orderItems"
 
-// Re-exported for convenience — consumers can also import directly from @/lib/orderConstants
-// NOTE: cannot export non-async values from "use server" files, so pages import from orderConstants directly
-
-export type { OrderItemInput }
+// NOTE: cannot export non-async values from "use server" files (breaks the server-actions
+// bundler at runtime with "X is not defined") — OrderItemInput is not re-exported here,
+// import it directly from @/lib/orderItems, same as OrderForm.tsx already does.
 
 export type OrderItemRow = OrderItemInput & {
   id: string
