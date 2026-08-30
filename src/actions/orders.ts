@@ -6,9 +6,19 @@ import { logError } from "@/lib/logger"
 import { AppError, USER_MESSAGES } from "@/lib/errors"
 import { STATUS_LABELS } from "@/lib/orderConstants"
 import { buildSearchOrClause } from "@/lib/search"
+import { computeOrderSummary, type OrderItemInput } from "@/lib/orderItems"
 
 // Re-exported for convenience — consumers can also import directly from @/lib/orderConstants
 // NOTE: cannot export non-async values from "use server" files, so pages import from orderConstants directly
+
+export type { OrderItemInput }
+
+export type OrderItemRow = OrderItemInput & {
+  id: string
+  order_id: string
+  posizione: number
+  created_at: string
+}
 
 export type OrderRow = {
   id: string
@@ -51,9 +61,15 @@ export type OrderRow = {
 
 export type OrderDetail = OrderRow & {
   events: Array<{ id: string; event_type: string; note: string | null; created_at: string }>
+  items: OrderItemRow[]
 }
 
-export type CreateOrderInput = Omit<OrderRow, "id" | "created_at" | "updated_at">
+export type CreateOrderInput = Omit<
+  OrderRow,
+  "id" | "created_at" | "updated_at" | "cosa_ordinato" | "testo_da_scrivere" | "quantita" | "prezzo"
+> & {
+  items: OrderItemInput[]
+}
 
 export async function getOrders(filters?: {
   status?: string
@@ -93,9 +109,10 @@ export async function getOrder(id: string): Promise<OrderDetail | null> {
     const supabase = await createClient()
     const { data, error } = await supabase
       .from("orders")
-      .select("*, order_events(id, event_type, note, created_at)")
+      .select("*, order_events(id, event_type, note, created_at), order_items(id, order_id, cosa_ordinato, testo_da_scrivere, quantita, prezzo_unitario, posizione, created_at)")
       .eq("id", id)
       .order("created_at", { referencedTable: "order_events", ascending: false })
+      .order("posizione", { referencedTable: "order_items", ascending: true })
       .single()
     if (error) {
       if (error.code === "PGRST116") return null
@@ -103,24 +120,41 @@ export async function getOrder(id: string): Promise<OrderDetail | null> {
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const row = data as any
-    return { ...row, events: row.order_events ?? [] } as OrderDetail
+    return { ...row, events: row.order_events ?? [], items: row.order_items ?? [] } as OrderDetail
   } catch (err) {
     logError("getOrder", err, { id })
     throw err instanceof AppError ? err : new AppError(String(err), USER_MESSAGES.generic)
   }
 }
 
-export async function createOrder(input: Partial<CreateOrderInput> & { nome: string; cosa_ordinato: string }): Promise<{ id: string }> {
+export async function createOrder(input: Partial<CreateOrderInput> & { nome: string; items: OrderItemInput[] }): Promise<{ id: string }> {
+  const { items, ...rest } = input
+  if (items.length === 0) {
+    throw new AppError("createOrder called with an empty items array", USER_MESSAGES.validationError)
+  }
+  const { cosaOrdinato, prezzo } = computeOrderSummary(items)
   const supabase = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from("orders")
-    .insert(input)
+    .insert({ ...rest, cosa_ordinato: cosaOrdinato, prezzo })
     .select("id")
     .single()
   if (error) {
     logError("createOrder", error, { input })
     throw new AppError(error.message, USER_MESSAGES.saveFailed)
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: itemsError } = await (supabase as any).from("order_items").insert(
+    items.map((item, idx) => ({ ...item, order_id: data.id, posizione: idx }))
+  )
+  if (itemsError) {
+    logError("createOrder", itemsError, { input })
+    // Compensating cleanup: no DB transaction spans these two inserts, so a failed
+    // order_items insert would otherwise leave behind an orphaned order with no line items.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from("orders").delete().eq("id", data.id)
+    throw new AppError(itemsError.message, USER_MESSAGES.saveFailed)
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase as any).from("order_events").insert({
@@ -133,13 +167,33 @@ export async function createOrder(input: Partial<CreateOrderInput> & { nome: str
   return { id: data.id }
 }
 
-export async function updateOrder(id: string, input: Partial<CreateOrderInput>): Promise<void> {
+export async function updateOrder(id: string, input: Partial<CreateOrderInput> & { items: OrderItemInput[] }): Promise<void> {
+  const { items, ...rest } = input
+  if (items.length === 0) {
+    throw new AppError("updateOrder called with an empty items array", USER_MESSAGES.validationError)
+  }
+  const { cosaOrdinato, prezzo } = computeOrderSummary(items)
+  const updates: Record<string, unknown> = { ...rest, cosa_ordinato: cosaOrdinato, prezzo }
   const supabase = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).from("orders").update(input).eq("id", id)
+  const { error } = await (supabase as any).from("orders").update(updates).eq("id", id)
   if (error) {
     logError("updateOrder", error, { id })
     throw new Error(USER_MESSAGES.saveFailed)
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: deleteError } = await (supabase as any).from("order_items").delete().eq("order_id", id)
+  if (deleteError) {
+    logError("updateOrder", deleteError, { id })
+    throw new AppError(deleteError.message, USER_MESSAGES.saveFailed)
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: insertError } = await (supabase as any).from("order_items").insert(
+    items.map((item, idx) => ({ ...item, order_id: id, posizione: idx }))
+  )
+  if (insertError) {
+    logError("updateOrder", insertError, { id })
+    throw new AppError(insertError.message, USER_MESSAGES.saveFailed)
   }
   revalidatePath("/orders")
   revalidatePath("/dashboard")

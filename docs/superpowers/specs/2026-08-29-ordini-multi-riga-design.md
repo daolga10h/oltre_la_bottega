@@ -38,7 +38,7 @@ create policy "auth_all" on public.order_items for all using (auth.uid() is not 
 - `cosa_ordinato` = elenco degli articoli separati da virgola (es. "Targa, Timbro")
 - `prezzo` = somma di (quantità × prezzo unitario) su tutte le righe
 
-Questo è il motivo per cui liste, bacheca, dashboard, ricerca e backup CSV **non richiedono nessuna modifica di codice**: leggono sempre quei due campi su `orders`, che ora vengono scritti in automatico invece che a mano.
+Questo è il motivo per cui liste, bacheca, dashboard, ricerca e backup CSV **non richiedono nessuna modifica di codice**: leggono sempre quei due campi su `orders`, che ora vengono semplicemente scritti in automatico invece che a mano.
 
 Le colonne `orders.quantita` e `orders.testo_da_scrivere` restano nello schema ma diventano inutilizzate dal form in poi — stesso trattamento già riservato a `quantita` quando fu tolto dal riquadro pagamento il 2026-07-09. `orders.tipo_lavorazione` e `orders.dettagli_grafici` restano invece **attivi**, a livello ordine, invariati (vedi "Fuori scope").
 

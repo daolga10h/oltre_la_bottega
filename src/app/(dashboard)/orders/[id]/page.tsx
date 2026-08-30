@@ -237,12 +237,22 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         )}
       </div>
 
-      {/* Text to engrave */}
-      {order.testo_da_scrivere && (
+      {/* Articoli */}
+      {order.items.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-sm text-muted-foreground">Testo da scrivere</CardTitle></CardHeader>
-          <CardContent className="pt-0">
-            <p className="font-medium">{order.testo_da_scrivere}</p>
+          <CardHeader><CardTitle className="text-sm text-muted-foreground">Articoli</CardTitle></CardHeader>
+          <CardContent className="pt-0 space-y-3">
+            {order.items.map((item) => (
+              <div key={item.id} className="flex items-start justify-between gap-3 border-b border-border pb-2 last:border-0 last:pb-0">
+                <div>
+                  <p className="font-medium">{item.cosa_ordinato} &times; {item.quantita}</p>
+                  {item.testo_da_scrivere && (
+                    <p className="text-sm text-muted-foreground">{item.testo_da_scrivere}</p>
+                  )}
+                </div>
+                <p className="text-sm shrink-0">€{formatEUR(item.quantita * item.prezzo_unitario)}</p>
+              </div>
+            ))}
           </CardContent>
         </Card>
       )}
@@ -260,7 +270,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       {/* Payment */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <div className="rounded-lg border border-border bg-card px-3 py-3 text-center shadow-[0px_4px_8px_0px_rgba(59,39,22,0.06)]">
-          <p className="text-xs text-muted-foreground">Prezzo</p>
+          <p className="text-xs text-muted-foreground">Prezzo (calcolato)</p>
           <p className="font-semibold text-base text-foreground">€{formatEUR(order.prezzo)}</p>
         </div>
         <div className="rounded-lg border border-border bg-card px-3 py-3 text-center shadow-[0px_4px_8px_0px_rgba(59,39,22,0.06)]">

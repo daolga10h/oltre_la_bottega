@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
 import { computeOrderStatus, computeSaldo } from "@/lib/orderConstants"
+import { computeOrderSummary, type OrderItemInput } from "@/lib/orderItems"
+import type { OrderItemRow } from "@/actions/orders"
 import { getRememberedOperator, setRememberedOperator } from "@/lib/device-operator"
 import Link from "next/link"
 
@@ -39,7 +41,7 @@ const MATERIALE_OPTIONS = [
 const numClass = "w-full h-9 rounded-lg border border-input bg-card px-2 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 
 interface Props {
-  order?: OrderRow
+  order?: OrderRow & { items?: OrderItemRow[] }
   operatori?: string[]
 }
 
@@ -115,11 +117,40 @@ export function OrderForm({ order, operatori = [] }: Props) {
   const [materiale, setMateriale] = useState(order?.materiale ?? "non_serve")
   const [materialeFornitore, setMaterialeFornitore] = useState(order?.materiale_fornitore ?? "")
   const [materialeCosaManca, setMaterialeCosaManca] = useState(order?.materiale_cosa_manca ?? "")
-  const [prezzoText, setPrezzoText] = useState(order?.prezzo ? order.prezzo.toFixed(2) : "")
+  type ItemRow = { id: number; cosaOrdinato: string; testoDaScrivere: string; quantita: string; prezzoUnitario: string }
+  const [items, setItems] = useState<ItemRow[]>(() => {
+    if (order?.items && order.items.length > 0) {
+      return order.items.map((it, idx) => ({
+        id: idx,
+        cosaOrdinato: it.cosa_ordinato,
+        testoDaScrivere: it.testo_da_scrivere ?? "",
+        quantita: String(it.quantita),
+        prezzoUnitario: it.prezzo_unitario.toFixed(2),
+      }))
+    }
+    return [{ id: 0, cosaOrdinato: "", testoDaScrivere: "", quantita: "1", prezzoUnitario: "" }]
+  })
+  const nextItemId = useRef(items.length)
+
+  function addItem() {
+    setItems((prev) => [...prev, { id: nextItemId.current++, cosaOrdinato: "", testoDaScrivere: "", quantita: "1", prezzoUnitario: "" }])
+  }
+  function removeItem(id: number) {
+    setItems((prev) => (prev.length > 1 ? prev.filter((it) => it.id !== id) : prev))
+  }
+  function updateItem(id: number, field: keyof Omit<ItemRow, "id">, value: string) {
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, [field]: value } : it)))
+  }
+  const itemInputs: OrderItemInput[] = items.map((it) => ({
+    cosa_ordinato: it.cosaOrdinato.trim(),
+    testo_da_scrivere: it.testoDaScrivere.trim() || null,
+    quantita: parseInt(it.quantita, 10) || 1,
+    prezzo_unitario: parseFloat(it.prezzoUnitario) || 0,
+  }))
+  const { prezzo: itemsTotal } = computeOrderSummary(itemInputs)
   const [accontoText, setAccontoText] = useState(order?.acconto ? order.acconto.toFixed(2) : "")
-  const prezzo = parseFloat(prezzoText) || 0
   const acconto = parseFloat(accontoText) || 0
-  const saldo = computeSaldo(prezzo, acconto)
+  const saldo = computeSaldo(itemsTotal, acconto)
   const [fileCliente, setFileCliente] = useState(order?.file_cliente ?? "")
   const [consensoMarketing, setConsensoMarketing] = useState(order?.consenso_marketing ?? false)
   const [chiedereRec, setChiedereRec] = useState(order?.chiedere_recensione ?? false)
@@ -145,8 +176,7 @@ export function OrderForm({ order, operatori = [] }: Props) {
       data_ordine: isEdit ? (order.data_ordine ?? null) : undefined,
       data_consegna: v("data_consegna"),
       data_consegnato: isEdit ? v("data_consegnato") : undefined,
-      cosa_ordinato: (fd.get("cosa_ordinato") as string).trim(),
-      testo_da_scrivere: v("testo_da_scrivere"),
+      items: itemInputs,
       tipo_lavorazione: tipoLavorazione || null,
       bozza_grafica: bozza,
       materiale,
@@ -157,7 +187,6 @@ export function OrderForm({ order, operatori = [] }: Props) {
       dettagli_grafici: v("dettagli_grafici"),
       file_cliente: fileCliente || null,
       note: v("note"),
-      prezzo,
       acconto,
       saldo,
       status: isEdit ? undefined : computeOrderStatus(preventivo, bozza),
@@ -325,13 +354,66 @@ export function OrderForm({ order, operatori = [] }: Props) {
             </div>
           </div>
         )}
-        <div>
-          <Label htmlFor="cosa_ordinato">Cosa ordinato *</Label>
-          <Input id="cosa_ordinato" name="cosa_ordinato" required autoComplete="off" defaultValue={order?.cosa_ordinato} placeholder="Es. targa plexiglass, timbro, portachiavi inciso..." />
-        </div>
-        <div>
-          <Label htmlFor="testo_da_scrivere">Testo da scrivere / incidere / stampare</Label>
-          <Textarea id="testo_da_scrivere" name="testo_da_scrivere" rows={3} autoComplete="off" defaultValue={order?.testo_da_scrivere ?? ""} placeholder="Frase, nome, data, testo targa, testo timbro..." />
+        <div className="space-y-3">
+          <Label>Articoli *</Label>
+          {items.map((item, idx) => (
+            <div key={item.id} className="rounded-lg border border-border p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Riga {idx + 1}</span>
+                {items.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.id)}
+                    className="text-xs text-terracotta hover:underline"
+                  >
+                    Rimuovi
+                  </button>
+                )}
+              </div>
+              <Input
+                required
+                autoComplete="off"
+                value={item.cosaOrdinato}
+                onChange={(e) => updateItem(item.id, "cosaOrdinato", e.target.value)}
+                placeholder="Es. targa plexiglass, timbro, portachiavi inciso..."
+              />
+              <Textarea
+                rows={2}
+                autoComplete="off"
+                value={item.testoDaScrivere}
+                onChange={(e) => updateItem(item.id, "testoDaScrivere", e.target.value)}
+                placeholder="Testo da scrivere / incidere / stampare"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Quantità</Label>
+                  <input
+                    type="number" inputMode="numeric" min="1" step="1"
+                    value={item.quantita}
+                    onChange={(e) => updateItem(item.id, "quantita", e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    className={numClass}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Prezzo unitario €</Label>
+                  <input
+                    type="number" inputMode="decimal" step="0.01" min="0" max="99999"
+                    value={item.prezzoUnitario} placeholder="0.00"
+                    onChange={(e) => updateItem(item.id, "prezzoUnitario", e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    className={numClass}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+          <Button type="button" variant="outline" size="sm" onClick={addItem}>
+            + Aggiungi articolo
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            Totale: <span className="font-semibold text-foreground">€{itemsTotal.toFixed(2)}</span>
+          </p>
         </div>
         <div>
           <Label htmlFor="dettagli_grafici">Dettagli grafici</Label>
@@ -442,13 +524,10 @@ export function OrderForm({ order, operatori = [] }: Props) {
         <h2 className="font-semibold text-foreground border-b pb-1">Pagamento</h2>
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <Label htmlFor="prezzo">Prezzo €</Label>
-            <input id="prezzo" type="number" inputMode="decimal" step="0.01" min="0" max="99999"
-              value={prezzoText} placeholder="0.00"
-              onChange={(e) => setPrezzoText(e.target.value)}
-              onFocus={(e) => e.target.select()}
-              onBlur={() => setPrezzoText(prezzoText ? (parseFloat(prezzoText) || 0).toFixed(2) : "")}
-              className={numClass} />
+            <Label>Prezzo € (calcolato)</Label>
+            <div className="h-9 rounded-lg border border-input bg-background px-2 text-sm flex items-center font-medium text-foreground">
+              {itemsTotal.toFixed(2)}
+            </div>
           </div>
           <div>
             <Label htmlFor="acconto">Acconto €</Label>

@@ -6,7 +6,7 @@ jest.mock("@/lib/supabase/server", () => ({
 }))
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }))
 
-import { getOrders, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore, createOrder } from "../orders"
+import { getOrders, getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore, createOrder, updateOrder } from "../orders"
 
 describe("getOrders filters", () => {
   afterEach(() => jest.clearAllMocks())
@@ -336,33 +336,52 @@ describe("updateMaterialeFornitore", () => {
 describe("createOrder", () => {
   afterEach(() => jest.clearAllMocks())
 
-  it("inserts the order then logs a 'created' event against the returned id", async () => {
+  const items = [
+    { cosa_ordinato: "Targa", testo_da_scrivere: "Studio Rossi", quantita: 2, prezzo_unitario: 6 },
+    { cosa_ordinato: "Timbro", testo_da_scrivere: null, quantita: 1, prezzo_unitario: 10 },
+  ]
+
+  it("computes cosa_ordinato/prezzo from items and inserts orders, then order_items, then order_events", async () => {
     const client = createSupabaseMock({
       orders: [{ data: { id: "new-id" }, error: null }],
+      order_items: [{ data: null, error: null }],
       order_events: [{ data: null, error: null }],
     })
     mockCreateClient.mockResolvedValue(client)
 
-    const result = await createOrder({ nome: "Gigi", cosa_ordinato: "Targa" })
+    const result = await createOrder({ nome: "Gigi", items })
 
     expect(result).toEqual({ id: "new-id" })
-    const eventsBuilder = client.from.mock.results[1].value
-    expect(client.from).toHaveBeenNthCalledWith(2, "order_events")
+
+    expect(client.from).toHaveBeenNthCalledWith(1, "orders")
+    const orderBuilder = client.from.mock.results[0].value
+    expect(orderBuilder.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ nome: "Gigi", cosa_ordinato: "Targa, Timbro", prezzo: 22 })
+    )
+
+    expect(client.from).toHaveBeenNthCalledWith(2, "order_items")
+    const itemsBuilder = client.from.mock.results[1].value
+    expect(itemsBuilder.insert).toHaveBeenCalledWith([
+      { ...items[0], order_id: "new-id", posizione: 0 },
+      { ...items[1], order_id: "new-id", posizione: 1 },
+    ])
+
+    expect(client.from).toHaveBeenNthCalledWith(3, "order_events")
+    const eventsBuilder = client.from.mock.results[2].value
     expect(eventsBuilder.insert).toHaveBeenCalledWith(
       expect.objectContaining({ order_id: "new-id", event_type: "created" })
     )
   })
 
   it("if the order_events insert fails, createOrder does not surface an error — the order exists with no timeline entry", async () => {
-    // fragile point: the two inserts are not transactional and the second one's
-    // error is neither checked nor thrown. This documents current (risky) behavior.
     const client = createSupabaseMock({
       orders: [{ data: { id: "new-id" }, error: null }],
+      order_items: [{ data: null, error: null }],
       order_events: [{ data: null, error: { message: "insert failed" } }],
     })
     mockCreateClient.mockResolvedValue(client)
 
-    await expect(createOrder({ nome: "Gigi", cosa_ordinato: "Targa" })).resolves.toEqual({ id: "new-id" })
+    await expect(createOrder({ nome: "Gigi", items })).resolves.toEqual({ id: "new-id" })
   })
 
   it("throws a save-failed AppError when the order insert itself fails", async () => {
@@ -372,6 +391,148 @@ describe("createOrder", () => {
     mockCreateClient.mockResolvedValue(client)
     jest.spyOn(console, "error").mockImplementation(() => {})
 
-    await expect(createOrder({ nome: "Gigi", cosa_ordinato: "Targa" })).rejects.toThrow()
+    await expect(createOrder({ nome: "Gigi", items })).rejects.toThrow()
+  })
+
+  it("rejects an empty items array before touching the database", async () => {
+    const client = createSupabaseMock({})
+    mockCreateClient.mockResolvedValue(client)
+
+    await expect(createOrder({ nome: "Gigi", items: [] })).rejects.toThrow()
+    expect(client.from).not.toHaveBeenCalled()
+  })
+
+  it("throws a save-failed AppError when the order_items insert fails", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: { id: "new-id" }, error: null }],
+      order_items: [{ data: null, error: { message: "constraint violation" } }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+    jest.spyOn(console, "error").mockImplementation(() => {})
+
+    await expect(createOrder({ nome: "Gigi", items })).rejects.toThrow()
+  })
+
+  it("deletes the just-created order if the order_items insert fails, to avoid leaving an orphaned order with no line items", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: { id: "new-id" }, error: null }],
+      order_items: [{ data: null, error: { message: "insert failed" } }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+    jest.spyOn(console, "error").mockImplementation(() => {})
+
+    await expect(createOrder({ nome: "Gigi", items })).rejects.toThrow()
+
+    expect(client.from).toHaveBeenNthCalledWith(3, "orders")
+    const deleteBuilder = client.from.mock.results[2].value
+    expect(deleteBuilder.delete).toHaveBeenCalled()
+    expect(deleteBuilder.eq).toHaveBeenCalledWith("id", "new-id")
+  })
+})
+
+describe("updateOrder items handling", () => {
+  afterEach(() => jest.clearAllMocks())
+
+  it("recomputes cosa_ordinato/prezzo from items and replaces the order_items rows", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: null }],
+      order_items: [{ data: null, error: null }, { data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    const items = [
+      { cosa_ordinato: "Targa", testo_da_scrivere: null, quantita: 3, prezzo_unitario: 6 },
+    ]
+    await updateOrder("id1", { items })
+
+    const orderUpdateBuilder = client.from.mock.results[0].value
+    expect(orderUpdateBuilder.update).toHaveBeenCalledWith(
+      expect.objectContaining({ cosa_ordinato: "Targa", prezzo: 18 })
+    )
+
+    expect(client.from).toHaveBeenNthCalledWith(2, "order_items")
+    const deleteBuilder = client.from.mock.results[1].value
+    expect(deleteBuilder.delete).toHaveBeenCalled()
+    expect(deleteBuilder.eq).toHaveBeenCalledWith("order_id", "id1")
+
+    expect(client.from).toHaveBeenNthCalledWith(3, "order_items")
+    const insertBuilder = client.from.mock.results[2].value
+    expect(insertBuilder.insert).toHaveBeenCalledWith([{ ...items[0], order_id: "id1", posizione: 0 }])
+  })
+
+  it("rejects an empty items array before touching the database", async () => {
+    const client = createSupabaseMock({})
+    mockCreateClient.mockResolvedValue(client)
+
+    await expect(updateOrder("id1", { items: [] })).rejects.toThrow()
+    expect(client.from).not.toHaveBeenCalled()
+  })
+
+  it("throws a save-failed AppError when the order_items delete fails", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: null }],
+      order_items: [{ data: null, error: { message: "delete failed" } }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+    jest.spyOn(console, "error").mockImplementation(() => {})
+
+    const items = [
+      { cosa_ordinato: "Targa", testo_da_scrivere: null, quantita: 3, prezzo_unitario: 6 },
+    ]
+    await expect(updateOrder("id1", { items })).rejects.toThrow()
+  })
+
+  it("throws a save-failed AppError when the order_items insert fails", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: null }],
+      order_items: [
+        { data: null, error: null },
+        { data: null, error: { message: "insert failed" } },
+      ],
+    })
+    mockCreateClient.mockResolvedValue(client)
+    jest.spyOn(console, "error").mockImplementation(() => {})
+
+    const items = [
+      { cosa_ordinato: "Targa", testo_da_scrivere: null, quantita: 3, prezzo_unitario: 6 },
+    ]
+    await expect(updateOrder("id1", { items })).rejects.toThrow()
+  })
+})
+
+describe("getOrder", () => {
+  afterEach(() => jest.clearAllMocks())
+
+  it("returns items from the order_items join", async () => {
+    const client = createSupabaseMock({
+      orders: [{
+        data: {
+          id: "id1",
+          order_events: [],
+          order_items: [
+            { id: "item1", order_id: "id1", cosa_ordinato: "Targa", testo_da_scrivere: null, quantita: 2, prezzo_unitario: 6, posizione: 0, created_at: "2026-08-29T00:00:00Z" },
+          ],
+        },
+        error: null,
+      }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    const order = await getOrder("id1")
+
+    expect(order?.items).toEqual([
+      { id: "item1", order_id: "id1", cosa_ordinato: "Targa", testo_da_scrivere: null, quantita: 2, prezzo_unitario: 6, posizione: 0, created_at: "2026-08-29T00:00:00Z" },
+    ])
+  })
+
+  it("defaults items to an empty array when the join returns none", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: { id: "id1", order_events: [] }, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    const order = await getOrder("id1")
+
+    expect(order?.items).toEqual([])
   })
 })
