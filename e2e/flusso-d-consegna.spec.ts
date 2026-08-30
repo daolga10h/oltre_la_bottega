@@ -24,11 +24,15 @@ test.describe("Flusso D — Consegna, pagamento e follow-up", () => {
     const nomeCliente = `E2E Test FlussoD ${Date.now()}`
 
     await page.goto("/orders/new")
-    await page.getByLabel("Nome *").fill(nomeCliente)
-    await page.getByLabel("Cosa ordinato *").fill("Targa incisa — test E2E")
+    await page.locator("#nome").fill(nomeCliente)
+    await page.locator("#cognome").fill("E2E")
+    await page.locator("#telefono").fill("3331234567")
+    await page.locator("#data_consegna").fill("2026-09-15")
     await page.getByLabel("Operatore *").click()
     await page.getByRole("option", { name: TEST_OPERATOR }).click()
-    await page.getByLabel("Prezzo €").fill("50")
+    const riga1 = page.locator("div.rounded-lg.border-border.p-3").first()
+    await riga1.getByPlaceholder("Es. targa plexiglass, timbro, portachiavi inciso...").fill("Targa incisa — test E2E")
+    await riga1.locator('input[type="number"]').nth(1).fill("50")
     await page.getByRole("button", { name: "Crea ordine" }).click()
 
     await page.waitForURL(/\/orders\/[0-9a-f-]{36}$/)
