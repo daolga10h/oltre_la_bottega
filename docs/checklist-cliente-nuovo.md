@@ -23,10 +23,11 @@ Checklist per l'attivazione di una nuova istanza (modello single-tenant: ogni bo
 ### Indispensabile
 
 - Un indirizzo email della bottega.
-- Un dispositivo con browser e connessione internet per l'uso quotidiano (tablet, PC o smartphone).
+- Un tablet, un PC o uno smartphone con un browser, per l'uso quotidiano.
+- Una connessione a internet.
 - Decidere e ricordare il PIN condiviso della bottega (un solo PIN per tutti, non un accesso per persona).
 
 ### Facoltativo
 
-- Una stampante etichette compatibile Mopria/AirPrint (es. Brother QL), se vuole stampare le etichette con QR code degli ordini.
-- Disponibilità a passare a Vercel Pro (~20€/mese) se preferisce essere formalmente in regola con i termini di servizio invece di restare sul piano gratuito.
+- Una stampante per etichette compatibile Mopria/AirPrint (es. Brother QL): permette di stampare un'etichetta con QR code per ogni ordine, da attaccare all'oggetto per riconoscerlo subito.
+- Disponibilità a un piccolo costo in più, solo se in futuro la bottega cresce molto e serve più spazio online — per l'uso di tutti i giorni non serve (oggi copre tutto il piano gratuito).
