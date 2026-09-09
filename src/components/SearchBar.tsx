@@ -8,7 +8,7 @@ import { useDebounce } from "@/lib/hooks/useDebounce"
 import { buildClientDisplayName } from "@/lib/utils"
 
 interface SearchResult {
-  orders: Array<{ id: string; cosa_ordinato: string; nome: string; cognome: string | null; azienda: string | null; status: string }>
+  orders: Array<{ id: string; cosa_ordinato: string; nome: string; cognome: string | null; azienda: string | null; referente: string | null; status: string }>
 }
 
 export function SearchBar() {
@@ -76,6 +76,9 @@ export function SearchBar() {
               <span className="text-muted-foreground ml-2 text-xs">
                 {buildClientDisplayName(o.nome, o.cognome, o.azienda)}
               </span>
+              {o.referente && (
+                <span className="text-muted-foreground ml-2 text-xs">Ref. {o.referente}</span>
+              )}
             </button>
           ))}
         </div>

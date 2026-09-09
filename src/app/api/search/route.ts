@@ -15,8 +15,8 @@ export async function GET(request: Request) {
 
     const { data } = await supabase
       .from("orders")
-      .select("id, cosa_ordinato, nome, cognome, azienda, status")
-      .or(buildSearchOrClause(q, ["nome", "cognome", "cosa_ordinato", "telefono", "azienda"]))
+      .select("id, cosa_ordinato, nome, cognome, azienda, referente, status")
+      .or(buildSearchOrClause(q, ["nome", "cognome", "cosa_ordinato", "telefono", "azienda", "referente"]))
       .not("status", "eq", "consegnato")
       .limit(8)
 

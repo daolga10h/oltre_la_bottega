@@ -27,7 +27,7 @@ describe("GET /api/search", () => {
     expect(body).toEqual({ orders: [] })
   })
 
-  it("includes azienda in the select so results can be labeled with it", async () => {
+  it("includes azienda and referente in the select so results can be labeled with them", async () => {
     const client = createSupabaseMock({ orders: [{ data: [], error: null }] })
     mockCreateClient.mockResolvedValue(client)
 
@@ -36,9 +36,10 @@ describe("GET /api/search", () => {
 
     const builder = client.from.mock.results[0].value
     expect(builder.select).toHaveBeenCalledWith(expect.stringContaining("azienda"))
+    expect(builder.select).toHaveBeenCalledWith(expect.stringContaining("referente"))
   })
 
-  it("searches across nome, cognome, cosa_ordinato, telefono and azienda with escaping", async () => {
+  it("searches across nome, cognome, cosa_ordinato, telefono, azienda and referente with escaping", async () => {
     const client = createSupabaseMock({ orders: [{ data: [], error: null }] })
     mockCreateClient.mockResolvedValue(client)
 
@@ -48,7 +49,7 @@ describe("GET /api/search", () => {
     const builder = client.from.mock.results[0].value
     const orArg = builder.or.mock.calls[0][0] as string
     expect(orArg).toBe(
-      'nome.ilike."%Rossi, Mario%",cognome.ilike."%Rossi, Mario%",cosa_ordinato.ilike."%Rossi, Mario%",telefono.ilike."%Rossi, Mario%",azienda.ilike."%Rossi, Mario%"'
+      'nome.ilike."%Rossi, Mario%",cognome.ilike."%Rossi, Mario%",cosa_ordinato.ilike."%Rossi, Mario%",telefono.ilike."%Rossi, Mario%",azienda.ilike."%Rossi, Mario%",referente.ilike."%Rossi, Mario%"'
     )
   })
 })
