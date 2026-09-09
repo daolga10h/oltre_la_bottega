@@ -59,7 +59,12 @@ export function OrderCard({ order }: { order: OrderRow }) {
         overdue && order.status !== "consegnato" && "border-terracotta/40 bg-[#fdf0ef]"
       )}>
         <div className="flex items-start justify-between gap-2">
-          <p className="font-semibold text-sm text-foreground">{clientName}</p>
+          <div>
+            <p className="font-semibold text-sm text-foreground">{clientName}</p>
+            {order.referente && (
+              <p className="text-xs text-muted-foreground">Ref. {order.referente}</p>
+            )}
+          </div>
           <div className="flex items-center gap-1 shrink-0">
             {materialeStage(order.materiale) === "red" && <StageBadge label="da ordinare" tone="red" />}
             {materialeStage(order.materiale) === "yellow" && <StageBadge label="ordinato" tone="yellow" />}
