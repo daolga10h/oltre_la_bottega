@@ -66,6 +66,8 @@ export function OrderForm({ order, operatori = [] }: Props) {
   const [nomeValue, setNomeValue] = useState(order?.nome ?? "")
   const [cognomeValue, setCognomeValue] = useState(order?.cognome ?? "")
   const [aziendaValue, setAziendaValue] = useState(order?.azienda ?? "")
+  const [isEnte, setIsEnte] = useState(order?.is_ente ?? false)
+  const [referenteValue, setReferenteValue] = useState(order?.referente ?? "")
   const [telefonoValue, setTelefonoValue] = useState(order?.telefono ?? "")
   const [emailValue, setEmailValue] = useState(order?.email_cliente ?? "")
 
@@ -98,8 +100,10 @@ export function OrderForm({ order, operatori = [] }: Props) {
 
   function fillCustomer(c: CustomerSummary) {
     setNomeValue(c.nome)
-    setCognomeValue(c.cognome ?? "")
-    setAziendaValue(c.azienda ?? "")
+    setIsEnte(c.is_ente)
+    setCognomeValue(c.is_ente ? "" : (c.cognome ?? ""))
+    setAziendaValue(c.is_ente ? "" : (c.azienda ?? ""))
+    setReferenteValue(c.is_ente ? (c.referente ?? "") : "")
     setTelefonoValue(c.telefono ?? "")
     setEmailValue(c.email ?? "")
     setShowSugg(false)
@@ -167,8 +171,10 @@ export function OrderForm({ order, operatori = [] }: Props) {
 
     const payload = {
       nome: nomeValue.trim(),
-      cognome: cognomeValue.trim() || null,
-      azienda: aziendaValue.trim() || null,
+      is_ente: isEnte,
+      cognome: isEnte ? null : (cognomeValue.trim() || null),
+      azienda: isEnte ? null : (aziendaValue.trim() || null),
+      referente: isEnte ? (referenteValue.trim() || null) : null,
       telefono: telefonoValue.trim() || null,
       email_cliente: emailValue.trim() || null,
       canale,
@@ -219,9 +225,21 @@ export function OrderForm({ order, operatori = [] }: Props) {
       {/* CLIENTE */}
       <section className="space-y-4">
         <h2 className="font-semibold text-foreground border-b pb-1">Cliente</h2>
+        <div className="flex items-center gap-2">
+          <input
+            id="is_ente"
+            type="checkbox"
+            checked={isEnte}
+            onChange={(e) => setIsEnte(e.target.checked)}
+            className="h-4 w-4 rounded border-border"
+          />
+          <Label htmlFor="is_ente" className="mb-0 font-normal text-sm cursor-pointer">
+            È un ente/azienda (non una persona)
+          </Label>
+        </div>
         <div className="grid grid-cols-3 gap-3">
           <div ref={suggRef} className="relative">
-            <Label htmlFor="nome">Nome *</Label>
+            <Label htmlFor="nome">{isEnte ? "Nome ente/azienda *" : "Nome *"}</Label>
             <Input
               id="nome"
               name="nome"
@@ -229,7 +247,7 @@ export function OrderForm({ order, operatori = [] }: Props) {
               value={nomeValue}
               onChange={(e) => handleNomeInput(e.target.value)}
               onFocus={() => { if (suggestions.length > 0) setShowSugg(true) }}
-              placeholder="Nome"
+              placeholder={isEnte ? "Es. Comune di X" : "Nome"}
               autoComplete="off"
             />
             {showSugg && (
@@ -242,9 +260,12 @@ export function OrderForm({ order, operatori = [] }: Props) {
                     className="w-full text-left px-3 py-2 text-sm hover:bg-muted/60 flex items-center justify-between border-b border-border last:border-0"
                   >
                     <span className="font-medium">
-                      {[c.nome, c.cognome].filter(Boolean).join(" ")}
-                      {c.azienda && (
+                      {c.is_ente ? c.nome : [c.nome, c.cognome].filter(Boolean).join(" ")}
+                      {!c.is_ente && c.azienda && (
                         <span className="text-muted-foreground font-normal"> — {c.azienda}</span>
+                      )}
+                      {c.is_ente && c.referente && (
+                        <span className="text-muted-foreground font-normal"> — Ref. {c.referente}</span>
                       )}
                     </span>
                     {c.telefono && <span className="text-muted-foreground text-xs">{c.telefono}</span>}
@@ -253,27 +274,43 @@ export function OrderForm({ order, operatori = [] }: Props) {
               </div>
             )}
           </div>
-          <div>
-            <Label htmlFor="cognome">Cognome *</Label>
-            <Input
-              id="cognome"
-              name="cognome"
-              required
-              value={cognomeValue}
-              onChange={(e) => setCognomeValue(e.target.value)}
-              placeholder="Cognome"
-            />
-          </div>
-          <div>
-            <Label htmlFor="azienda">Azienda</Label>
-            <Input
-              id="azienda"
-              name="azienda"
-              value={aziendaValue}
-              onChange={(e) => setAziendaValue(e.target.value)}
-              placeholder="Associazione, azienda... (facoltativo)"
-            />
-          </div>
+          {!isEnte && (
+            <div>
+              <Label htmlFor="cognome">Cognome *</Label>
+              <Input
+                id="cognome"
+                name="cognome"
+                required
+                value={cognomeValue}
+                onChange={(e) => setCognomeValue(e.target.value)}
+                placeholder="Cognome"
+              />
+            </div>
+          )}
+          {!isEnte && (
+            <div>
+              <Label htmlFor="azienda">Azienda</Label>
+              <Input
+                id="azienda"
+                name="azienda"
+                value={aziendaValue}
+                onChange={(e) => setAziendaValue(e.target.value)}
+                placeholder="Associazione, azienda... (facoltativo)"
+              />
+            </div>
+          )}
+          {isEnte && (
+            <div>
+              <Label htmlFor="referente">Referente</Label>
+              <Input
+                id="referente"
+                name="referente"
+                value={referenteValue}
+                onChange={(e) => setReferenteValue(e.target.value)}
+                placeholder="Facoltativo — persona di contatto"
+              />
+            </div>
+          )}
           <div>
             <Label htmlFor="telefono">Telefono *</Label>
             <Input
