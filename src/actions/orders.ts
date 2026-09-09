@@ -24,6 +24,8 @@ export type OrderRow = {
   nome: string
   cognome: string | null
   azienda: string | null
+  is_ente: boolean
+  referente: string | null
   telefono: string | null
   email_cliente: string | null
   canale: string

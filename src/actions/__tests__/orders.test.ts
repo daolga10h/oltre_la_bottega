@@ -373,6 +373,22 @@ describe("createOrder", () => {
     )
   })
 
+  it("passes is_ente and referente straight through to the orders insert", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: { id: "new-id" }, error: null }],
+      order_items: [{ data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await createOrder({ nome: "Comune di X", is_ente: true, referente: "Mario Rossi", items })
+
+    const orderBuilder = client.from.mock.results[0].value
+    expect(orderBuilder.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ is_ente: true, referente: "Mario Rossi" })
+    )
+  })
+
   it("if the order_events insert fails, createOrder does not surface an error — the order exists with no timeline entry", async () => {
     const client = createSupabaseMock({
       orders: [{ data: { id: "new-id" }, error: null }],
@@ -458,6 +474,22 @@ describe("updateOrder items handling", () => {
     expect(client.from).toHaveBeenNthCalledWith(3, "order_items")
     const insertBuilder = client.from.mock.results[2].value
     expect(insertBuilder.insert).toHaveBeenCalledWith([{ ...items[0], order_id: "id1", posizione: 0 }])
+  })
+
+  it("passes is_ente and referente straight through to the orders update", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: null }],
+      order_items: [{ data: null, error: null }, { data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    const items = [{ cosa_ordinato: "Targa", testo_da_scrivere: null, quantita: 1, prezzo_unitario: 10 }]
+    await updateOrder("id1", { is_ente: true, referente: "Mario Rossi", items })
+
+    const orderUpdateBuilder = client.from.mock.results[0].value
+    expect(orderUpdateBuilder.update).toHaveBeenCalledWith(
+      expect.objectContaining({ is_ente: true, referente: "Mario Rossi" })
+    )
   })
 
   it("rejects an empty items array before touching the database", async () => {
