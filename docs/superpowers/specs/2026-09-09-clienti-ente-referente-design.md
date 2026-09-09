@@ -6,7 +6,7 @@ Data: 2026-09-09
 
 Alcuni ordini arrivano non da una persona privata ma da un'azienda o da una Pubblica Amministrazione (es. un Comune) — non c'è un "nome e cognome" della persona da inserire, ma la ragione sociale dell'ente. Oggi `nome` e `cognome` sono entrambi obbligatori nel form (vincolo di database su `nome`, solo di form su `cognome`), quindi questi ordini non hanno un modo corretto di essere registrati: si finisce a scrivere il nome dell'ente nel campo "Nome" e a lasciare "Cognome" vuoto forzando la validazione, oppure a inventare un cognome fittizio.
 
-A volte questi ordini hanno anche un referente umano (una persona con cui si è effettivamente parlato), che però può cambiare da un ordine all'altro dello stesso ente — mentre l'ente resta lo stesso. I due dati vanno tenuti distinti: l'ente è l'identità stabile e ricorrente del cliente, il referente è un dettaglio di contatto che varia.
+A volte questi ordini hanno anche un referente (una persona con cui si è effettivamente parlato), che però può cambiare da un ordine all'altro dello stesso ente — mentre l'ente resta lo stesso. I due dati vanno tenuti distinti: l'ente è l'identità stabile e ricorrente del cliente, il referente è un dettaglio di contatto che varia.
 
 **Vincolo scoperto in fase di design**: usare il campo esistente `azienda` per il referente (o viceversa) crea un'ambiguità di visualizzazione che non si può risolvere a posteriori — lo stesso dato ("Mario Rossi" + "Comune di X") potrebbe legittimamente significare "una persona privata che lavora per un'azienda" (ordine di sempre, va mostrato "Mario Rossi — Comune di X") oppure "un ente con un referente" (questo caso, va mostrato con l'ente davanti). Serve un segnale esplicito salvato con l'ordine per distinguere i due casi in modo affidabile in tutti i punti dell'app che mostrano il nome cliente.
 
@@ -36,7 +36,7 @@ Migration `supabase/migrations/<timestamp>_add_ente_referente.sql`:
 
 ### Visualizzazione ovunque compare il nome cliente
 
-`buildClientDisplayName` (`src/lib/utils.ts`) guadagna i parametri `isEnte`/`referente` e, quando `isEnte` è true, ritorna solo il nome dell'ente (mai concatenato col referente in una stringa unica — la richiesta esplicita è che i due dati restino visivamente separati). Il referente, quando presente, viene reso in un elemento **separato**, sempre su una riga propria sotto il nome:
+`buildClientDisplayName` (`src/lib/utils.ts`) **non cambia**: in modalità ente `cognome` e `azienda` restano sempre `null` (vedi sopra), quindi la funzione esistente (`[nome, cognome].filter(Boolean).join(" ")`, più l'azienda se presente) ritorna già da sola solo il nome dell'ente, senza bisogno di parametri aggiuntivi. Il referente non passa mai da questa funzione: è un dato indipendente, reso in un elemento **separato**, sempre su una riga propria sotto il nome (mai concatenato in un'unica stringa — la richiesta esplicita è che i due dati restino visivamente separati):
 
 ```
 Comune di X
@@ -63,7 +63,6 @@ Punti toccati (stessa entità di lavoro della feature "Azienda" del 2026-08-29):
 
 ## Test
 
-- `buildClientDisplayName`: nuovi test (ente senza referente, ente con referente, persona privata invariata — nessuna regressione sui casi esistenti).
 - `createOrder`/`updateOrder` (`src/actions/orders.ts`): nuovi test che verificano `is_ente`/`referente` nel payload salvato.
 - `getCustomers`: nuovo test sull'aggregazione di `is_ente`/`referente` (stesso pattern "valore più recente non nullo" già testato per `azienda`).
 - `/api/search/route.ts`: nuovo test che verifica `referente` nella clausola di ricerca.
