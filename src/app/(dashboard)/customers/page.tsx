@@ -83,7 +83,7 @@ export default async function CustomersPage({ searchParams }: Props) {
                   (c.telefono ? `&tel=${encodeURIComponent(c.telefono)}` : "")
                 return (
                   <tr key={i} className="border-b last:border-0 hover:bg-muted/40">
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 align-top">
                       <Link href={href} className="font-bold hover:underline">
                         {displayName}
                       </Link>
@@ -92,17 +92,20 @@ export default async function CustomersPage({ searchParams }: Props) {
                           consenso
                         </span>
                       )}
+                      {c.referente && (
+                        <p className="text-xs text-muted-foreground">Ref. {c.referente}</p>
+                      )}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="px-4 py-3 align-top text-muted-foreground">
                       {c.telefono ?? "—"}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
+                    <td className="px-4 py-3 align-top text-muted-foreground hidden sm:table-cell">
                       {c.email ?? "—"}
                     </td>
-                    <td className="px-4 py-3 text-center font-semibold">
+                    <td className="px-4 py-3 align-top text-center font-semibold">
                       {c.totale_ordini}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
+                    <td className="px-4 py-3 align-top text-muted-foreground hidden sm:table-cell">
                       {c.ultimo_ordine ? formatDate(c.ultimo_ordine) : "—"}
                     </td>
                   </tr>
