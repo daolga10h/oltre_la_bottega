@@ -93,7 +93,7 @@ export async function getOrders(filters?: {
     }
     if (filters?.search) {
       query = query.or(
-        buildSearchOrClause(filters.search, ["nome", "cognome", "cosa_ordinato", "telefono", "azienda"])
+        buildSearchOrClause(filters.search, ["nome", "cognome", "cosa_ordinato", "telefono", "azienda", "referente"])
       )
     }
     const { data, error } = await query
