@@ -17,13 +17,13 @@ export async function GET() {
         .eq("status", "in_lavorazione"),
       supabase.from("orders").select("id", { count: "exact", head: true })
         .lt("data_consegna", today).not("status", "in", '("consegnato")'),
-      supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda, status, data_consegna")
+      supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda, referente, status, data_consegna")
         .eq("data_consegna", today).not("status", "in", '("consegnato")'),
-      supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda")
+      supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda, referente")
         .eq("data_consegnato", today),
-      supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda")
+      supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda, referente")
         .eq("materiale", "da_ordinare"),
-      supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda")
+      supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda, referente")
         .eq("materiale", "ordinato").eq("materiale_data_ordine", today),
       supabase.from("reminders").select("id, title, due_at")
         .eq("status", "attivo").lte("due_at", `${today}T23:59:59Z`).order("due_at"),

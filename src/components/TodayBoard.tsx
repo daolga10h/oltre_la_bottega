@@ -21,6 +21,7 @@ interface TodayOrder {
   nome: string
   cognome: string | null
   azienda: string | null
+  referente: string | null
   status: string
   data_consegna: string | null
 }
@@ -37,6 +38,7 @@ interface OrderSummary {
   nome: string
   cognome: string | null
   azienda: string | null
+  referente: string | null
 }
 
 interface DashboardData {
@@ -177,6 +179,9 @@ function DashboardListCard({
               <p className="text-xs text-muted-foreground mt-0.5">
                 {buildClientDisplayName(o.nome, o.cognome, o.azienda)}
               </p>
+              {o.referente && (
+                <p className="text-xs text-muted-foreground">Ref. {o.referente}</p>
+              )}
             </div>
             {chevron && <span className="text-muted-foreground/50 group-hover:text-muted-foreground text-sm">›</span>}
           </Link>
