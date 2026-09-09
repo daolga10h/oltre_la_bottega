@@ -8,6 +8,7 @@ export type CustomerOrder = {
   nome: string
   cognome: string | null
   azienda: string | null
+  referente: string | null
   telefono: string | null
   email_cliente: string | null
   cosa_ordinato: string
@@ -24,6 +25,8 @@ export type CustomerSummary = {
   nome: string
   cognome: string | null
   azienda: string | null
+  is_ente: boolean
+  referente: string | null
   telefono: string | null
   email: string | null
   consenso_marketing: boolean
@@ -36,27 +39,27 @@ export async function getCustomers(search?: string): Promise<CustomerSummary[]> 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query = (supabase as any)
     .from("orders")
-    .select("nome, cognome, azienda, telefono, email_cliente, consenso_marketing, data_ordine")
+    .select("nome, cognome, azienda, is_ente, referente, telefono, email_cliente, consenso_marketing, data_ordine")
     .order("data_ordine", { ascending: false })
 
   if (search) {
-    query = query.or(buildSearchOrClause(search, ["nome", "cognome", "telefono", "azienda"]))
+    query = query.or(buildSearchOrClause(search, ["nome", "cognome", "telefono", "azienda", "referente"]))
   }
 
   const { data, error } = await query
   if (error) throw error
 
   const map = new Map<string, {
-    nome: string; cognome: string | null; azienda: string | null; telefono: string | null
-    email: string | null; consenso: boolean; count: number; lastDate: string | null
+    nome: string; cognome: string | null; azienda: string | null; isEnte: boolean; referente: string | null
+    telefono: string | null; email: string | null; consenso: boolean; count: number; lastDate: string | null
   }>()
 
   for (const o of data ?? []) {
     const key = o.telefono?.trim() || `${o.nome}|${o.cognome ?? ""}`
     if (!map.has(key)) {
       map.set(key, {
-        nome: o.nome, cognome: o.cognome, azienda: o.azienda, telefono: o.telefono,
-        email: o.email_cliente, consenso: false, count: 0, lastDate: null,
+        nome: o.nome, cognome: o.cognome, azienda: o.azienda, isEnte: o.is_ente, referente: o.referente,
+        telefono: o.telefono, email: o.email_cliente, consenso: false, count: 0, lastDate: null,
       })
     }
     const c = map.get(key)!
@@ -71,6 +74,8 @@ export async function getCustomers(search?: string): Promise<CustomerSummary[]> 
       nome: c.nome,
       cognome: c.cognome,
       azienda: c.azienda,
+      is_ente: c.isEnte,
+      referente: c.referente,
       telefono: c.telefono,
       email: c.email,
       consenso_marketing: c.consenso,
@@ -84,7 +89,7 @@ export async function getOrdersByCustomer(nome: string, telefono?: string | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query = (supabase as any)
     .from("orders")
-    .select("id, nome, cognome, azienda, telefono, email_cliente, cosa_ordinato, status, data_ordine, data_consegna, data_consegnato, prezzo, acconto, saldo")
+    .select("id, nome, cognome, azienda, referente, telefono, email_cliente, cosa_ordinato, status, data_ordine, data_consegna, data_consegnato, prezzo, acconto, saldo")
     .order("data_ordine", { ascending: false })
 
   if (telefono) {

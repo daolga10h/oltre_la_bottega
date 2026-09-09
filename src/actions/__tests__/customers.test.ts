@@ -79,7 +79,7 @@ describe("getCustomers", () => {
     const builder = client.from.mock.results[0].value
     const orArg = builder.or.mock.calls[0][0] as string
     expect(orArg).toBe(
-      'nome.ilike."%Rossi, Mario%",cognome.ilike."%Rossi, Mario%",telefono.ilike."%Rossi, Mario%",azienda.ilike."%Rossi, Mario%"'
+      'nome.ilike."%Rossi, Mario%",cognome.ilike."%Rossi, Mario%",telefono.ilike."%Rossi, Mario%",azienda.ilike."%Rossi, Mario%",referente.ilike."%Rossi, Mario%"'
     )
   })
 
@@ -92,6 +92,18 @@ describe("getCustomers", () => {
 
     const [customer] = await getCustomers()
     expect(customer.azienda).toBeNull()
+  })
+
+  it("carries is_ente and referente from each customer's most recent order", async () => {
+    const rows = [
+      { nome: "Comune di X", cognome: null, telefono: "0522", email_cliente: null, consenso_marketing: false, data_ordine: "2026-06-20", azienda: null, is_ente: false, referente: "Mario Rossi" },
+      { nome: "Comune di X", cognome: null, telefono: "0522", email_cliente: null, consenso_marketing: false, data_ordine: "2026-06-01", azienda: null, is_ente: true, referente: "Anna Bianchi" },
+    ]
+    mockCreateClient.mockResolvedValue(createSupabaseMock({ orders: [{ data: rows, error: null }] }))
+
+    const [customer] = await getCustomers()
+    expect(customer.is_ente).toBe(false)
+    expect(customer.referente).toBe("Mario Rossi")
   })
 })
 
@@ -128,6 +140,18 @@ describe("getOrdersByCustomer", () => {
     const builder = client.from.mock.results[0].value
     expect(builder.select).toHaveBeenCalledWith(
       expect.stringContaining("azienda")
+    )
+  })
+
+  it("selects referente so the profile header can show it", async () => {
+    const client = createSupabaseMock({ orders: [{ data: [], error: null }] })
+    mockCreateClient.mockResolvedValue(client)
+
+    await getOrdersByCustomer("Maria Rossi", "3331112222")
+
+    const builder = client.from.mock.results[0].value
+    expect(builder.select).toHaveBeenCalledWith(
+      expect.stringContaining("referente")
     )
   })
 })
