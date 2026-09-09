@@ -24,6 +24,7 @@ export default async function PrintPage({ params }: { params: Promise<{ id: stri
         nome={order.nome}
         cognome={order.cognome}
         azienda={order.azienda}
+        referente={order.referente}
         telefono={order.telefono}
         dataConsegna={order.data_consegna}
         saldo={order.saldo}
