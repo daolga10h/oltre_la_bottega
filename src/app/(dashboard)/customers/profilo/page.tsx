@@ -15,6 +15,7 @@ export default async function CustomerProfiloPage({ searchParams }: Props) {
   const firstOrder = orders[0]
   const email = firstOrder?.email_cliente
   const telefono = tel ?? firstOrder?.telefono
+  const referente = firstOrder?.referente
   const displayName = firstOrder
     ? buildClientDisplayName(firstOrder.nome, firstOrder.cognome, firstOrder.azienda)
     : nome
@@ -31,6 +32,7 @@ export default async function CustomerProfiloPage({ searchParams }: Props) {
 
       <div>
         <h1 className="text-2xl font-bold">{displayName}</h1>
+        {referente && <p className="text-sm text-muted-foreground">Ref. {referente}</p>}
         <div className="flex flex-col gap-0.5 mt-1">
           {telefono && <p className="text-sm text-muted-foreground">{telefono}</p>}
           {email && <p className="text-sm text-muted-foreground">{email}</p>}
