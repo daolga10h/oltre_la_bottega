@@ -77,7 +77,7 @@ export function SearchBar() {
                 {buildClientDisplayName(o.nome, o.cognome, o.azienda)}
               </span>
               {o.referente && (
-                <span className="text-muted-foreground ml-2 text-xs">Ref. {o.referente}</span>
+                <span className="block text-muted-foreground text-xs">Ref. {o.referente}</span>
               )}
             </button>
           ))}
