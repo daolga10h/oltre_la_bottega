@@ -62,7 +62,12 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
                       className="bg-card border border-border rounded-lg p-3 shadow-[0px_2px_4px_0px_rgba(59,39,22,0.05)] hover:shadow-[0px_4px_10px_0px_rgba(59,39,22,0.1)] transition-shadow space-y-2"
                     >
                       <div className="flex items-start justify-between gap-1">
-                        <p className="font-semibold text-sm text-foreground">{clientName}</p>
+                        <div>
+                          <p className="font-semibold text-sm text-foreground">{clientName}</p>
+                          {order.referente && (
+                            <p className="text-xs text-muted-foreground">Ref. {order.referente}</p>
+                          )}
+                        </div>
                         <div className="flex items-center gap-1 shrink-0">
                           {materialeStage(order.materiale) === "red" && <StageBadge label="da ordinare" tone="red" />}
                           {materialeStage(order.materiale) === "yellow" && <StageBadge label="ordinato" tone="yellow" />}
