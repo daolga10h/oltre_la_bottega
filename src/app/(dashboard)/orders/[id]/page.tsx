@@ -111,6 +111,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight">{clientName}</h1>
+          {order.referente && <p className="text-sm text-muted-foreground">Ref. {order.referente}</p>}
           <p className="text-bark font-medium">{order.cosa_ordinato}</p>
           {order.telefono && <p className="text-sm text-muted-foreground">{order.telefono}</p>}
         </div>
