@@ -11,7 +11,7 @@ jest.mock("@/lib/email/sendBackupEmail", () => ({
 import { GET } from "../route"
 
 function makeRequest(secret?: string): Request {
-  return new Request("http://localhost/api/cron/weekly-backup", {
+  return new Request("http://localhost/api/cron/daily-backup", {
     headers: secret ? { authorization: `Bearer ${secret}` } : {},
   })
 }
@@ -39,7 +39,7 @@ function mockAdminClient(
   }
 }
 
-describe("GET /api/cron/weekly-backup", () => {
+describe("GET /api/cron/daily-backup", () => {
   const OLD_ENV = process.env
   beforeEach(() => {
     process.env = { ...OLD_ENV, CRON_SECRET: "test-secret" }
