@@ -16,7 +16,7 @@ export async function sendBackupEmail(params: {
     from,
     to: params.to,
     subject: `Copia di sicurezza ordini — ${params.shopName} (${today})`,
-    html: `<p>In allegato la copia settimanale di tutti gli ordini di ${params.shopName}, aggiornata al ${today}.</p>`,
+    html: `<p>In allegato la copia giornaliera di tutti gli ordini di ${params.shopName}, aggiornata al ${today}.</p>`,
     attachments: [
       {
         filename: `ordini-${today}.csv`,
