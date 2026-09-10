@@ -17,13 +17,13 @@ export async function GET(request: Request) {
 
     const { data: usersData, error: usersError } = await admin.auth.admin.listUsers()
     if (usersError) {
-      logError("cron/weekly-backup", usersError)
+      logError("cron/daily-backup", usersError)
       return NextResponse.json({ error: "No shop user" }, { status: 500 })
     }
     const shopUsers = usersData?.users.filter((u) => !u.email?.endsWith("@oltrelabottega.local")) ?? []
     const shopUser = shopUsers.length === 1 ? shopUsers[0] : null
     if (!shopUser?.email) {
-      logError("cron/weekly-backup", new Error(`Atteso esattamente un utente bottega, trovati ${shopUsers.length}`))
+      logError("cron/daily-backup", new Error(`Atteso esattamente un utente bottega, trovati ${shopUsers.length}`))
       return NextResponse.json({ error: "No shop user" }, { status: 500 })
     }
 
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
       .order("data_ordine", { ascending: false })
 
     if (error) {
-      logError("cron/weekly-backup", error)
+      logError("cron/daily-backup", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
 
@@ -46,10 +46,10 @@ export async function GET(request: Request) {
       shopName: getShopName(shopUser),
     })
 
-    logInfo("cron/weekly-backup", "Backup settimanale inviato", { count: orders?.length ?? 0 })
+    logInfo("cron/daily-backup", "Backup giornaliero inviato", { count: orders?.length ?? 0 })
     return NextResponse.json({ ok: true, count: orders?.length ?? 0 })
   } catch (error) {
-    logError("cron/weekly-backup", error)
+    logError("cron/daily-backup", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
