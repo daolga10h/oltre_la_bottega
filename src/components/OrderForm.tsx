@@ -197,9 +197,9 @@ export function OrderForm({ order, operatori = [] }: Props) {
       saldo,
       status: isEdit ? undefined : computeOrderStatus(preventivo, bozza),
       consenso_marketing: consensoMarketing,
-      chiedere_recensione: chiedereRec,
-      recensione_richiesta: recRichiesta,
-      recensione_ricevuta: recRicevuta,
+      chiedere_recensione: isEnte ? false : chiedereRec,
+      recensione_richiesta: isEnte ? false : recRichiesta,
+      recensione_ricevuta: isEnte ? false : recRicevuta,
       msg_pronto_inviato: msgPronto,
     }
 
@@ -594,9 +594,11 @@ export function OrderForm({ order, operatori = [] }: Props) {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: "Msg PRONTO inviato", state: msgPronto, set: setMsgPronto },
-              { label: "Chiedere recensione", state: chiedereRec, set: setChiedereRec },
-              { label: "Recensione richiesta", state: recRichiesta, set: setRecRichiesta },
-              { label: "Recensione ricevuta", state: recRicevuta, set: setRecRicevuta },
+              ...(isEnte ? [] : [
+                { label: "Chiedere recensione", state: chiedereRec, set: setChiedereRec },
+                { label: "Recensione richiesta", state: recRichiesta, set: setRecRichiesta },
+                { label: "Recensione ricevuta", state: recRicevuta, set: setRecRicevuta },
+              ]),
             ].map(({ label, state, set }) => (
               <button key={label} type="button" onClick={() => set(!state)}
                 className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors text-left ${
