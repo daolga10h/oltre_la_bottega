@@ -18,7 +18,7 @@ const links = [
 export function BottomNav() {
   const pathname = usePathname()
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 bg-card border-t border-border z-50 flex">
+    <nav className="md:hidden fixed bottom-0 inset-x-0 bg-card border-t border-border z-50 flex print:hidden">
       {links.map(({ href, label, icon: Icon }) => {
         const active = pathname.startsWith(href)
         return (

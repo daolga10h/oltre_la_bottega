@@ -111,7 +111,7 @@ export function CalculatorWidget() {
     "h-9 rounded-lg bg-honey text-bark text-sm font-semibold hover:bg-gold/40"
 
   return (
-    <div className="fixed left-4 bottom-20 md:bottom-4 z-50">
+    <div className="fixed left-4 bottom-20 md:bottom-4 z-50 print:hidden">
       {open && (
         <div
           ref={panelRef}

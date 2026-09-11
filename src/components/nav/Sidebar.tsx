@@ -44,7 +44,7 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="hidden md:flex flex-col w-56 border-r border-border bg-card min-h-screen">
+    <aside className="hidden md:flex flex-col w-56 border-r border-border bg-card min-h-screen print:hidden">
       {/* striscia ambra in cima */}
       <div className="mx-4 h-0.5 bg-gradient-to-r from-gold to-amber rounded-b-sm" />
 
