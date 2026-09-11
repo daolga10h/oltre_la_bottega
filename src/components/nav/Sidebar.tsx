@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { LayoutDashboard, ShoppingBag, Users, Calendar, LayoutGrid, Star, Settings, Euro } from "lucide-react"
+import { LayoutDashboard, ShoppingBag, Users, Calendar, LayoutGrid, Star, Settings, Euro, ClipboardList } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const mainLinks = [
@@ -15,6 +15,7 @@ const managementLinks = [
   { href: "/agenda", label: "Agenda", icon: Calendar },
   { href: "/recensioni", label: "Recensioni", icon: Star },
   { href: "/pagamenti", label: "Da incassare", icon: Euro },
+  { href: "/riepilogo", label: "Riepilogo", icon: ClipboardList },
   { href: "/customers", label: "Clienti", icon: Users },
   { href: "/impostazioni", label: "Impostazioni", icon: Settings },
 ]
@@ -44,7 +45,7 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="hidden md:flex flex-col w-56 border-r border-border bg-card min-h-screen">
+    <aside className="hidden md:flex flex-col w-56 border-r border-border bg-card min-h-screen print:hidden">
       {/* striscia ambra in cima */}
       <div className="mx-4 h-0.5 bg-gradient-to-r from-gold to-amber rounded-b-sm" />
 
