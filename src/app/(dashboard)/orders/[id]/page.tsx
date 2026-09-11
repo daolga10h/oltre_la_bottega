@@ -133,7 +133,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
       {/* Avvisa cliente — ordine pronto */}
       {order.status === "pronto" && !order.msg_pronto_inviato && (() => {
-        const waLink = buildWhatsAppLink(
+        const waLink = order.canale === "mail" ? null : buildWhatsAppLink(
           order.telefono,
           `Ciao ${order.nome}! Il tuo ordine (${order.cosa_ordinato}) è pronto per il ritiro da ${shopName}. Ti aspettiamo! 🙂`
         )
