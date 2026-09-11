@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { LayoutDashboard, ShoppingBag, Users, Calendar, LayoutGrid, Star, Settings } from "lucide-react"
+import { LayoutDashboard, ShoppingBag, Users, Calendar, LayoutGrid, Star, Settings, Euro } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const mainLinks = [
@@ -14,6 +14,7 @@ const mainLinks = [
 const managementLinks = [
   { href: "/agenda", label: "Agenda", icon: Calendar },
   { href: "/recensioni", label: "Recensioni", icon: Star },
+  { href: "/pagamenti", label: "Da incassare", icon: Euro },
   { href: "/customers", label: "Clienti", icon: Users },
   { href: "/impostazioni", label: "Impostazioni", icon: Settings },
 ]
