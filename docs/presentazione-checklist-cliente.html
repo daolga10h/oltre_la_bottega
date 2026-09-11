@@ -1,0 +1,274 @@
+<title>Cosa ti serve</title>
+<style>
+  /* Same Runway identity as the commercial deck (see DESIGN.md) — single-theme
+     warm paper, no dark variant in the live product. */
+  :root{
+    --cream:#f8f7f5;
+    --paper:#ffffff;
+    --linen:#e3dfd5;
+    --stone:#d5d2cd;
+    --warm-ash:#aca89f;
+    --driftwood:#8f897e;
+    --bark:#61594a;
+    --espresso:#3b2716;
+    --amber:#f9a600;
+    --gold:#e89b01;
+    --ledger-rule: rgba(59,39,22,0.06);
+    --ledger-margin: rgba(240,98,79,0.32);
+    --shadow: rgba(59,39,22,0.10);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--espresso);
+    font-family:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,p,ul{margin:0;}
+  h1,h2{text-wrap:balance;}
+
+  .ruled-bg{
+    position:fixed; inset:0;
+    background-image: repeating-linear-gradient(
+      to bottom, transparent 0, transparent 37px,
+      var(--ledger-rule) 37px, var(--ledger-rule) 38px
+    );
+    pointer-events:none; z-index:0;
+  }
+  .margin-rule{
+    position:fixed; top:0; bottom:0; left:clamp(28px,6vw,88px);
+    width:1px; background:var(--ledger-margin);
+    pointer-events:none; z-index:0;
+  }
+  .lamp-glow{
+    position:fixed; top:-20%; left:-10%; width:70vw; height:70vw;
+    background:radial-gradient(circle, rgba(249,166,0,0.16) 0%, rgba(249,166,0,0) 65%);
+    pointer-events:none; z-index:0;
+  }
+
+  .deck{
+    position:relative; width:100vw; height:100vh; height:100dvh;
+    overflow-y:auto; overflow-x:hidden;
+    scroll-snap-type:y mandatory; z-index:1;
+  }
+
+  .page{
+    position:relative; width:100%;
+    min-height:100vh; min-height:100dvh;
+    scroll-snap-align:start; scroll-snap-stop:always;
+    display:flex; flex-direction:column; justify-content:center;
+    padding: clamp(32px,8vh,96px) clamp(28px,10vw,160px) clamp(72px,10vh,120px) clamp(64px,12vw,200px);
+  }
+
+  .eyebrow{
+    font-size:11px; font-weight:700; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--gold); margin-bottom:18px;
+  }
+  .page-content{ max-width:640px; position:relative; }
+
+  .page-title h1{
+    font-size:clamp(38px,6.5vw,72px);
+    font-weight:800; letter-spacing:-0.03em; line-height:1.03;
+  }
+  .page-title .subtitle{
+    font-size:clamp(17px,2.2vw,22px);
+    font-weight:500; color:var(--bark); margin-top:16px; max-width:44ch;
+  }
+
+  .ob-mark{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:28px; height:28px; background:var(--espresso); color:var(--cream);
+    border-radius:6px; font-size:11px; font-weight:800; letter-spacing:.02em;
+    flex-shrink:0;
+  }
+  .brand-corner{
+    position:absolute; left:clamp(28px,10vw,160px); bottom:clamp(28px,6vh,56px);
+    display:flex; align-items:center; gap:10px;
+    color:var(--driftwood); font-size:12px; font-weight:600; letter-spacing:.04em;
+  }
+
+  .page-heading h2{
+    font-size:clamp(26px,4vw,40px);
+    font-weight:800; letter-spacing:-0.02em; margin-bottom:6px;
+  }
+  .page-heading .kicker{
+    font-size:13px; font-weight:700; letter-spacing:.06em;
+    color:var(--driftwood); margin-bottom:28px; display:block;
+  }
+  .kicker.required{ color:var(--espresso); }
+
+  .checklist{ display:flex; flex-direction:column; gap:12px; }
+  .checklist-item{
+    display:flex; align-items:flex-start; gap:16px;
+    padding:16px 20px; background:var(--paper);
+    border:1px solid var(--linen); border-radius:8px;
+    box-shadow:0 4px 8px var(--shadow);
+  }
+  .checklist-item.required{ border-left:3px solid var(--amber); }
+  .checklist-item.optional{ border-left:3px solid var(--stone); }
+  .checklist-item .num{
+    font-size:13px; font-weight:800; color:var(--gold);
+    font-variant-numeric:tabular-nums; min-width:20px; padding-top:1px;
+  }
+  .checklist-item.optional .num{ color:var(--warm-ash); }
+  .checklist-item .label{
+    font-size:17px; color:var(--espresso); font-weight:500; line-height:1.5;
+  }
+  .checklist-item.optional .label{ color:var(--bark); }
+
+  .page-note{
+    margin-top:26px; font-size:14px; color:var(--driftwood); font-style:italic;
+  }
+
+  .deck-nav{
+    position:fixed; left:0; right:0; bottom:clamp(18px,4vh,32px);
+    display:flex; align-items:center; justify-content:center; gap:18px; z-index:5;
+  }
+  .dots{ display:flex; gap:8px; }
+  .dot{
+    width:7px; height:7px; border-radius:50%; background:var(--stone);
+    border:none; padding:0; cursor:pointer;
+    transition:background .25s ease, transform .25s ease;
+  }
+  .dot:hover{ background:var(--warm-ash); }
+  .dot.active{ background:var(--gold); transform:scale(1.35); }
+  .dot:focus-visible{ outline:2px solid var(--amber); outline-offset:3px; }
+
+  .nav-arrow{
+    width:38px; height:38px; border-radius:50%; border:1px solid var(--linen);
+    background:var(--paper); color:var(--espresso); font-size:17px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; box-shadow:0 2px 6px var(--shadow);
+  }
+  .nav-arrow:hover{ background:var(--linen); }
+  .nav-arrow:disabled{ opacity:.3; cursor:default; box-shadow:none; }
+  .nav-arrow:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+
+  .folio{
+    position:fixed; right:clamp(20px,6vw,64px); bottom:clamp(20px,5vh,40px);
+    font-size:11px; font-weight:700; letter-spacing:.12em; color:var(--driftwood);
+    font-variant-numeric:tabular-nums; z-index:5;
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<div class="ruled-bg" aria-hidden="true"></div>
+<div class="margin-rule" aria-hidden="true"></div>
+<div class="lamp-glow" aria-hidden="true"></div>
+
+<div class="deck" id="deck">
+
+  <section class="page page-title">
+    <div class="page-content">
+      <p class="eyebrow">Prima di cominciare</p>
+      <h1>Ti servono quattro cose.</h1>
+      <p class="subtitle">Non un progetto informatico, non una lista infinita di account da creare. La parte tecnica — configurazione, collegamenti, tutto il resto — la preparo io.</p>
+    </div>
+    <div class="brand-corner"><span class="ob-mark">OB</span> Oltre la Bottega</div>
+  </section>
+
+  <section class="page page-heading">
+    <div class="page-content">
+      <p class="eyebrow">Il minimo indispensabile</p>
+      <h2>Solo queste quattro cose</h2>
+      <span class="kicker required">Indispensabile</span>
+      <ul class="checklist">
+        <li class="checklist-item required"><span class="num">01</span><span class="label">Un indirizzo email della bottega</span></li>
+        <li class="checklist-item required"><span class="num">02</span><span class="label">Un tablet, un PC o uno smartphone con un browser (Chrome, Safari...)</span></li>
+        <li class="checklist-item required"><span class="num">03</span><span class="label">Una connessione a internet</span></li>
+        <li class="checklist-item required"><span class="num">04</span><span class="label">Decidere e ricordare il PIN condiviso della bottega</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="page page-heading">
+    <div class="page-content">
+      <p class="eyebrow">Se vuoi fare di più</p>
+      <h2>Due cose extra, quando vuoi</h2>
+      <span class="kicker">Facoltativo — non servono per iniziare</span>
+      <ul class="checklist">
+        <li class="checklist-item optional"><span class="num">01</span><span class="label">Una stampante per etichette: ti permette di stampare un'etichetta per ogni ordine, da attaccare all'oggetto, così riconosci subito a chi appartiene</span></li>
+        <li class="checklist-item optional"><span class="num">02</span><span class="label">Un piccolo costo in più, solo se in futuro la bottega cresce molto e serve più spazio online — per l'uso di tutti i giorni non serve</span></li>
+      </ul>
+      <p class="page-note">Anche senza queste due cose, l'app funziona esattamente allo stesso modo.</p>
+    </div>
+  </section>
+
+</div>
+
+<nav class="deck-nav" aria-label="Navigazione pagine">
+  <button class="nav-arrow prev" aria-label="Pagina precedente" id="prevBtn">‹</button>
+  <div class="dots" id="dots"></div>
+  <button class="nav-arrow next" aria-label="Pagina successiva" id="nextBtn">›</button>
+</nav>
+
+<div class="folio" id="folio">01 / 03</div>
+
+<script>
+(function(){
+  var deckEl = document.getElementById('deck');
+  var pages = Array.prototype.slice.call(document.querySelectorAll('.page'));
+  var dotsWrap = document.getElementById('dots');
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+  var folio = document.getElementById('folio');
+  var total = pages.length;
+  var current = 0;
+  var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  pages.forEach(function(_, i){
+    var b = document.createElement('button');
+    b.className = 'dot';
+    b.setAttribute('aria-label', 'Vai alla pagina ' + (i+1));
+    b.addEventListener('click', function(){ goTo(i); });
+    dotsWrap.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.querySelectorAll('.dot'));
+
+  function pad(n){ return n < 10 ? '0'+n : ''+n; }
+
+  function setCurrent(i){
+    current = i;
+    dots.forEach(function(d, idx){
+      d.classList.toggle('active', idx === current);
+      d.setAttribute('aria-current', idx === current ? 'true' : 'false');
+    });
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === total - 1;
+    folio.textContent = pad(current+1) + ' / ' + pad(total);
+  }
+
+  function goTo(i){
+    i = Math.max(0, Math.min(total - 1, i));
+    pages[i].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  }
+
+  prevBtn.addEventListener('click', function(){ goTo(current - 1); });
+  nextBtn.addEventListener('click', function(){ goTo(current + 1); });
+
+  window.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') { goTo(current + 1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') { goTo(current - 1); e.preventDefault(); }
+    else if (e.key === 'Home') { goTo(0); }
+    else if (e.key === 'End') { goTo(total - 1); }
+  });
+
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.55) {
+          setCurrent(pages.indexOf(entry.target));
+        }
+      });
+    }, { root: deckEl, threshold: [0.55] });
+    pages.forEach(function(p){ observer.observe(p); });
+  }
+
+  setCurrent(0);
+})();
+</script>

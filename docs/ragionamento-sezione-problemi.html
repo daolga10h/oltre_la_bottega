@@ -1,0 +1,220 @@
+<title>Come raccontare i problemi</title>
+<style>
+  :root{
+    --cream:#f8f7f5; --paper:#ffffff; --linen:#e3dfd5; --stone:#d5d2cd;
+    --warm-ash:#aca89f; --driftwood:#8f897e; --bark:#61594a; --espresso:#3b2716;
+    --amber:#f9a600; --gold:#e89b01; --terracotta:#f0624f;
+    --ledger-rule: rgba(59,39,22,0.06); --ledger-margin: rgba(240,98,79,0.32);
+    --shadow: rgba(59,39,22,0.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{ margin:0; background:var(--cream); color:var(--espresso);
+    font-family:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+    -webkit-font-smoothing:antialiased; }
+  h1,h2,h3,p,blockquote{margin:0;}
+  h1,h2{text-wrap:balance;}
+
+  .ruled-bg{ position:fixed; inset:0;
+    background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 37px, var(--ledger-rule) 37px, var(--ledger-rule) 38px);
+    pointer-events:none; z-index:0; }
+  .margin-rule{ position:fixed; top:0; bottom:0; left:clamp(28px,6vw,88px); width:1px;
+    background:var(--ledger-margin); pointer-events:none; z-index:0; }
+
+  .deck{ position:relative; width:100vw; height:100vh; height:100dvh;
+    overflow-y:auto; overflow-x:hidden; scroll-snap-type:y mandatory; z-index:1; }
+  .page{ position:relative; width:100%; min-height:100vh; min-height:100dvh;
+    scroll-snap-align:start; scroll-snap-stop:always;
+    display:flex; flex-direction:column; justify-content:center;
+    padding: clamp(32px,8vh,96px) clamp(28px,10vw,160px) clamp(72px,10vh,120px) clamp(64px,12vw,200px); }
+
+  .eyebrow{ font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--gold); margin-bottom:18px; }
+  .page-content{ max-width:700px; position:relative; }
+
+  h1{ font-size:clamp(34px,5.5vw,58px); font-weight:800; letter-spacing:-0.03em; line-height:1.05; }
+  .subtitle{ font-size:clamp(16px,2vw,20px); font-weight:500; color:var(--bark); margin-top:16px; max-width:52ch; }
+
+  h2{ font-size:clamp(24px,3.6vw,34px); font-weight:800; letter-spacing:-0.02em; margin-bottom:20px; }
+
+  ol.diagnosis{ padding-left:0; list-style:none; display:flex; flex-direction:column; gap:16px; }
+  ol.diagnosis li{ font-size:16px; line-height:1.6; color:var(--bark); padding-left:36px; position:relative; }
+  ol.diagnosis li .n{ position:absolute; left:0; top:0; font-weight:800; color:var(--terracotta); }
+
+  .option-tag{ display:inline-block; font-size:11px; font-weight:700; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--gold); border:1px solid var(--linen); background:var(--paper);
+    padding:4px 10px; border-radius:100px; margin-bottom:22px; }
+
+  .sample{ background:var(--paper); border:1px solid var(--linen); border-radius:8px;
+    padding:26px 28px; box-shadow:0 4px 8px var(--shadow); margin-top:6px; }
+  .sample .s-eyebrow{ font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--gold); margin-bottom:10px; }
+  .sample blockquote{ font-size:clamp(22px,3.2vw,30px); font-weight:800; letter-spacing:-0.01em;
+    line-height:1.1; margin-bottom:14px; }
+  .sample p{ font-size:15.5px; line-height:1.65; color:var(--bark); margin-top:10px; }
+  .sample p:first-of-type{ margin-top:0; }
+  .sample .three{ display:flex; flex-direction:column; gap:12px; margin-top:10px; }
+  .sample .three p{ margin:0; }
+  .sample .three b{ color:var(--espresso); }
+
+  .why{ margin-top:16px; font-size:14px; font-style:italic; color:var(--driftwood); }
+
+  .deck-nav{ position:fixed; left:0; right:0; bottom:clamp(18px,4vh,32px);
+    display:flex; align-items:center; justify-content:center; gap:18px; z-index:5; }
+  .dots{ display:flex; gap:8px; }
+  .dot{ width:7px; height:7px; border-radius:50%; background:var(--stone); border:none; padding:0;
+    cursor:pointer; transition:background .25s ease, transform .25s ease; }
+  .dot:hover{ background:var(--warm-ash); }
+  .dot.active{ background:var(--gold); transform:scale(1.35); }
+  .dot:focus-visible{ outline:2px solid var(--amber); outline-offset:3px; }
+  .nav-arrow{ width:38px; height:38px; border-radius:50%; border:1px solid var(--linen);
+    background:var(--paper); color:var(--espresso); font-size:17px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px var(--shadow); }
+  .nav-arrow:hover{ background:var(--linen); }
+  .nav-arrow:disabled{ opacity:.3; cursor:default; box-shadow:none; }
+  .nav-arrow:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+  .folio{ position:fixed; right:clamp(20px,6vw,64px); bottom:clamp(20px,5vh,40px);
+    font-size:11px; font-weight:700; letter-spacing:.12em; color:var(--driftwood);
+    font-variant-numeric:tabular-nums; z-index:5; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<div class="ruled-bg" aria-hidden="true"></div>
+<div class="margin-rule" aria-hidden="true"></div>
+
+<div class="deck" id="deck">
+
+  <section class="page">
+    <div class="page-content">
+      <p class="eyebrow">Un ragionamento, non una versione finale</p>
+      <h1>Come raccontare i problemi di prima</h1>
+      <p class="subtitle">Le 3 pagine dedicate con la "conseguenza" evidenziata non convincono. Prima di rifare, guardiamo tre strade diverse per raccontare lo stesso concetto — così scegliamo insieme quella giusta.</p>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="page-content">
+      <p class="eyebrow">Un'ipotesi sul perché non funziona</p>
+      <h2>Cosa potrebbe stonare</h2>
+      <ol class="diagnosis">
+        <li><span class="n">1.</span> Tre pagine per un solo concetto rallentano troppo rispetto al ritmo del resto del documento.</li>
+        <li><span class="n">2.</span> Il riquadro "conseguenza" evidenziato sembra una tecnica di vendita studiata a tavolino, invece di una voce onesta — proprio quello che il documento vuole evitare.</li>
+        <li><span class="n">3.</span> Descrivere "quello che sbagli" in seconda persona può risultare giudicante, invece che empatico.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="page-content">
+      <span class="option-tag">Strada A</span>
+      <h2>Una sola pagina, essenziale</h2>
+      <div class="sample">
+        <p class="s-eyebrow">Ogni giorno, prima delle 9</p>
+        <blockquote>Cosa devo fare oggi?</blockquote>
+        <p>Prima di Oltre la Bottega, la risposta stava in testa — tra un ordine da ricordare, una scadenza che salta fuori all'ultimo, un cliente di cui hai perso il filo. Oltre la Bottega risponde in meno di un minuto.</p>
+      </div>
+      <p class="why">Torna a una pagina sola. Nessun elenco, nessuna scatola: si fida del lettore e passa oltre in fretta.</p>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="page-content">
+      <span class="option-tag">Strada B</span>
+      <h2>Una scena raccontata, non una categoria</h2>
+      <div class="sample">
+        <p>Le 8 e mezza di un martedì qualunque. Un cliente è al banco, chiede se il suo ordine è pronto. Non lo so — non perché non lavori bene, ma perché quell'informazione è da qualche parte tra un post-it, un messaggio WhatsApp e la mia memoria. Gli dico "controllo e ti richiamo", e per il resto della giornata quella promessa mi resta in testa, insieme a tutte le altre.</p>
+        <p>Oltre la Bottega è nata perché quel momento smettesse di ripetersi.</p>
+      </div>
+      <p class="why">Un episodio concreto, in prima persona, invece di un elenco di categorie di problemi. Mostra la scena invece di spiegarla.</p>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="page-content">
+      <span class="option-tag">Strada C</span>
+      <h2>I tre pensieri, ma leggeri</h2>
+      <div class="sample">
+        <div class="three">
+          <p><b>Gli ordini che tieni a mente</b> — finché una scadenza non salta fuori solo perché il cliente richiama per chiedere.</p>
+          <p><b>Il cliente che torni a vedere</b> — e non ricordi più cosa aveva ordinato, o se gli hai già chiesto una recensione.</p>
+          <p><b>Le cose che restano indietro</b> — non per pigrizia, ma perché al banco non c'è mai un attimo libero.</p>
+        </div>
+      </div>
+      <p class="why">Tiene i tre pensieri della versione precedente, ma su una pagina sola e senza il riquadro "conseguenza" — la conseguenza resta sottintesa, non dichiarata.</p>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="page-content">
+      <p class="eyebrow">A te la scelta</p>
+      <h2>Quale di queste tre si avvicina di più?</h2>
+      <p class="subtitle">Oppure nessuna delle tre, e serve un'altra strada ancora — dimmi cosa non torna e ripartiamo da lì.</p>
+    </div>
+  </section>
+
+</div>
+
+<nav class="deck-nav" aria-label="Navigazione pagine">
+  <button class="nav-arrow prev" aria-label="Pagina precedente" id="prevBtn">‹</button>
+  <div class="dots" id="dots"></div>
+  <button class="nav-arrow next" aria-label="Pagina successiva" id="nextBtn">›</button>
+</nav>
+<div class="folio" id="folio">01 / 06</div>
+
+<script>
+(function(){
+  var deckEl = document.getElementById('deck');
+  var pages = Array.prototype.slice.call(document.querySelectorAll('.page'));
+  var dotsWrap = document.getElementById('dots');
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+  var folio = document.getElementById('folio');
+  var total = pages.length;
+  var current = 0;
+  var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  pages.forEach(function(_, i){
+    var b = document.createElement('button');
+    b.className = 'dot';
+    b.setAttribute('aria-label', 'Vai alla pagina ' + (i+1));
+    b.addEventListener('click', function(){ goTo(i); });
+    dotsWrap.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.querySelectorAll('.dot'));
+
+  function pad(n){ return n < 10 ? '0'+n : ''+n; }
+  function setCurrent(i){
+    current = i;
+    dots.forEach(function(d, idx){
+      d.classList.toggle('active', idx === current);
+      d.setAttribute('aria-current', idx === current ? 'true' : 'false');
+    });
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === total - 1;
+    folio.textContent = pad(current+1) + ' / ' + pad(total);
+  }
+  function goTo(i){
+    i = Math.max(0, Math.min(total - 1, i));
+    pages[i].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  }
+  prevBtn.addEventListener('click', function(){ goTo(current - 1); });
+  nextBtn.addEventListener('click', function(){ goTo(current + 1); });
+  window.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') { goTo(current + 1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') { goTo(current - 1); e.preventDefault(); }
+    else if (e.key === 'Home') { goTo(0); }
+    else if (e.key === 'End') { goTo(total - 1); }
+  });
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.55) { setCurrent(pages.indexOf(entry.target)); }
+      });
+    }, { root: deckEl, threshold: [0.55] });
+    pages.forEach(function(p){ observer.observe(p); });
+  }
+  setCurrent(0);
+})();
+</script>

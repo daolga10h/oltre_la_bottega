@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd \"d:\\\\Documenti\\\\Projects\\\\oltre_la_bottega\"; npx tsc --noEmit 2>&1 | Where-Object { $_ -notmatch \"validator.ts\" } | Select-Object -First 20)",
+      "Bash(npx eslint *)",
+      "Read(//tmp/**)",
+      "Bash(git status *)",
+      "Bash(find / -iname \"*security-review*\" 2>/dev/null | grep -v node_modules)",
+      "Read(//d//**)",
+      "Bash(git fetch *)",
+      "Bash(grep -iE \"sk-[a-z0-9]{10,}|eyJhbGciOi|SUPABASE_SERVICE_ROLE|-----BEGIN \\(RSA|PRIVATE\\)\")",
+      "Skill(code-review)",
+      "Skill(code-review:*)",
+      "Bash(npm audit *)",
+      "Bash(node -e \"console.log\\(JSON.parse\\(require\\('fs'\\).readFileSync\\('package.json'\\)\\).dependencies['@supabase/supabase-js']\\)\")",
+      "Bash(npx playwright *)",
+      "Bash(awk -F'=' '{print $1\"=\"length\\($0\\)-length\\($1\\)-1\" chars, line ends: \"}' .env.local)",
+      "Bash(node -e ' *)",
+      "Bash(node scratch_debug_env.js)",
+      "Bash(ls src/actions/inventory.ts)",
+      "Bash(wc -l src/actions/inventory.ts)",
+      "Bash(grep -rn \"inventory\" src/app --include=\"*.tsx\" -l)",
+      "Bash(cd d:/Documenti/Projects/oltre_la_bottega && rm -rf \"src/app/\\(dashboard\\)/inventory\" src/actions/inventory.ts && git status --porcelain)",
+      "Bash(node -e \"const i = require\\('lucide-react'\\); console.log\\(typeof i.MessageCircle\\)\")",
+      "Bash(find \"src/app/\\(dashboard\\)/customers\" -type f)",
+      "Bash(wc -l src/actions/customers.ts src/actions/reminders.ts)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
+    ],
+    "additionalDirectories": [
+      "d:\\Documenti\\Projects\\oltre_la_bottega\\src\\app\\(dashboard)\\inventory"
+    ]
+  }
+}
