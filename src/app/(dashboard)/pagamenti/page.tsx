@@ -1,6 +1,7 @@
 import { getOrders } from "@/actions/orders"
 import { toUserMessage } from "@/lib/errors"
 import { ErrorMessage } from "@/components/ErrorMessage"
+import { QuickContactLink } from "@/components/QuickContactLink"
 import { formatDate, formatEUR, buildClientDisplayName, buildWhatsAppLink, buildMailtoLink, cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/server"
@@ -72,30 +73,8 @@ export default async function PagamentiPage() {
                     <td className="px-4 py-3 font-semibold text-gold">€{formatEUR(o.saldo)}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
-                        {waLink && (
-                          <a
-                            href={waLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={cn(
-                              buttonVariants({ variant: "outline", size: "sm" }),
-                              "w-full text-xs inline-flex items-center justify-center gap-1"
-                            )}
-                          >
-                            <MessageCircle className="w-3 h-3" />Chiedi su WhatsApp
-                          </a>
-                        )}
-                        {mailLink && (
-                          <a
-                            href={mailLink}
-                            className={cn(
-                              buttonVariants({ variant: "outline", size: "sm" }),
-                              "w-full text-xs inline-flex items-center justify-center gap-1"
-                            )}
-                          >
-                            <Mail className="w-3 h-3" />Chiedi via email
-                          </a>
-                        )}
+                        <QuickContactLink href={waLink} icon={MessageCircle} label="Chiedi su WhatsApp" external />
+                        <QuickContactLink href={mailLink} icon={Mail} label="Chiedi via email" />
                         <Link
                           href={`/orders/${o.id}`}
                           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full text-xs")}

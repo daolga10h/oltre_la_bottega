@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore } from "@/actions/orders"
 import { STATUS_LABELS, STATUS_ORDER, preventivoStage, bozzaStage, materialeStage, type Stage } from "@/lib/orderConstants"
 import { StatusBadge } from "@/components/OrderCard"
+import { QuickContactLink } from "@/components/QuickContactLink"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
 import Link from "next/link"
@@ -146,24 +147,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         return (
           <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gold/30 bg-honey/40 px-3 py-2">
             <span className="text-xs font-semibold text-bark mr-1">Avvisa il cliente:</span>
-            {waLink && (
-              <a
-                href={waLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "inline-flex items-center gap-1 bg-card")}
-              >
-                <MessageCircle className="w-3.5 h-3.5" />WhatsApp
-              </a>
-            )}
-            {mailLink && (
-              <a
-                href={mailLink}
-                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "inline-flex items-center gap-1 bg-card")}
-              >
-                <Mail className="w-3.5 h-3.5" />Email
-              </a>
-            )}
+            <QuickContactLink href={waLink} icon={MessageCircle} label="WhatsApp" external variant="toolbar" />
+            <QuickContactLink href={mailLink} icon={Mail} label="Email" variant="toolbar" />
           </div>
         )
       })()}
