@@ -1,11 +1,11 @@
 import { getOrders } from "@/actions/orders"
 import { toUserMessage } from "@/lib/errors"
 import { ErrorMessage } from "@/components/ErrorMessage"
-import { formatDate, formatEUR, buildClientDisplayName, buildWhatsAppLink, cn } from "@/lib/utils"
+import { formatDate, formatEUR, buildClientDisplayName, buildWhatsAppLink, buildMailtoLink, cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/server"
 import { getShopName } from "@/lib/shop-name"
-import { MessageCircle } from "lucide-react"
+import { MessageCircle, Mail } from "lucide-react"
 import Link from "next/link"
 
 export default async function PagamentiPage() {
@@ -53,10 +53,9 @@ export default async function PagamentiPage() {
             <tbody>
               {orders.map((o) => {
                 const clientName = buildClientDisplayName(o.nome, o.cognome, o.azienda)
-                const waLink = buildWhatsAppLink(
-                  o.telefono,
-                  `Ciao ${o.nome}! Qui è ${shopName} 🙂 Ti ricordiamo che il saldo di €${formatEUR(o.saldo)} per il tuo ordine è ancora da saldare. Grazie!`
-                )
+                const messaggio = `Ciao ${o.nome}! Qui è ${shopName} 🙂 Ti ricordiamo che il saldo di €${formatEUR(o.saldo)} per il tuo ordine è ancora da saldare. Grazie!`
+                const waLink = o.canale === "mail" ? null : buildWhatsAppLink(o.telefono, messaggio)
+                const mailLink = o.canale === "mail" ? buildMailtoLink(o.email_cliente, `Saldo in sospeso — ${shopName}`, messaggio) : null
                 return (
                   <tr key={o.id} className="border-b last:border-0 hover:bg-muted/40">
                     <td className="px-4 py-3">
@@ -84,6 +83,17 @@ export default async function PagamentiPage() {
                             )}
                           >
                             <MessageCircle className="w-3 h-3" />Chiedi su WhatsApp
+                          </a>
+                        )}
+                        {mailLink && (
+                          <a
+                            href={mailLink}
+                            className={cn(
+                              buttonVariants({ variant: "outline", size: "sm" }),
+                              "w-full text-xs inline-flex items-center justify-center gap-1"
+                            )}
+                          >
+                            <Mail className="w-3 h-3" />Chiedi via email
                           </a>
                         )}
                         <Link
