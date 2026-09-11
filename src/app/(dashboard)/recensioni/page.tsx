@@ -1,13 +1,13 @@
 import { getOrders, markReviewRequested, markReviewReceived } from "@/actions/orders"
 import { toUserMessage } from "@/lib/errors"
 import { ErrorMessage } from "@/components/ErrorMessage"
-import { formatDate, buildWhatsAppLink } from "@/lib/utils"
+import { formatDate, buildWhatsAppLink, buildMailtoLink } from "@/lib/utils"
 import { revalidatePath } from "next/cache"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/server"
 import { getShopName } from "@/lib/shop-name"
-import { MessageCircle } from "lucide-react"
+import { MessageCircle, Mail } from "lucide-react"
 import Link from "next/link"
 
 function YesNoBadge({ value }: { value: boolean }) {
@@ -109,10 +109,22 @@ export default async function RecensioniPage() {
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
                         {(() => {
-                          const waLink = buildWhatsAppLink(
-                            o.telefono,
-                            `Ciao ${o.nome}! Qui è ${shopName} 🙂 Se hai un minuto, ci farebbe molto piacere ricevere una tua recensione. Grazie mille!`
-                          )
+                          const messaggio = `Ciao ${o.nome}! Qui è ${shopName} 🙂 Se hai un minuto, ci farebbe molto piacere ricevere una tua recensione. Grazie mille!`
+                          if (o.canale === "mail") {
+                            const mailLink = buildMailtoLink(o.email_cliente, "La tua opinione conta per noi", messaggio)
+                            return mailLink ? (
+                              <a
+                                href={mailLink}
+                                className={cn(
+                                  buttonVariants({ variant: "outline", size: "sm" }),
+                                  "w-full text-xs inline-flex items-center justify-center gap-1"
+                                )}
+                              >
+                                <Mail className="w-3 h-3" />Chiedi via email
+                              </a>
+                            ) : null
+                          }
+                          const waLink = buildWhatsAppLink(o.telefono, messaggio)
                           return waLink ? (
                             <a
                               href={waLink}
