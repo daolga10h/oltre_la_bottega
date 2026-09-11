@@ -1,4 +1,6 @@
 import { getOrders } from "@/actions/orders"
+import { toUserMessage } from "@/lib/errors"
+import { ErrorMessage } from "@/components/ErrorMessage"
 import { STATUS_ORDER, STATUS_LABELS } from "@/lib/orderConstants"
 import { formatDate, formatEUR, buildClientDisplayName } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/server"
@@ -10,7 +12,15 @@ export default async function RiepilogoPage() {
   const { data: { user } } = await supabase.auth.getUser()
   const shopName = getShopName(user)
 
-  const orders = await getOrders({ activeOnly: true })
+  let orders: Awaited<ReturnType<typeof getOrders>> = []
+  let errorMsg: string | null = null
+
+  try {
+    orders = await getOrders({ activeOnly: true })
+  } catch (err) {
+    errorMsg = toUserMessage(err)
+  }
+
   const oggi = formatDate(new Date())
 
   return (
@@ -23,7 +33,9 @@ export default async function RiepilogoPage() {
         <StampaButton />
       </div>
 
-      {orders.length === 0 && (
+      {errorMsg && <ErrorMessage message={errorMsg} />}
+
+      {orders.length === 0 && !errorMsg && (
         <p className="text-muted-foreground text-sm">Nessun ordine attivo.</p>
       )}
 
@@ -35,27 +47,38 @@ export default async function RiepilogoPage() {
             <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground border-b border-border pb-1">
               {STATUS_LABELS[status]}
             </h2>
-            <table className="w-full text-sm">
-              <tbody>
-                {statusOrders.map((o) => {
-                  const clientName = buildClientDisplayName(o.nome, o.cognome, o.azienda)
-                  return (
-                    <tr key={o.id} className="border-b border-border last:border-0 [break-inside:avoid]">
-                      <td className="px-2 py-2 align-top">
-                        <p className="font-semibold">{clientName}</p>
-                        {o.referente && <p className="text-xs text-muted-foreground">Ref. {o.referente}</p>}
-                      </td>
-                      <td className="px-2 py-2 align-top">{o.cosa_ordinato}</td>
-                      <td className="px-2 py-2 align-top text-muted-foreground">{o.telefono ?? "—"}</td>
-                      <td className="px-2 py-2 align-top text-muted-foreground">
-                        {o.data_consegna ? formatDate(o.data_consegna) : "—"}
-                      </td>
-                      <td className="px-2 py-2 align-top font-semibold text-gold">€{formatEUR(o.saldo)}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <div className="bg-card rounded-lg border border-border overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-background">
+                    <th className="text-left px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Cliente</th>
+                    <th className="text-left px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Cosa ordinato</th>
+                    <th className="text-left px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Telefono</th>
+                    <th className="text-left px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Consegna</th>
+                    <th className="text-left px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Saldo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {statusOrders.map((o) => {
+                    const clientName = buildClientDisplayName(o.nome, o.cognome, o.azienda)
+                    return (
+                      <tr key={o.id} className="border-b border-border last:border-0 [break-inside:avoid]">
+                        <td className="px-2 py-2 align-top">
+                          <p className="font-semibold">{clientName}</p>
+                          {o.referente && <p className="text-xs text-muted-foreground">Ref. {o.referente}</p>}
+                        </td>
+                        <td className="px-2 py-2 align-top">{o.cosa_ordinato}</td>
+                        <td className="px-2 py-2 align-top text-muted-foreground">{o.telefono ?? "—"}</td>
+                        <td className="px-2 py-2 align-top text-muted-foreground">
+                          {o.data_consegna ? formatDate(o.data_consegna) : "—"}
+                        </td>
+                        <td className="px-2 py-2 align-top font-semibold text-gold">€{formatEUR(o.saldo)}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )
       })}
