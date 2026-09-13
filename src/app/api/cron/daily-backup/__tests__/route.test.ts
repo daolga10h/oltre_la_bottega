@@ -16,18 +16,28 @@ function makeRequest(secret?: string): Request {
   })
 }
 
+const oneOrder = [
+  {
+    nome: "Gigi", cognome: "Rossi", telefono: null, email_cliente: null,
+    cosa_ordinato: "Targa", data_ordine: "2026-08-01", data_consegna: null,
+    data_consegnato: null, status: "pronto", operatore: "Maria",
+    prezzo: 10, acconto: 0, saldo: 10, note: null,
+  },
+]
+
 function mockAdminClient(
   orders: unknown[],
   ordersError: unknown = null,
-  users: unknown[] = [{ id: "u1", email: "bottega@example.com", user_metadata: { shop_name: "La Bottega" } }]
+  users: unknown[] = [{ id: "u1", email: "bottega@example.com", user_metadata: { shop_name: "La Bottega" } }],
+  usersError: unknown = null
 ) {
   return {
     auth: {
       admin: {
         listUsers: () =>
           Promise.resolve({
-            data: { users },
-            error: null,
+            data: usersError ? null : { users },
+            error: usersError,
           }),
       },
     },
@@ -42,7 +52,7 @@ function mockAdminClient(
 describe("GET /api/cron/daily-backup", () => {
   const OLD_ENV = process.env
   beforeEach(() => {
-    process.env = { ...OLD_ENV, CRON_SECRET: "test-secret" }
+    process.env = { ...OLD_ENV, CRON_SECRET: "test-secret", BACKUP_EMAIL_TO: "bottega@example.com" }
     mockSendBackupEmail.mockResolvedValue(undefined)
   })
   afterEach(() => {
@@ -62,27 +72,19 @@ describe("GET /api/cron/daily-backup", () => {
     expect(mockCreateAdminClient).not.toHaveBeenCalled()
   })
 
-  it("sends the CSV backup to the shop's own email on success", async () => {
-    mockCreateAdminClient.mockReturnValue(
-      mockAdminClient([
-        {
-          nome: "Gigi",
-          cognome: "Rossi",
-          telefono: null,
-          email_cliente: null,
-          cosa_ordinato: "Targa",
-          data_ordine: "2026-08-01",
-          data_consegna: null,
-          data_consegnato: null,
-          status: "pronto",
-          operatore: "Maria",
-          prezzo: 10,
-          acconto: 0,
-          saldo: 10,
-          note: null,
-        },
-      ])
-    )
+  it("returns 500 and does not touch the database when BACKUP_EMAIL_TO is not configured", async () => {
+    delete process.env.BACKUP_EMAIL_TO
+    jest.spyOn(console, "error").mockImplementation(() => {})
+
+    const res = await GET(makeRequest("test-secret"))
+
+    expect(res.status).toBe(500)
+    expect(mockCreateAdminClient).not.toHaveBeenCalled()
+    expect(mockSendBackupEmail).not.toHaveBeenCalled()
+  })
+
+  it("sends the CSV backup to BACKUP_EMAIL_TO, using the shop name of the matching auth user", async () => {
+    mockCreateAdminClient.mockReturnValue(mockAdminClient(oneOrder))
 
     const res = await GET(makeRequest("test-secret"))
     const body = await res.json()
@@ -96,29 +98,47 @@ describe("GET /api/cron/daily-backup", () => {
     expect(call.csv).toContain("Gigi")
   })
 
-  it("ignores @oltrelabottega.local service/test accounts when picking the shop user", async () => {
+  it("still sends the backup when extra/stray accounts exist in Supabase Auth (regression: no longer requires exactly one shop user)", async () => {
     mockCreateAdminClient.mockReturnValue(
-      mockAdminClient(
-        [
-          {
-            nome: "Gigi", cognome: "Rossi", telefono: null, email_cliente: null,
-            cosa_ordinato: "Targa", data_ordine: "2026-08-01", data_consegna: null,
-            data_consegnato: null, status: "pronto", operatore: "Maria",
-            prezzo: 10, acconto: 0, saldo: 10, note: null,
-          },
-        ],
-        null,
-        [
-          { id: "u1", email: "bottega@example.com", user_metadata: { shop_name: "La Bottega" } },
-          { id: "u2", email: "e2e-test@oltrelabottega.local", user_metadata: {} },
-        ]
-      )
+      mockAdminClient(oneOrder, null, [
+        { id: "u1", email: "bottega@example.com", user_metadata: { shop_name: "La Bottega" } },
+        { id: "u2", email: "vecchio-account-fantasma@esempio.it", user_metadata: {} },
+        { id: "u3", email: "e2e-test@oltrelabottega.local", user_metadata: {} },
+      ])
     )
 
     const res = await GET(makeRequest("test-secret"))
 
     expect(res.status).toBe(200)
     expect(mockSendBackupEmail).toHaveBeenCalledTimes(1)
+    const call = mockSendBackupEmail.mock.calls[0][0]
+    expect(call.to).toBe("bottega@example.com")
+    expect(call.shopName).toBe("La Bottega")
+  })
+
+  it("falls back to the default shop name when no auth user matches BACKUP_EMAIL_TO", async () => {
+    mockCreateAdminClient.mockReturnValue(
+      mockAdminClient(oneOrder, null, [
+        { id: "u2", email: "qualcun-altro@esempio.it", user_metadata: { shop_name: "Altro" } },
+      ])
+    )
+
+    const res = await GET(makeRequest("test-secret"))
+
+    expect(res.status).toBe(200)
+    expect(mockSendBackupEmail.mock.calls[0][0].to).toBe("bottega@example.com")
+    expect(mockSendBackupEmail.mock.calls[0][0].shopName).toBe("OB")
+  })
+
+  it("still sends the backup even if listing auth users fails (shop name falls back, delivery is not blocked)", async () => {
+    mockCreateAdminClient.mockReturnValue(
+      mockAdminClient(oneOrder, null, [], new Error("auth admin API down"))
+    )
+    jest.spyOn(console, "error").mockImplementation(() => {})
+
+    const res = await GET(makeRequest("test-secret"))
+
+    expect(res.status).toBe(200)
     expect(mockSendBackupEmail.mock.calls[0][0].to).toBe("bottega@example.com")
   })
 
@@ -133,16 +153,7 @@ describe("GET /api/cron/daily-backup", () => {
   })
 
   it("returns 500 and does not report success if sendBackupEmail throws", async () => {
-    mockCreateAdminClient.mockReturnValue(
-      mockAdminClient([
-        {
-          nome: "Gigi", cognome: "Rossi", telefono: null, email_cliente: null,
-          cosa_ordinato: "Targa", data_ordine: "2026-08-01", data_consegna: null,
-          data_consegnato: null, status: "pronto", operatore: "Maria",
-          prezzo: 10, acconto: 0, saldo: 10, note: null,
-        },
-      ])
-    )
+    mockCreateAdminClient.mockReturnValue(mockAdminClient(oneOrder))
     mockSendBackupEmail.mockRejectedValue(new Error("Resend down"))
     jest.spyOn(console, "error").mockImplementation(() => {})
 

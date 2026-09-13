@@ -13,7 +13,7 @@ Checklist per l'attivazione di una nuova istanza (modello single-tenant: ogni bo
 
 ### Facoltativo
 
-- Creare l'account Resend a nome del cliente (con la sua email — non la mia, altrimenti l'email di backup non arriva), impostare `RESEND_API_KEY` su Vercel e verificare che il backup settimanale arrivi davvero.
+- Creare l'account Resend a nome del cliente (con la sua email — non la mia, altrimenti l'email di backup non arriva), impostare `RESEND_API_KEY` e `BACKUP_EMAIL_TO` (l'email della bottega) su Vercel e verificare che il backup giornaliero arrivi davvero.
 - Configurare SimpleBackups + Google Drive per il backup tecnico giornaliero (previene la pausa automatica di Supabase per inattività) — verificato funzionante il 2026-08-24. Se il caricamento su Drive fallisce con un errore di permessi/scope insufficiente, risolvere da Storages → "..." sulla connessione → **Refresh Authentication**, non serve eliminare e ricreare la connessione.
 - Verificare la stampa etichette se il cliente ha una stampante compatibile (Mopria/AirPrint).
 - Segnalare al cliente l'opzione Vercel Pro se vuole essere formalmente in regola con i termini "non commerciale" del piano gratuito.

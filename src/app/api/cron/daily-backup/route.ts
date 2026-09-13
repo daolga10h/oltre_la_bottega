@@ -12,20 +12,21 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  const backupEmailTo = process.env.BACKUP_EMAIL_TO
+  if (!backupEmailTo) {
+    logError("cron/daily-backup", new Error("BACKUP_EMAIL_TO non configurata"))
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+
   try {
     const admin = createAdminClient()
 
     const { data: usersData, error: usersError } = await admin.auth.admin.listUsers()
     if (usersError) {
       logError("cron/daily-backup", usersError)
-      return NextResponse.json({ error: "No shop user" }, { status: 500 })
     }
-    const shopUsers = usersData?.users.filter((u) => !u.email?.endsWith("@oltrelabottega.local")) ?? []
-    const shopUser = shopUsers.length === 1 ? shopUsers[0] : null
-    if (!shopUser?.email) {
-      logError("cron/daily-backup", new Error(`Atteso esattamente un utente bottega, trovati ${shopUsers.length}`))
-      return NextResponse.json({ error: "No shop user" }, { status: 500 })
-    }
+    const shopUser =
+      usersData?.users.find((u) => u.email?.toLowerCase() === backupEmailTo.toLowerCase()) ?? null
 
     const { data: orders, error } = await admin
       .from("orders")
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
 
     const csv = ordersToCsv((orders ?? []) as OrderExportRow[])
     await sendBackupEmail({
-      to: shopUser.email,
+      to: backupEmailTo,
       csv,
       shopName: getShopName(shopUser),
     })
