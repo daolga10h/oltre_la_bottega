@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore } from "@/actions/orders"
+import { getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore, markPaymentReceived } from "@/actions/orders"
 import { STATUS_LABELS, STATUS_ORDER, preventivoStage, bozzaStage, materialeStage, type Stage } from "@/lib/orderConstants"
 import { StatusBadge } from "@/components/OrderCard"
 import { QuickContactLink } from "@/components/QuickContactLink"
@@ -36,6 +36,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     revalidatePath(`/orders/${id}`)
     revalidatePath("/orders")
     revalidatePath("/dashboard")
+    revalidatePath("/pagamenti")
   }
 
   async function changeBozza(formData: FormData) {
@@ -59,6 +60,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     revalidatePath(`/orders/${id}`)
     revalidatePath("/orders")
     revalidatePath("/dashboard")
+  }
+
+  async function markPaid() {
+    "use server"
+    await markPaymentReceived(id)
+    revalidatePath(`/orders/${id}`)
+    revalidatePath("/pagamenti")
+    revalidatePath("/riepilogo")
   }
 
   const currentIdx = STATUS_ORDER.indexOf(order.status)
@@ -268,6 +277,17 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <p className="font-semibold text-base text-gold">€{formatEUR(order.saldo)}</p>
         </div>
       </div>
+
+      {order.saldo > 0 && (
+        <form action={markPaid}>
+          <button
+            type="submit"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full")}
+          >
+            Segna come pagato
+          </button>
+        </form>
+      )}
 
       {/* Flags */}
       <div className="flex flex-wrap gap-2 text-xs">

@@ -199,6 +199,7 @@ export async function updateOrder(id: string, input: Partial<CreateOrderInput> &
   revalidatePath("/orders")
   revalidatePath("/dashboard")
   revalidatePath(`/orders/${id}`)
+  revalidatePath("/pagamenti")
 }
 
 const BOZZA_LABELS: Record<string, string> = {
@@ -353,4 +354,33 @@ export async function markReviewReceived(id: string): Promise<void> {
     logError("markReviewReceived", error, { id })
     throw new Error(USER_MESSAGES.saveFailed)
   }
+}
+
+export async function markPaymentReceived(id: string): Promise<void> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: order, error: readError } = await (supabase as any)
+    .from("orders")
+    .select("prezzo")
+    .eq("id", id)
+    .single()
+  if (readError || !order) {
+    logError("markPaymentReceived", readError ?? new Error("order not found"), { id })
+    throw new Error(USER_MESSAGES.saveFailed)
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from("orders")
+    .update({ acconto: order.prezzo, saldo: 0 })
+    .eq("id", id)
+  if (error) {
+    logError("markPaymentReceived", error, { id })
+    throw new Error(USER_MESSAGES.saveFailed)
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from("order_events").insert({
+    order_id: id,
+    event_type: "payment_received",
+    note: "Pagamento saldato",
+  })
 }
