@@ -6,7 +6,7 @@ jest.mock("@/lib/supabase/server", () => ({
 }))
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }))
 
-import { getOrders, getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore, createOrder, updateOrder } from "../orders"
+import { getOrders, getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore, markPaymentReceived, createOrder, updateOrder } from "../orders"
 
 describe("getOrders filters", () => {
   afterEach(() => jest.clearAllMocks())
@@ -332,6 +332,63 @@ describe("updateMaterialeFornitore", () => {
     expect(client.from).toHaveBeenNthCalledWith(2, "order_events")
     const eventPayload = eventsBuilder.insert.mock.calls[0][0]
     expect(eventPayload.note).toBe("Materiale da ordinare")
+  })
+})
+
+describe("markPaymentReceived", () => {
+  afterEach(() => jest.clearAllMocks())
+
+  it("sets acconto to the order's prezzo and saldo to 0", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: { prezzo: 120 }, error: null }, { data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await markPaymentReceived("id1")
+
+    const updateBuilder = client.from.mock.results[1].value
+    const updatePayload = updateBuilder.update.mock.calls[0][0]
+    expect(updatePayload).toEqual({ acconto: 120, saldo: 0 })
+  })
+
+  it("logs a payment_received event", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: { prezzo: 80 }, error: null }, { data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await markPaymentReceived("id1")
+
+    expect(client.from).toHaveBeenNthCalledWith(3, "order_events")
+    const eventsBuilder = client.from.mock.results[2].value
+    const eventPayload = eventsBuilder.insert.mock.calls[0][0]
+    expect(eventPayload).toEqual({
+      order_id: "id1",
+      event_type: "payment_received",
+      note: "Pagamento saldato",
+    })
+  })
+
+  it("throws and does not attempt an update when reading the order's prezzo fails", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: { message: "boom" } }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await expect(markPaymentReceived("id1")).rejects.toThrow()
+    expect(client.from).toHaveBeenCalledTimes(1)
+  })
+
+  it("throws when the update fails", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: { prezzo: 50 }, error: null }, { data: null, error: { message: "boom" } }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await expect(markPaymentReceived("id1")).rejects.toThrow()
+    expect(client.from).toHaveBeenCalledTimes(2)
   })
 })
 
