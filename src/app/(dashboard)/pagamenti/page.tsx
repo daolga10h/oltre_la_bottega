@@ -21,6 +21,7 @@ export default async function PagamentiPage() {
     await markPaymentReceived(id)
     revalidatePath("/pagamenti")
     revalidatePath(`/orders/${id}`)
+    revalidatePath("/riepilogo")
   }
 
   let orders: Awaited<ReturnType<typeof getOrders>> = []

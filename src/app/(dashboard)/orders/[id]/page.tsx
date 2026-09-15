@@ -67,6 +67,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     await markPaymentReceived(id)
     revalidatePath(`/orders/${id}`)
     revalidatePath("/pagamenti")
+    revalidatePath("/riepilogo")
   }
 
   const currentIdx = STATUS_ORDER.indexOf(order.status)
