@@ -1,5 +1,6 @@
-import { getOrders } from "@/actions/orders"
+import { getOrders, markPaymentReceived } from "@/actions/orders"
 import { toUserMessage } from "@/lib/errors"
+import { revalidatePath } from "next/cache"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { QuickContactLink } from "@/components/QuickContactLink"
 import { formatDate, formatEUR, buildClientDisplayName, buildWhatsAppLink, buildMailtoLink, cn } from "@/lib/utils"
@@ -13,6 +14,14 @@ export default async function PagamentiPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const shopName = getShopName(user)
+
+  async function segnaPagato(formData: FormData) {
+    "use server"
+    const id = formData.get("id") as string
+    await markPaymentReceived(id)
+    revalidatePath("/pagamenti")
+    revalidatePath(`/orders/${id}`)
+  }
 
   let orders: Awaited<ReturnType<typeof getOrders>> = []
   let errorMsg: string | null = null
@@ -81,6 +90,15 @@ export default async function PagamentiPage() {
                         >
                           Scheda
                         </Link>
+                        <form action={segnaPagato}>
+                          <input type="hidden" name="id" value={o.id} />
+                          <button
+                            type="submit"
+                            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full text-xs")}
+                          >
+                            Segna come pagato
+                          </button>
+                        </form>
                       </div>
                     </td>
                   </tr>
