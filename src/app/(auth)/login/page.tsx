@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { getRememberedEmail, setRememberedEmail } from "@/lib/device-email"
 import { getPostLoginRedirect } from "@/lib/shop-name"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -73,10 +73,8 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm overflow-hidden">
         <div className="h-0.5 bg-gradient-to-r from-gold to-amber" />
         <CardHeader className="items-center text-center pt-6">
-          <div className="w-8 h-8 rounded-md bg-espresso flex items-center justify-center text-xs font-bold text-cream mb-2">
-            OB
-          </div>
-          <CardTitle className="text-xl">Oltre la Bottega</CardTitle>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-oltre-la-bottega.png" alt="Oltre la Bottega" className="h-9 w-auto mx-auto" />
         </CardHeader>
         <CardContent>
           <div className="flex rounded-lg border border-border p-1 mb-4">

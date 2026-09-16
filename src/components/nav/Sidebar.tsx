@@ -52,7 +52,8 @@ export function Sidebar() {
       <div className="flex flex-col flex-1 p-4 gap-1">
         {/* Nome prodotto */}
         <div className="px-2 pb-5 pt-2">
-          <span className="block font-bold text-[13px] tracking-tight text-foreground">Oltre la Bottega</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-oltre-la-bottega.png" alt="Oltre la Bottega" className="h-6 w-auto" />
         </div>
 
         {/* Principale */}

@@ -121,19 +121,15 @@ box-shadow: inset 0px 1px 2px rgba(255,255,255,0.18),
 ### Sidebar
 - Sfondo `bg-card` (paper white)
 - Striscia ambra orizzontale in cima: `bg-gradient-to-r from-gold to-amber`
-- Logo mark 24×24px `bg-espresso text-cream rounded-md`
+- Logo completo (`/logo-oltre-la-bottega.png`, `h-6 w-auto`) al posto del testo "Oltre la Bottega" (2026-09-16, vedere sotto)
 - Link attivo: `bg-muted` + barra verticale `bg-gold` a sinistra (3px)
 - Label sezioni: 10px uppercase tracking-widest `text-warm-ash`
 
-### Logo mark "OB" — riutilizzo
-Lo stesso marchio (quadrato espresso, testo cream "OB") va ripetuto ovunque il brand deve comparire, per coerenza:
-- Sidebar (24×24px)
-- Login page (32×32px, con striscia ambra sopra la card)
-- Favicon — generato dinamicamente in `src/app/icon.tsx` via `next/og` `ImageResponse` (nessun file binario da mantenere)
-- Etichetta di stampa — versione bianco/nero 14×14px per compatibilità stampante termica monocromatica
-- Sidebar: **rimosso il 2026-07-09** — mostra solo il testo "Oltre la
-  Bottega", nessun quadratino né nome bottega personalizzato (resta
-  invece in login, etichetta di stampa e favicon)
+### Logo e icona ufficiali (2026-09-16)
+Sostituiscono il vecchio marchio testuale "OB" generato dinamicamente via `next/og`. Due file PNG con sfondo trasparente, generati una tantum con `sharp` a partire dagli elaborati grafici confermati dall'utente (`Oltre la bottega icona.jpg` / `Oltre la bottega.jpg`, file sorgente non versionati) — nessuna dipendenza `sharp` aggiunta al progetto, usata solo come script una tantum in locale:
+- **Icona** (`src/app/icon.png`, `src/app/apple-icon.png`, `public/icon-192.png`, `public/icon-512.png`): quadrato arrotondato espresso con "O + linea" avorio; sfondo reso trasparente fuori dagli angoli arrotondati (era bianco pieno nel JPG originale) via flood-fill dai quattro angoli. Sostituisce le 4 route dinamiche precedenti (`icon.tsx`, `apple-icon.tsx`, `icon-192/route.tsx`, `icon-512/route.tsx`), eliminando anche il fetch del font Inter Black da Google Fonts a ogni build.
+- **Logo completo** (`public/logo-oltre-la-bottega.png`): scritta "OLTRE LA BOTTEGA". Testo ricolorato in espresso `#3b2716` (era un quasi-nero nell'originale) e riga su "OLTRE" ricolorata in oro `#e89b01` (era azzurro-grigio nell'originale — unico colore vietato dal design system, vedere `docs/palette-logo.md`). Sfondo reso trasparente in base alla luminosità dei pixel. Usato in sidebar e pagina di login al posto del vecchio quadratino + testo.
+- **Etichetta di stampa**: non ancora aggiornata con questi asset — la scheda mostra il nome/iniziali del *singolo tenant* (`shopName`, non il brand "Oltre la Bottega") in primo piano, con un filigrana al 15% di opacità del marchio "OB"/"OLTRE LA BOTTEGA" dietro (vedere `PrintClient.tsx`); usare qui il logo a colori richiede prima una versione monocromatica (per stampa termica) e va comunque limitato alla sola filigrana per non rompere il modello white-label — decisione rimandata, vedere Roadmap in `CLAUDE.md`.
 
 ### Righe liste (Oggi, Agenda)
 - Sfondo `bg-background` (cream), bordo-radius `rounded-lg`, padding `px-4 py-3`
