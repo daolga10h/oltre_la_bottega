@@ -2,11 +2,11 @@ import { notFound } from "next/navigation"
 import { getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore, markPaymentReceived } from "@/actions/orders"
 import { STATUS_LABELS, STATUS_ORDER, preventivoStage, bozzaStage, materialeStage, type Stage } from "@/lib/orderConstants"
 import { StatusBadge } from "@/components/OrderCard"
-import { QuickContactLink } from "@/components/QuickContactLink"
+import { NotifyReadyLinks } from "@/components/NotifyReadyLinks"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
 import Link from "next/link"
-import { ArrowLeft, Edit, Printer, CalendarPlus, MessageCircle, Mail } from "lucide-react"
+import { ArrowLeft, Edit, Printer, CalendarPlus } from "lucide-react"
 import { formatDate, formatEUR, buildWhatsAppLink, buildMailtoLink, buildClientDisplayName } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { revalidatePath } from "next/cache"
@@ -156,8 +156,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         return (
           <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gold/30 bg-honey/40 px-3 py-2">
             <span className="text-xs font-semibold text-bark mr-1">Avvisa il cliente:</span>
-            <QuickContactLink href={waLink} icon={MessageCircle} label="WhatsApp" external variant="toolbar" />
-            <QuickContactLink href={mailLink} icon={Mail} label="Email" variant="toolbar" />
+            <NotifyReadyLinks orderId={id} waLink={waLink} mailLink={mailLink} />
           </div>
         )
       })()}
