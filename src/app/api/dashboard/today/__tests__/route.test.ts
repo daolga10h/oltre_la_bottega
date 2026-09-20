@@ -9,13 +9,14 @@ import { GET } from "../route"
 
 // L'ordine delle risposte deve rispettare l'ordine dei from("orders") nel
 // Promise.all della route: open, urgent, overdue, todayOrders, deliveredToday,
-// materialeDaOrdinare, materialeOrdinatoOggi.
+// materialeDaOrdinare, materialeOrdinatoOggi, daAvvisare.
 function mockOrdersSequence(
   counts: { open: number; urgent: number; overdue: number },
   todayOrders: unknown[],
   deliveredToday: unknown[],
   materialeDaOrdinare: unknown[] = [],
-  materialeOrdinatoOggi: unknown[] = []
+  materialeOrdinatoOggi: unknown[] = [],
+  daAvvisare: unknown[] = []
 ) {
   return createSupabaseMock({
     orders: [
@@ -26,6 +27,7 @@ function mockOrdersSequence(
       { data: deliveredToday, error: null },
       { data: materialeDaOrdinare, error: null },
       { data: materialeOrdinatoOggi, error: null },
+      { data: daAvvisare, error: null },
     ],
     reminders: [{ data: [], error: null }],
   })
@@ -78,6 +80,7 @@ describe("GET /api/dashboard/today", () => {
         { data: null, error: null },
         { data: null, error: null },
         { data: null, error: null },
+        { data: null, error: null },
       ],
       reminders: [{ data: null, error: null }],
     })
@@ -91,10 +94,11 @@ describe("GET /api/dashboard/today", () => {
     expect(body.deliveredToday).toEqual([])
     expect(body.materialeDaOrdinare).toEqual([])
     expect(body.materialeOrdinatoOggi).toEqual([])
+    expect(body.daAvvisare).toEqual([])
     expect(body.reminders).toEqual([])
   })
 
-  it("includes azienda in the select for todayOrders, deliveredToday, materialeDaOrdinare and materialeOrdinatoOggi", async () => {
+  it("includes azienda in the select for todayOrders, deliveredToday, materialeDaOrdinare, materialeOrdinatoOggi and daAvvisare", async () => {
     const client = mockOrdersSequence({ open: 0, urgent: 0, overdue: 0 }, [], [])
     mockCreateClient.mockResolvedValue(client)
 
@@ -105,9 +109,10 @@ describe("GET /api/dashboard/today", () => {
     expect(results[4].value.select.mock.calls[0][0]).toContain("azienda")
     expect(results[5].value.select.mock.calls[0][0]).toContain("azienda")
     expect(results[6].value.select.mock.calls[0][0]).toContain("azienda")
+    expect(results[7].value.select.mock.calls[0][0]).toContain("azienda")
   })
 
-  it("includes referente in the select for todayOrders, deliveredToday, materialeDaOrdinare and materialeOrdinatoOggi", async () => {
+  it("includes referente in the select for todayOrders, deliveredToday, materialeDaOrdinare, materialeOrdinatoOggi and daAvvisare", async () => {
     const client = mockOrdersSequence({ open: 0, urgent: 0, overdue: 0 }, [], [])
     mockCreateClient.mockResolvedValue(client)
 
@@ -118,6 +123,7 @@ describe("GET /api/dashboard/today", () => {
     expect(results[4].value.select.mock.calls[0][0]).toContain("referente")
     expect(results[5].value.select.mock.calls[0][0]).toContain("referente")
     expect(results[6].value.select.mock.calls[0][0]).toContain("referente")
+    expect(results[7].value.select.mock.calls[0][0]).toContain("referente")
   })
 
   it("returns 500 and does not leak internals if a query throws", async () => {
@@ -147,5 +153,31 @@ describe("materiale sections", () => {
 
     expect(body.materialeDaOrdinare).toEqual(daOrdinare)
     expect(body.materialeOrdinatoOggi).toEqual(ordinatoOggi)
+  })
+})
+
+describe("avvisi ordine pronto", () => {
+  afterEach(() => jest.clearAllMocks())
+
+  it("returns daAvvisare from its dedicated query", async () => {
+    const daAvvisare = [{ id: "p1", cosa_ordinato: "Targa", nome: "Gigi", cognome: null }]
+    const client = mockOrdersSequence({ open: 0, urgent: 0, overdue: 0 }, [], [], [], [], daAvvisare)
+    mockCreateClient.mockResolvedValue(client)
+
+    const res = await GET()
+    const body = await res.json()
+
+    expect(body.daAvvisare).toEqual(daAvvisare)
+  })
+
+  it("filters by status pronto and msg_pronto_inviato false", async () => {
+    const client = mockOrdersSequence({ open: 0, urgent: 0, overdue: 0 }, [], [])
+    mockCreateClient.mockResolvedValue(client)
+
+    await GET()
+
+    const builder = client.from.mock.results[7].value
+    expect(builder.eq).toHaveBeenCalledWith("status", "pronto")
+    expect(builder.eq).toHaveBeenCalledWith("msg_pronto_inviato", false)
   })
 })

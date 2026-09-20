@@ -10,7 +10,7 @@ export async function GET() {
 
     const today = new Date().toISOString().split("T")[0]
 
-    const [openRes, urgentRes, overdueRes, todayRes, deliveredRes, materialeDaOrdinareRes, materialeOrdinatoOggiRes, remindersRes] = await Promise.all([
+    const [openRes, urgentRes, overdueRes, todayRes, deliveredRes, materialeDaOrdinareRes, materialeOrdinatoOggiRes, daAvvisareRes, remindersRes] = await Promise.all([
       supabase.from("orders").select("id", { count: "exact", head: true })
         .not("status", "in", '("consegnato")'),
       supabase.from("orders").select("id", { count: "exact", head: true })
@@ -25,6 +25,8 @@ export async function GET() {
         .eq("materiale", "da_ordinare"),
       supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda, referente")
         .eq("materiale", "ordinato").eq("materiale_data_ordine", today),
+      supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda, referente")
+        .eq("status", "pronto").eq("msg_pronto_inviato", false),
       supabase.from("reminders").select("id, title, due_at")
         .eq("status", "attivo").lte("due_at", `${today}T23:59:59Z`).order("due_at"),
     ])
@@ -40,6 +42,7 @@ export async function GET() {
       deliveredToday: deliveredRes.data ?? [],
       materialeDaOrdinare: materialeDaOrdinareRes.data ?? [],
       materialeOrdinatoOggi: materialeOrdinatoOggiRes.data ?? [],
+      daAvvisare: daAvvisareRes.data ?? [],
       reminders: remindersRes.data ?? [],
     })
   } catch (error) {
