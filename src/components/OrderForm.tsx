@@ -13,6 +13,8 @@ import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
 import { computeOrderStatus, computeSaldo } from "@/lib/orderConstants"
 import { computeOrderSummary, type OrderItemInput } from "@/lib/orderItems"
+import { appendDictatedText } from "@/lib/dictation"
+import { VoiceDictationButton } from "@/components/VoiceDictationButton"
 import type { OrderItemRow } from "@/actions/orders"
 import { getRememberedOperator, setRememberedOperator } from "@/lib/device-operator"
 import Link from "next/link"
@@ -142,8 +144,21 @@ export function OrderForm({ order, operatori = [] }: Props) {
   function removeItem(id: number) {
     setItems((prev) => (prev.length > 1 ? prev.filter((it) => it.id !== id) : prev))
   }
-  function updateItem(id: number, field: keyof Omit<ItemRow, "id">, value: string) {
-    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, [field]: value } : it)))
+  function updateItem(
+    id: number,
+    field: keyof Omit<ItemRow, "id">,
+    value: string | ((prev: string) => string)
+  ) {
+    // Il valore puo' essere una funzione: serve per la dettatura vocale, dove
+    // ogni frase riconosciuta deve accodarsi al testo piu' recente e non a
+    // quello catturato nella closure al momento in cui l'ascolto e' partito.
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === id
+          ? { ...it, [field]: typeof value === "function" ? value(it[field]) : value }
+          : it
+      )
+    )
   }
   const itemInputs: OrderItemInput[] = items.map((it) => ({
     cosa_ordinato: it.cosaOrdinato.trim(),
@@ -414,13 +429,21 @@ export function OrderForm({ order, operatori = [] }: Props) {
                 onChange={(e) => updateItem(item.id, "cosaOrdinato", e.target.value)}
                 placeholder="Es. targa plexiglass, timbro, portachiavi inciso..."
               />
-              <Textarea
-                rows={2}
-                autoComplete="off"
-                value={item.testoDaScrivere}
-                onChange={(e) => updateItem(item.id, "testoDaScrivere", e.target.value)}
-                placeholder="Testo da scrivere / incidere / stampare"
-              />
+              <div className="flex items-start gap-2">
+                <Textarea
+                  rows={2}
+                  autoComplete="off"
+                  value={item.testoDaScrivere}
+                  onChange={(e) => updateItem(item.id, "testoDaScrivere", e.target.value)}
+                  placeholder="Testo da scrivere / incidere / stampare"
+                  className="flex-1"
+                />
+                <VoiceDictationButton
+                  onTranscript={(chunk) =>
+                    updateItem(item.id, "testoDaScrivere", (prev) => appendDictatedText(prev, chunk))
+                  }
+                />
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Quantità</Label>
