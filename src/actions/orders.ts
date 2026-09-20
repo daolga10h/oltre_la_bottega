@@ -384,3 +384,22 @@ export async function markPaymentReceived(id: string): Promise<void> {
     note: "Pagamento saldato",
   })
 }
+
+export async function markMsgProntoInviato(id: string): Promise<void> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from("orders")
+    .update({ msg_pronto_inviato: true })
+    .eq("id", id)
+  if (error) {
+    logError("markMsgProntoInviato", error, { id })
+    throw new Error(USER_MESSAGES.saveFailed)
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from("order_events").insert({
+    order_id: id,
+    event_type: "msg_pronto_inviato",
+    note: "Messaggio \"pronto per il ritiro\" inviato",
+  })
+}
