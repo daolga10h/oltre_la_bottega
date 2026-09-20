@@ -8,15 +8,15 @@ function makeUser(shopName?: string): User {
 }
 
 describe("getPostLoginRedirect", () => {
-  it("returns /auth/setup-shop when shop name is not set", () => {
-    expect(getPostLoginRedirect(makeUser())).toBe("/auth/setup-shop")
+  it("returns /setup-shop when shop name is not set", () => {
+    expect(getPostLoginRedirect(makeUser())).toBe("/setup-shop")
   })
 
   it("returns /dashboard when shop name is already set", () => {
     expect(getPostLoginRedirect(makeUser("Bottega di Olga"))).toBe("/dashboard")
   })
 
-  it("returns /auth/setup-shop when user is null", () => {
-    expect(getPostLoginRedirect(null)).toBe("/auth/setup-shop")
+  it("returns /setup-shop when user is null", () => {
+    expect(getPostLoginRedirect(null)).toBe("/setup-shop")
   })
 })

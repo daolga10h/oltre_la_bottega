@@ -7,5 +7,5 @@ export function getShopName(user: User | null): string {
 }
 
 export function getPostLoginRedirect(user: User | null): string {
-  return getShopName(user) === "OB" ? "/auth/setup-shop" : "/dashboard"
+  return getShopName(user) === "OB" ? "/setup-shop" : "/dashboard"
 }

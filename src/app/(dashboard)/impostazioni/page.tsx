@@ -4,17 +4,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { getOperatorNames } from "@/lib/operators"
+import { getShopName } from "@/lib/shop-name"
 import { OperatoriSettings } from "@/components/OperatoriSettings"
+import { ShopNameSettings } from "@/components/ShopNameSettings"
 
 export default async function ImpostazioniPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const pinSet = Boolean(user?.user_metadata?.pin_set)
   const operatori = getOperatorNames(user)
+  const shopName = getShopName(user)
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">Impostazioni</h1>
+
+      <ShopNameSettings initialShopName={shopName === "OB" ? "" : shopName} />
 
       <Card>
         <CardHeader>
