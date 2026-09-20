@@ -8,13 +8,15 @@ interface QuickContactLinkProps {
   label: string
   external?: boolean
   variant?: "toolbar" | "table"
+  onClick?: () => void
 }
 
-export function QuickContactLink({ href, icon: Icon, label, external = false, variant = "table" }: QuickContactLinkProps) {
+export function QuickContactLink({ href, icon: Icon, label, external = false, variant = "table", onClick }: QuickContactLinkProps) {
   if (!href) return null
   return (
     <a
       href={href}
+      onClick={onClick}
       {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       className={cn(
         buttonVariants({ variant: "outline", size: "sm" }),
