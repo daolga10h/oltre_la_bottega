@@ -137,6 +137,7 @@ export function OrderForm({ order, operatori = [] }: Props) {
     return [{ id: 0, cosaOrdinato: "", testoDaScrivere: "", quantita: "1", prezzoUnitario: "" }]
   })
   const nextItemId = useRef(items.length)
+  const noteRef = useRef<HTMLTextAreaElement>(null)
 
   function addItem() {
     setItems((prev) => [...prev, { id: nextItemId.current++, cosaOrdinato: "", testoDaScrivere: "", quantita: "1", prezzoUnitario: "" }])
@@ -610,8 +611,22 @@ export function OrderForm({ order, operatori = [] }: Props) {
       {/* NOTE + FLAG */}
       <section className="space-y-4">
         <h2 className="text-sm font-semibold text-foreground border-b pb-1">Note</h2>
-        <div>
-          <Textarea id="note" name="note" rows={2} aria-label="Note interne" defaultValue={order?.note ?? ""} />
+        <div className="flex items-start gap-2">
+          <Textarea
+            id="note"
+            name="note"
+            rows={2}
+            aria-label="Note interne"
+            defaultValue={order?.note ?? ""}
+            ref={noteRef}
+            className="flex-1"
+          />
+          <VoiceDictationButton
+            onTranscript={(chunk) => {
+              if (!noteRef.current) return
+              noteRef.current.value = appendDictatedText(noteRef.current.value, chunk)
+            }}
+          />
         </div>
         {isEdit && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
