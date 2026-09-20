@@ -6,7 +6,7 @@ jest.mock("@/lib/supabase/server", () => ({
 }))
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }))
 
-import { getOrders, getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore, markPaymentReceived, createOrder, updateOrder } from "../orders"
+import { getOrders, getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore, markPaymentReceived, markMsgProntoInviato, createOrder, updateOrder } from "../orders"
 
 describe("getOrders filters", () => {
   afterEach(() => jest.clearAllMocks())
@@ -389,6 +389,54 @@ describe("markPaymentReceived", () => {
 
     await expect(markPaymentReceived("id1")).rejects.toThrow()
     expect(client.from).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe("markMsgProntoInviato", () => {
+  afterEach(() => jest.clearAllMocks())
+
+  it("sets msg_pronto_inviato to true", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await markMsgProntoInviato("id1")
+
+    const updateBuilder = client.from.mock.results[0].value
+    const updatePayload = updateBuilder.update.mock.calls[0][0]
+    expect(updatePayload).toEqual({ msg_pronto_inviato: true })
+  })
+
+  it("logs a msg_pronto_inviato event", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: null }],
+      order_events: [{ data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await markMsgProntoInviato("id1")
+
+    expect(client.from).toHaveBeenNthCalledWith(2, "order_events")
+    const eventsBuilder = client.from.mock.results[1].value
+    const eventPayload = eventsBuilder.insert.mock.calls[0][0]
+    expect(eventPayload).toEqual({
+      order_id: "id1",
+      event_type: "msg_pronto_inviato",
+      note: "Messaggio \"pronto per il ritiro\" inviato",
+    })
+  })
+
+  it("throws when the update fails", async () => {
+    const client = createSupabaseMock({
+      orders: [{ data: null, error: { message: "boom" } }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+    jest.spyOn(console, "error").mockImplementation(() => {})
+
+    await expect(markMsgProntoInviato("id1")).rejects.toThrow()
+    expect(client.from).toHaveBeenCalledTimes(1)
   })
 })
 

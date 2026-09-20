@@ -47,6 +47,7 @@ interface DashboardData {
   deliveredToday: OrderSummary[]
   materialeDaOrdinare: OrderSummary[]
   materialeOrdinatoOggi: OrderSummary[]
+  daAvvisare: OrderSummary[]
   reminders: Reminder[]
 }
 
@@ -78,7 +79,7 @@ export function TodayBoard() {
     return <ErrorMessage message={error} />
   }
 
-  const { kpi, todayOrders, deliveredToday, materialeDaOrdinare, materialeOrdinatoOggi, reminders } = data!
+  const { kpi, todayOrders, deliveredToday, materialeDaOrdinare, materialeOrdinatoOggi, daAvvisare, reminders } = data!
 
   return (
     <div className="space-y-6">
@@ -93,6 +94,13 @@ export function TodayBoard() {
         title="Da consegnare oggi"
         items={todayOrders}
         badgeClassName="bg-muted border-border text-muted-foreground"
+        chevron
+      />
+
+      <DashboardListCard
+        title="Da avvisare"
+        items={daAvvisare}
+        badgeClassName="bg-honey border-gold/40 text-bark"
         chevron
       />
 
@@ -136,7 +144,7 @@ export function TodayBoard() {
         </Card>
       )}
 
-      {todayOrders.length === 0 && deliveredToday.length === 0 && materialeDaOrdinare.length === 0 && materialeOrdinatoOggi.length === 0 && reminders.length === 0 && (
+      {todayOrders.length === 0 && deliveredToday.length === 0 && materialeDaOrdinare.length === 0 && materialeOrdinatoOggi.length === 0 && daAvvisare.length === 0 && reminders.length === 0 && (
         <p className="text-sm text-muted-foreground">Nessuna scadenza per oggi. Ottimo lavoro!</p>
       )}
     </div>
