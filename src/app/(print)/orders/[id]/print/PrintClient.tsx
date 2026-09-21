@@ -55,7 +55,7 @@ export function PrintClient({ orderId, nome, cognome, azienda, referente, telefo
       {azienda && <p style={{ fontSize: "11px", margin: "0 0 3px 0" }}>{azienda}</p>}
       {referente && <p style={{ fontSize: "11px", margin: "0 0 3px 0" }}>Ref. {referente}</p>}
       {telefono && <p style={{ margin: "0 0 3px 0" }}>{telefono}</p>}
-      {date && <p style={{ margin: "0 0 3px 0" }}>{date}</p>}
+      {date && <p style={{ margin: "0 0 3px 0" }}>Consegnare: {date}</p>}
       <p style={{ fontWeight: "bold", margin: "0 0 8px 0" }}>Da pagare: €{formatEUR(saldo)}</p>
       {url && <QRCodeSVG value={url} size={90} />}
     </div>
