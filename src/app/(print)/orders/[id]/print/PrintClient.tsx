@@ -48,27 +48,8 @@ export function PrintClient({ orderId, nome, cognome, azienda, referente, telefo
         paddingBottom: "4px",
         borderBottom: "1px solid #000",
       }}>
-        <span style={{
-          display: "inline-block",
-          width: "14px",
-          height: "14px",
-          lineHeight: "14px",
-          textAlign: "center",
-          fontSize: "8px",
-          fontWeight: "bold",
-          color: "#fff",
-          background: "#000",
-          borderRadius: "3px",
-          position: "relative",
-          overflow: "hidden",
-        }}>
-          <span style={{ position: "absolute", opacity: 0.15 }}>OB</span>
-          <span style={{ position: "relative" }}>{shopName.substring(0, 2).toUpperCase()}</span>
-        </span>
-        <span style={{ fontSize: "10px", fontWeight: "bold", letterSpacing: "0.3px", position: "relative" }}>
-          <span style={{ position: "absolute", opacity: 0.15, fontSize: "7px" }}>OLTRE LA BOTTEGA</span>
-          <span style={{ position: "relative" }}>{shopName}</span>
-        </span>
+        <img src="/icon-mono.png" alt="" style={{ width: "14px", height: "14px", display: "block" }} />
+        <span style={{ fontSize: "10px", fontWeight: "bold", letterSpacing: "0.3px" }}>{shopName}</span>
       </div>
       <p style={{ fontWeight: "bold", fontSize: "16px", margin: "0 0 4px 0" }}>{clientName}</p>
       {azienda && <p style={{ fontSize: "11px", margin: "0 0 3px 0" }}>{azienda}</p>}
