@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vecchi worktree Git sotto .claude/ (creati dallo strumento worktree
+    // di superpowers durante lo sviluppo a task): contengono una copia
+    // duplicata di src/ e non vanno lintati.
+    ".claude/worktrees/**",
   ]),
 ]);
 
