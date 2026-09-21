@@ -10,8 +10,6 @@ import { ArrowLeft, Edit, Printer, CalendarPlus } from "lucide-react"
 import { formatDate, formatEUR, buildWhatsAppLink, buildMailtoLink, buildClientDisplayName } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { revalidatePath } from "next/cache"
-import { createClient } from "@/lib/supabase/server"
-import { getShopName } from "@/lib/shop-name"
 
 const PILL_STAGE_CLASSES: Record<Stage, string> = {
   red: "bg-terracotta/15 text-terracotta border-terracotta/30",
@@ -24,10 +22,6 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const { id } = await params
   const order = await getOrder(id)
   if (!order) notFound()
-
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const shopName = getShopName(user)
 
   async function changeStatus(formData: FormData) {
     "use server"
@@ -145,12 +139,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       {order.status === "pronto" && !order.msg_pronto_inviato && (() => {
         const waLink = order.canale === "mail" ? null : buildWhatsAppLink(
           order.telefono,
-          `Ciao ${order.nome}! Il tuo ordine (${order.cosa_ordinato}) è pronto per il ritiro da ${shopName}. Ti aspettiamo! 🙂`
+          "Buongiorno, l'ordine è pronto per il ritiro"
         )
         const mailLink = buildMailtoLink(
           order.email_cliente,
-          "Il tuo ordine è pronto",
-          `Ciao ${order.nome},\n\nil tuo ordine (${order.cosa_ordinato}) è pronto per il ritiro da ${shopName}.\n\nA presto!`
+          "Ordine pronto per il ritiro",
+          "Buongiorno, l'ordine è pronto per il ritiro"
         )
         if (!waLink && !mailLink) return null
         return (
