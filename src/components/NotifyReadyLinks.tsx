@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { MessageCircle, Mail } from "lucide-react"
 import { QuickContactLink } from "@/components/QuickContactLink"
+import { WhatsAppQr } from "@/components/WhatsAppQr"
 import { markMsgProntoInviato } from "@/actions/orders"
 
 interface NotifyReadyLinksProps {
@@ -22,6 +23,7 @@ export function NotifyReadyLinks({ orderId, waLink, mailLink }: NotifyReadyLinks
     <>
       <QuickContactLink href={waLink} icon={MessageCircle} label="WhatsApp" external variant="toolbar" onClick={handleClick} />
       <QuickContactLink href={mailLink} icon={Mail} label="Email" variant="toolbar" onClick={handleClick} />
+      <WhatsAppQr waLink={waLink} onDone={handleClick} />
     </>
   )
 }
