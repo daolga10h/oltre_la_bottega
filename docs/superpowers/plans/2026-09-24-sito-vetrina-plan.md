@@ -31,6 +31,7 @@
 | `site/check.mjs` | Controllo statico (link, alt, meta, segnaposto, modalità `--release`) |
 | `site/vercel.json` | Header di sicurezza e cache |
 | `site/robots.txt`, `site/sitemap.xml` | Indicizzazione |
+| `site/.vercelignore` | Esclude `check.mjs` dalla pubblicazione (già creato nel Task 3) |
 | `site/fonts/inter-latin.woff2` | Inter self-hosted |
 | `site/img/*`, `site/favicon.png`, `site/apple-touch-icon.png`, `site/og.png` | Immagini |
 | `scripts/site-smoke.mjs` | Verifica con Playwright: nessun errore, nessuno scroll orizzontale, screenshot |
@@ -340,11 +341,11 @@ p { margin: 0; }
 .cap { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--drift); }
 
 /* hero */
-.hero { padding-block: 64px 56px; max-width: 900px; margin-inline: auto; }
+.hero { padding-block: 64px 56px; }
 .hero h1 { font-size: clamp(44px, 8vw, 92px); line-height: 0.98; font-weight: 800; letter-spacing: -0.05em; margin: 18px 0 28px; }
 .hero .hl { background: linear-gradient(transparent 62%, var(--honey) 62%); }
 .hero .lead { font-size: 21px; color: var(--bark); max-width: 30ch; margin-bottom: 30px; }
-.hero--foto { max-width: 1080px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; }
+.hero--foto { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; }
 .foto { margin: 0; }
 .foto img { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--linen); box-shadow: 0 10px 30px rgba(59, 39, 22, 0.14); }
 .foto figcaption { font-size: 13px; color: var(--drift); margin-top: 8px; }
@@ -367,6 +368,8 @@ h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 700; line-height: 1.12; }
 .feature { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; padding-block: 28px; }
 .feature > div { min-width: 0; }
 .feature:nth-of-type(odd) .feature-txt { order: 2; }
+.feature--wide { grid-template-columns: 1fr; gap: 28px; }
+.feature.feature--wide .feature-txt { order: 0; }
 .feature h3 { font-size: 24px; font-weight: 700; margin-bottom: 10px; }
 .feature p { color: var(--bark); font-size: 17px; max-width: 40ch; }
 .feature .mockcap { font-size: 12px; color: var(--drift); margin-top: 10px; }
@@ -556,7 +559,7 @@ I meta tag qui dentro dicono "Centro Laser Viterbese" solo nella firma della sto
         <p>Ritardi, consegne di oggi, clienti da avvisare, materiale da ordinare: tutto nella prima schermata.</p>
       </div>
       <div>
-        <div class="mock"><div class="mock-bar"></div><div class="mock-body">
+        <div class="mock" aria-hidden="true"><div class="mock-bar"></div><div class="mock-body">
           <h4>Oggi</h4>
           <div class="kpis">
             <div class="kpi"><i class="r"></i><small>In ritardo</small><strong>2</strong></div>
@@ -573,13 +576,13 @@ I meta tag qui dentro dicono "Centro Laser Viterbese" solo nella firma della sto
       </div>
     </div>
 
-    <div class="feature">
+    <div class="feature feature--wide">
       <div class="feature-txt">
         <h3>I lavori come su una lavagna</h3>
-        <p>Preventivo, bozza grafica, da fare, in lavorazione, pronto. Cinque colonne, un colpo d'occhio, senza scorrere.</p>
+        <p>Preventivo, bozza grafica, da fare, in lavorazione, pronto. Cinque colonne, un colpo d'occhio.</p>
       </div>
       <div>
-        <div class="mock"><div class="mock-bar"></div><div class="mock-body">
+        <div class="mock" aria-hidden="true"><div class="mock-bar"></div><div class="mock-body">
           <h4>Bacheca</h4>
           <div class="board-scroll"><div class="board">
             <div><div class="col-h">Preventivo</div><div class="card"><b>Verdi Paola</b><span>Targa 30×20</span></div></div>
@@ -589,7 +592,7 @@ I meta tag qui dentro dicono "Centro Laser Viterbese" solo nella firma della sto
             <div><div class="col-h">Pronto</div><div class="card"><b>Rossi Marta</b><span>Targa in ottone</span></div></div>
           </div></div>
         </div></div>
-        <p class="mockcap">Schermata di esempio.</p>
+        <p class="mockcap">Schermata di esempio. Su telefono scorri di lato per vedere tutte le colonne.</p>
       </div>
     </div>
 
@@ -599,7 +602,7 @@ I meta tag qui dentro dicono "Centro Laser Viterbese" solo nella firma della sto
         <p>Il nome del cliente in cima, più articoli nello stesso ordine, prezzo, acconto e saldo sempre chiari.</p>
       </div>
       <div>
-        <div class="mock"><div class="mock-bar"></div><div class="mock-body">
+        <div class="mock" aria-hidden="true"><div class="mock-bar"></div><div class="mock-body">
           <div class="order-head"><h4>Ferri Anna</h4><span>Consegna 28/09</span></div>
           <div class="row"><div><span class="n">Bomboniere incise</span><span class="c">30 pezzi</span></div><span class="tag t-lin">€ 75,00</span></div>
           <div class="row"><div><span class="n">Targa in ottone</span><span class="c">1 pezzo</span></div><span class="tag t-lin">€ 45,00</span></div>
@@ -619,7 +622,7 @@ I meta tag qui dentro dicono "Centro Laser Viterbese" solo nella firma della sto
         <p>Il messaggio è già scritto: apri WhatsApp o la mail e mandi. Un ordine pronto ti compare tra le cose da avvisare, così non si dimentica.</p>
       </div>
       <div>
-        <div class="mock"><div class="mock-bar"></div><div class="mock-body">
+        <div class="mock" aria-hidden="true"><div class="mock-bar"></div><div class="mock-body">
           <div class="notify">
             <b>Avvisa il cliente</b>
             <div class="msg">Buongiorno, l'ordine è pronto per il ritiro.</div>
@@ -636,7 +639,7 @@ I meta tag qui dentro dicono "Centro Laser Viterbese" solo nella firma della sto
         <p>Stampi l'etichetta dell'ordine e la attacchi all'oggetto. Il QR apre la scheda, con tutto quello che serve sapere.</p>
       </div>
       <div>
-        <div class="mock"><div class="mock-bar"></div><div class="mock-body">
+        <div class="mock" aria-hidden="true"><div class="mock-bar"></div><div class="mock-body">
           <div class="label">
             <div>
               <div class="l-name">Ferri Anna</div>
