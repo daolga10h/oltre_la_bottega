@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     // di superpowers durante lo sviluppo a task): contengono una copia
     // duplicata di src/ e non vanno lintati.
     ".claude/worktrees/**",
+    // Sito vetrina statico (HTML/CSS/JS senza build): non fa parte dell'app Next.
+    "site/**",
   ]),
 ]);
 
