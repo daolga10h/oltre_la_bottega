@@ -3,6 +3,7 @@ import { getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo, upda
 import { STATUS_LABELS, STATUS_ORDER, preventivoStage, bozzaStage, materialeStage, type Stage } from "@/lib/orderConstants"
 import { StatusBadge } from "@/components/OrderCard"
 import { NotifyReadyLinks } from "@/components/NotifyReadyLinks"
+import { SendPreviewLinks } from "@/components/SendPreviewLinks"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
 import Link from "next/link"
@@ -17,6 +18,7 @@ const PILL_STAGE_CLASSES: Record<Stage, string> = {
   green: "bg-sage text-[#3a5a2e] border-sage",
 }
 const PILL_OFF_CLASS = "bg-card text-foreground border-border hover:border-foreground/30"
+const PREVIEW_MESSAGE = "Buongiorno, ecco l'anteprima. Attendo i commenti o le modifiche da apportare."
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -151,6 +153,19 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gold/30 bg-honey/40 px-3 py-2">
             <span className="text-xs font-semibold text-bark mr-1">Avvisa il cliente:</span>
             <NotifyReadyLinks orderId={id} waLink={waLink} mailLink={mailLink} />
+          </div>
+        )
+      })()}
+
+      {/* Invia anteprima — bozza grafica da mandare o rimandare */}
+      {order.status === "bozza_grafica" && (order.bozza_grafica === "da_fare" || order.bozza_grafica === "modificata") && (() => {
+        const waLink = order.canale === "mail" ? null : buildWhatsAppLink(order.telefono, PREVIEW_MESSAGE)
+        const mailLink = buildMailtoLink(order.email_cliente, "Anteprima", PREVIEW_MESSAGE)
+        if (!waLink && !mailLink) return null
+        return (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gold/30 bg-honey/40 px-3 py-2">
+            <span className="text-xs font-semibold text-bark mr-1">Invia anteprima:</span>
+            <SendPreviewLinks orderId={id} waLink={waLink} mailLink={mailLink} />
           </div>
         )
       })()}
