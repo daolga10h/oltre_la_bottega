@@ -924,7 +924,7 @@ for (const vp of viewports) {
     await page.goto(base + path, { waitUntil: "networkidle" });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     if (overflow > 0) failures.push(`${label}: scroll orizzontale di ${overflow}px`);
-    const font = await page.evaluate(async () => { await document.fonts.ready; return document.fonts.check("16px Inter"); });
+    const font = await page.evaluate(async () => { await document.fonts.ready; return [...document.fonts].some((f) => f.family.replace(/"/g, "") === "Inter" && f.status === "loaded"); });
     if (!font) failures.push(`${label}: font Inter non caricato`);
 
     const name = `${vp.name}${path === "/" ? "-home" : "-privacy"}.png`;
