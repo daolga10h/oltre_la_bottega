@@ -26,6 +26,7 @@ export default async function PrintPage({ params }: { params: Promise<{ id: stri
         azienda={order.azienda}
         referente={order.referente}
         telefono={order.telefono}
+        articoli={order.items.map((item) => ({ cosa_ordinato: item.cosa_ordinato, quantita: item.quantita }))}
         dataConsegna={order.data_consegna}
         saldo={order.saldo}
         shopName={shopName}

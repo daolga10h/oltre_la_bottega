@@ -11,12 +11,13 @@ interface Props {
   azienda: string | null
   referente: string | null
   telefono: string | null
+  articoli: { cosa_ordinato: string; quantita: number }[]
   dataConsegna: string | null
   saldo: number
   shopName: string
 }
 
-export function PrintClient({ orderId, nome, cognome, azienda, referente, telefono, dataConsegna, saldo, shopName }: Props) {
+export function PrintClient({ orderId, nome, cognome, azienda, referente, telefono, articoli, dataConsegna, saldo, shopName }: Props) {
   const [url, setUrl] = useState("")
 
   useEffect(() => {
@@ -55,6 +56,15 @@ export function PrintClient({ orderId, nome, cognome, azienda, referente, telefo
       {azienda && <p style={{ fontSize: "11px", margin: "0 0 3px 0" }}>{azienda}</p>}
       {referente && <p style={{ fontSize: "11px", margin: "0 0 3px 0" }}>Ref. {referente}</p>}
       {telefono && <p style={{ margin: "0 0 3px 0" }}>{telefono}</p>}
+      {articoli.length > 0 && (
+        <div style={{ margin: "0 0 3px 0", fontSize: "12px" }}>
+          {articoli.map((a, i) => (
+            <p key={i} style={{ margin: 0, paddingLeft: articoli.length > 1 ? "10px" : 0, textIndent: articoli.length > 1 ? "-10px" : 0 }}>
+              {articoli.length > 1 ? "• " : ""}{a.cosa_ordinato}{a.quantita > 1 ? ` × ${a.quantita}` : ""}
+            </p>
+          ))}
+        </div>
+      )}
       {date && <p style={{ margin: "0 0 3px 0" }}>Consegnare: {date}</p>}
       <p style={{ fontWeight: "bold", margin: "0 0 8px 0" }}>Da pagare: €{formatEUR(saldo)}</p>
       {url && <QRCodeSVG value={url} size={90} />}
