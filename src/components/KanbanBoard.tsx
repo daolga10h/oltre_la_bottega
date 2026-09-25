@@ -8,6 +8,8 @@ import { buttonVariants } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 import { StageBadge } from "@/components/OrderCard"
+import { DeadlineDot, DEADLINE_CARD_CLASSES } from "@/components/DeadlineDot"
+import { deadlineLevel } from "@/lib/deadline"
 import type { OrderRow } from "@/actions/orders"
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
@@ -56,10 +58,14 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
               <div className="space-y-3">
                 {colOrders.map((order) => {
                   const clientName = buildClientDisplayName(order.nome, order.cognome, order.azienda)
+                  const level = deadlineLevel(order.data_consegna, order.status)
                   return (
                     <div
                       key={order.id}
-                      className="bg-card border border-border rounded-lg p-3 shadow-[0px_2px_4px_0px_rgba(59,39,22,0.05)] hover:shadow-[0px_4px_10px_0px_rgba(59,39,22,0.1)] transition-shadow space-y-2"
+                      className={cn(
+                        "bg-card border border-border rounded-lg p-3 shadow-[0px_2px_4px_0px_rgba(59,39,22,0.05)] hover:shadow-[0px_4px_10px_0px_rgba(59,39,22,0.1)] transition-shadow space-y-2",
+                        level && DEADLINE_CARD_CLASSES[level]
+                      )}
                     >
                       <div className="flex items-start justify-between gap-1">
                         <div>
@@ -75,13 +81,14 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
                           {order.status === "preventivo" && preventivoStage((order as any).preventivo) === "yellow" && <StageBadge label="in attesa" tone="yellow" />}
                           {order.status === "bozza_grafica" && bozzaStage(order.bozza_grafica) === "red" && <StageBadge label="da fare" tone="red" />}
                           {order.status === "bozza_grafica" && bozzaStage(order.bozza_grafica) === "yellow" && <StageBadge label="in attesa" tone="yellow" />}
+                          <DeadlineDot level={level} className="ml-1" />
                         </div>
                       </div>
                       <p className="text-sm text-bark leading-tight">
                         {order.cosa_ordinato}
                       </p>
                       {order.data_consegna && (
-                        <p className="text-xs font-medium text-muted-foreground">
+                        <p className={cn("text-xs font-medium text-muted-foreground", level === "ritardo" && "text-terracotta font-semibold")}>
                           {formatDate(order.data_consegna)}
                         </p>
                       )}
