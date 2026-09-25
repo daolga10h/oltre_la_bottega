@@ -2,6 +2,8 @@ import { notFound } from "next/navigation"
 import { getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore, markPaymentReceived } from "@/actions/orders"
 import { STATUS_LABELS, STATUS_ORDER, preventivoStage, bozzaStage, materialeStage, type Stage } from "@/lib/orderConstants"
 import { StatusBadge } from "@/components/OrderCard"
+import { DeadlineDot } from "@/components/DeadlineDot"
+import { deadlineLevel } from "@/lib/deadline"
 import { NotifyReadyLinks } from "@/components/NotifyReadyLinks"
 import { SendPreviewLinks } from "@/components/SendPreviewLinks"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,6 +26,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const { id } = await params
   const order = await getOrder(id)
   if (!order) notFound()
+  const level = deadlineLevel(order.data_consegna, order.status)
 
   async function changeStatus(formData: FormData) {
     "use server"
@@ -124,7 +127,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         {order.data_consegna ? (
           <div className="text-right shrink-0">
             <span className="text-muted-foreground block text-xs">Consegna prevista</span>
-            <span className="text-base font-semibold text-foreground">{formatDate(order.data_consegna)}</span>
+            <span className="inline-flex items-center gap-2 text-base font-semibold text-foreground">
+              <DeadlineDot level={level} />
+              {formatDate(order.data_consegna)}
+            </span>
           </div>
         ) : (
           <Link
