@@ -112,6 +112,13 @@ box-shadow: inset 0px 1px 2px rgba(255,255,255,0.18),
   richiesta esplicita (le iconcine abbassavano la percezione qualitativa
   delle card)
 
+### Segnale di scadenza (2026-09-25)
+- Tre livelli in base ai giorni alla consegna (`deadlineLevel` in `src/lib/deadline.ts`, giorni contati sul calendario di `Europe/Rome`): **Domani**, **Oggi**, **In ritardo**. `consegnato` non ha mai segnale; `pronto` solo "In ritardo"
+- Card colorata (mappa `DEADLINE_CARD_CLASSES` in `src/components/DeadlineDot.tsx`): Domani `border-honey bg-[#fef6e4]`, Oggi `border-gold bg-[#fde7bd]`, In ritardo `border-terracotta/40 bg-[#fdf0ef]` — solo colori già in palette, mai `bg-amber` (riservato ai pulsanti primari)
+- Pallino luminoso 12px (`DeadlineDot`, classi `.deadline-dot*` in `globals.css`), senza testo ma con `role="img"` e `aria-label`/`title` ("Consegna domani" / "Consegna oggi" / "Consegna in ritardo"). Domani fermo; Oggi e In ritardo pulsano piano (2,2 s), `prefers-reduced-motion` disattiva la pulsazione
+- Compare in lista ordini, bacheca, scheda ordine (accanto alla data) e sulle righe dashboard "Materiale da ordinare" e "Da avvisare"; non in "Da consegnare oggi" (sarebbe sempre "Oggi")
+- Solo tema chiaro: i colori `.dark` definiti in `globals.css` non sono mai attivati nell'app
+
 ### KPI Card
 - Sfondo `bg-card`, bordo `border-border`
 - Numero 34px bold espresso
