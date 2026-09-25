@@ -21,11 +21,11 @@ export async function GET() {
         .eq("data_consegna", today).not("status", "in", '("consegnato")'),
       supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda, referente")
         .eq("data_consegnato", today),
-      supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda, referente")
+      supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda, referente, status, data_consegna")
         .eq("materiale", "da_ordinare"),
       supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda, referente")
         .eq("materiale", "ordinato").eq("materiale_data_ordine", today),
-      supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda, referente")
+      supabase.from("orders").select("id, cosa_ordinato, nome, cognome, azienda, referente, status, data_consegna")
         .eq("status", "pronto").eq("msg_pronto_inviato", false),
       supabase.from("reminders").select("id, title, due_at")
         .eq("status", "attivo").lte("due_at", `${today}T23:59:59Z`).order("due_at"),
