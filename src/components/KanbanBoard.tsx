@@ -35,7 +35,8 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
   }
 
   return (
-    <div className="grid grid-cols-5 gap-3">
+    <div className="overflow-x-auto pb-2">
+      <div className="grid grid-cols-[repeat(5,minmax(170px,1fr))] gap-3">
       {STATUS_ORDER.filter((s) => s !== "consegnato").map((status) => {
         const colOrders = orders.filter((o) => o.status === status)
         return (
@@ -67,14 +68,14 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
                         level && DEADLINE_CARD_CLASSES[level]
                       )}
                     >
-                      <div className="flex items-start justify-between gap-1">
-                        <div>
+                      <div className="flex flex-wrap items-start justify-between gap-x-1 gap-y-1.5">
+                        <div className="min-w-0">
                           <p className="font-semibold text-sm text-foreground">{clientName}</p>
                           {order.referente && (
                             <p className="text-xs text-muted-foreground">Ref. {order.referente}</p>
                           )}
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex flex-wrap items-center gap-1">
                           {materialeStage(order.materiale) === "red" && <StageBadge label="da ordinare" tone="red" />}
                           {materialeStage(order.materiale) === "yellow" && <StageBadge label="ordinato" tone="yellow" />}
                           {order.status === "preventivo" && preventivoStage((order as any).preventivo) === "red" && <StageBadge label="da inviare" tone="red" />}
@@ -128,6 +129,7 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
           </div>
         )
       })}
+      </div>
     </div>
   )
 }
