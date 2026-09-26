@@ -55,3 +55,6 @@ test-results/
 
 # schema della demo generato da scripts/demo-schema.mjs
 demo-schema.sql
+
+# video dimostrativo generato da npm run demo:video
+/video/

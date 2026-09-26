@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "test": "jest",
     "demo:schema": "node scripts/demo-schema.mjs",
-    "demo:reset": "tsx scripts/demo-reset.ts"
+    "demo:reset": "tsx scripts/demo-reset.ts",
+    "demo:video": "tsx scripts/demo-video/run.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
