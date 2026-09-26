@@ -53,6 +53,11 @@ export function giorno(oggi: Date, offset: number): string {
   return new Date(base + offset * GIORNO_MS).toISOString().slice(0, 10)
 }
 
+/** Un istante di oggi non può stare nel futuro rispetto al momento in cui si genera la demo. */
+function nonFuturo(oggi: Date, iso: string): string {
+  return new Date(iso).getTime() > oggi.getTime() ? oggi.toISOString() : iso
+}
+
 type Cliente = {
   nome: string
   cognome: string | null
@@ -113,8 +118,8 @@ function costruisci(oggi: Date, s: Specifica): DemoOrder {
   const acconto = consegnato ? prezzo : s.acconto ?? 0
   const dataOrdine = giorno(oggi, s.ordine)
   const dataConsegnato = consegnato && s.consegnato !== undefined ? giorno(oggi, s.consegnato) : null
-  const creato = `${dataOrdine}T09:00:00Z`
-  const chiuso = dataConsegnato ? `${dataConsegnato}T16:00:00Z` : creato
+  const creato = nonFuturo(oggi, `${dataOrdine}T09:00:00Z`)
+  const chiuso = dataConsegnato ? nonFuturo(oggi, `${dataConsegnato}T16:00:00Z`) : creato
   const ente = s.cliente.ente
 
   const events: DemoEvent[] = [{ event_type: "created", note: "Ordine creato", created_at: creato }]
@@ -196,10 +201,10 @@ export function buildDemoData(oggi: Date): DemoData {
   ]
 
   const reminders: DemoReminder[] = [
-    { title: "Ordinare il cartoncino dal fornitore", due_at: `${giorno(oggi, 0)}T09:00:00Z`, status: "attivo", completed_at: null },
-    { title: "Richiamare Anna Bellini: ordine pronto", due_at: `${giorno(oggi, 0)}T10:00:00Z`, status: "attivo", completed_at: null },
+    { title: "Ordinare il cartoncino dal fornitore", due_at: `${giorno(oggi, 0)}T21:59:00Z`, status: "attivo", completed_at: null },
+    { title: "Richiamare Anna Bellini: ordine pronto", due_at: `${giorno(oggi, 0)}T21:59:00Z`, status: "attivo", completed_at: null },
     { title: "Pagare la bolletta della luce", due_at: `${giorno(oggi, -1)}T09:00:00Z`, status: "attivo", completed_at: null },
-    { title: "Chiamare il corriere", due_at: `${giorno(oggi, 0)}T08:00:00Z`, status: "completato", completed_at: `${giorno(oggi, 0)}T08:30:00Z` },
+    { title: "Chiamare il corriere", due_at: `${giorno(oggi, 0)}T08:00:00Z`, status: "completato", completed_at: nonFuturo(oggi, `${giorno(oggi, 0)}T08:30:00Z`) },
   ]
 
   return { orders: specifiche.map((s) => costruisci(oggi, s)), reminders }

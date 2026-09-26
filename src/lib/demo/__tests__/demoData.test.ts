@@ -162,4 +162,32 @@ describe("buildDemoData — promemoria", () => {
       expect(r.due_at.slice(0, 10) <= "2026-09-30").toBe(true)
     }
   })
+
+  it("un solo promemoria attivo è in ritardo; quelli di oggi scadono più tardi nella giornata", () => {
+    const attivi = reminders.filter((r) => r.status === "attivo")
+    const inRitardo = attivi.filter((r) => new Date(r.due_at).getTime() < OGGI.getTime())
+    expect(inRitardo).toHaveLength(1)
+    expect(inRitardo[0].due_at.slice(0, 10)).toBe("2026-09-29")
+    const diOggi = attivi.filter((r) => r.due_at.slice(0, 10) === "2026-09-30")
+    expect(diOggi).toHaveLength(2)
+    for (const r of diOggi) expect(new Date(r.due_at).getTime()).toBeGreaterThan(OGGI.getTime())
+  })
+})
+
+describe("buildDemoData — nessun istante di oggi nel futuro", () => {
+  const momenti = [OGGI, new Date("2026-09-30T00:10:00Z")]
+
+  it.each(momenti.map((m) => [m.toISOString(), m] as const))("con generazione alle %s", (_etichetta, adesso) => {
+    const limite = adesso.getTime()
+    const dati = buildDemoData(adesso)
+    for (const o of dati.orders) {
+      expect(new Date(o.order.created_at).getTime()).toBeLessThanOrEqual(limite)
+      expect(new Date(o.order.updated_at).getTime()).toBeLessThanOrEqual(limite)
+      for (const e of o.events) expect(new Date(e.created_at).getTime()).toBeLessThanOrEqual(limite)
+    }
+    for (const r of dati.reminders) {
+      if (r.completed_at) expect(new Date(r.completed_at).getTime()).toBeLessThanOrEqual(limite)
+    }
+    expect(JSON.stringify(buildDemoData(adesso))).toBe(JSON.stringify(dati))
+  })
 })
