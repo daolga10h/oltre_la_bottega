@@ -40,7 +40,7 @@ async function main() {
   })
 
   // Solo letture, finché non abbiamo verificato che il database sia quello giusto.
-  const { count, error: erroreConteggio } = await supabase.from("orders").select("id", { count: "exact", head: true })
+  const { count, error: erroreConteggio } = await supabase.from("orders").select("id", { count: "exact" }).limit(1)
   controlla(
     erroreConteggio,
     "Non riesco a leggere il database demo (lo schema è stato creato? vedere docs/demo/configurazione-demo.md)"
