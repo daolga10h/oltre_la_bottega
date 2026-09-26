@@ -38,9 +38,7 @@ Tre bisogni del target, dal documento "PEP - Oltre la bottega":
 **Scheda ordine:**
 - Riquadro "Avvisa il cliente" con WhatsApp o email, che rispetta il canale "mail".
 - Bottone "Segna come pagato".
-- Due modi di stampare, entrambi con QR code, elenco articoli e "Da pagare", disponibili in ogni livello:
-  - **Etichetta** (62 mm, per stampante termica): la pagina di stampa esistente, invariata.
-  - **Foglio lavoro** (per stampante normale): stessi dati e stesso QR con caratteri più grandi, disposti su mezzo foglio A4 (formato A5 orizzontale, nella metà superiore del foglio). Si allega alla busta o al lavoro. Nel livello base è la scelta di riferimento: non serve nessuna stampante speciale.
+- Stampa **solo come foglio lavoro** per stampante normale: QR code, elenco articoli e "Da pagare", caratteri grandi, su mezzo foglio A4 (formato A5 orizzontale, nella metà superiore del foglio). Si allega alla busta o al lavoro. Non serve nessuna stampante speciale. L'etichetta termica da 62 mm non fa parte del livello base (resta nel completo).
 - Nessun riquadro "Invia anteprima".
 
 **Recensioni:** richiesta recensione via WhatsApp o email, come oggi.
@@ -49,13 +47,18 @@ Tre bisogni del target, dal documento "PEP - Oltre la bottega":
 
 **Sicurezza:** backup automatico via email e copia tecnica giornaliera (risposta a "sapere che i dati sono recuperabili").
 
-**Fuori dal livello base (livelli superiori):** ordini multi-riga, ente/referente, materiale del fornitore, bozza grafica e anteprima, "Da incassare", Riepilogo stampabile, campo operatore, calcolatrice.
+**Fuori dal livello base (livelli superiori):** ordini multi-riga, ente/referente, materiale del fornitore, bozza grafica e anteprima, "Da incassare", Riepilogo stampabile, campo operatore, etichetta termica da 62 mm, calcolatrice.
 
 Il **livello di mezzo** non è definito: si decide dopo i primi clienti veri. Per ora esistono solo "base" e "completo".
 
 ## Stampa: foglio lavoro
 
-La pagina di stampa esistente (`(print)/orders/[id]/print`) accetta un parametro di formato (`?formato=foglio`; assente = etichetta come oggi). La scheda ordine ha due bottoni: "Stampa etichetta" e "Stampa foglio lavoro". Il foglio riusa gli stessi dati dell'etichetta e lo stesso QR verso la scheda ordine; cambiano solo dimensioni e layout. Nessuna migration, nessun nuovo server action.
+La pagina di stampa esistente (`(print)/orders/[id]/print`) accetta un parametro di formato (`?formato=foglio`; assente = etichetta come oggi).
+
+- **Livello completo:** la scheda ordine ha due bottoni, "Stampa etichetta" (termica, invariata) e "Stampa foglio lavoro".
+- **Livello base:** un solo bottone, "Stampa foglio lavoro". La pagina di stampa mostra sempre il foglio lavoro, anche se si apre l'indirizzo dell'etichetta a mano; la funzione `etichetta_termica` è spenta in `plan.ts`.
+
+Il foglio riusa gli stessi dati dell'etichetta e lo stesso QR verso la scheda ordine; cambiano solo dimensioni e layout. Nessuna migration, nessun nuovo server action.
 
 ## Come si realizza
 
@@ -79,7 +82,7 @@ La pagina di stampa esistente (`(print)/orders/[id]/print`) accetta un parametro
 ## Verifica
 
 1. **Test unitari Jest** su `plan.ts`: ogni livello espone le funzioni giuste; variabile mancante o non valida → completo.
-2. **Prova reale con Playwright** su un'istanza avviata con `PLAN=base` (utente di test, ordini creati e poi cancellati via service role, come nei flussi già esistenti): menu a 5 voci, form con soli campi del livello, ordine con preventivo portato da "Preventivo" fino a "Consegnato", ordine senza preventivo, pagine di stampa (etichetta e foglio lavoro) raggiungibili con i dati giusti, pagine fuori livello → 404.
+2. **Prova reale con Playwright** su un'istanza avviata con `PLAN=base` (utente di test, ordini creati e poi cancellati via service role, come nei flussi già esistenti): menu a 5 voci, form con soli campi del livello, ordine con preventivo portato da "Preventivo" fino a "Consegnato", ordine senza preventivo, foglio lavoro raggiungibile con i dati giusti e senza bottone etichetta, indirizzo dell'etichetta che mostra comunque il foglio, pagine fuori livello → 404.
 3. **Nessuna regressione sul completo:** con `PLAN=completo` (o variabile assente) l'app è identica a oggi. Suite Jest esistente verde, `npx tsc --noEmit` pulito, flussi E2E A-D invariati.
 
 ## Ordine di lavoro
