@@ -52,3 +52,6 @@ test-results/
 # git worktrees (superpowers)
 /.worktrees/
 .claude/worktrees/
+
+# schema della demo generato da scripts/demo-schema.mjs
+demo-schema.sql
