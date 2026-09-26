@@ -13,7 +13,7 @@ import { STATUS_ORDER } from "../orderConstants"
 // non possono passare a vuoto.
 const ALL_FEATURES_MAP: Record<Feature, true> = {
   multi_riga: true,
-  ente: true,
+  nome_su_stampa: true,
   materiale: true,
   bozza_grafica: true,
   campi_avanzati: true,

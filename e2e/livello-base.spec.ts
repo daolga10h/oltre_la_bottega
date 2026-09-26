@@ -71,7 +71,8 @@ test.describe("Livello base", () => {
   test("il form ordine ha solo i campi del livello", async ({ page }) => {
     await page.goto("/orders/new")
     await expect(page.locator("#preventivo")).toBeVisible()
-    for (const selector of ["#is_ente", "#operatore", "#bozza_grafica", "#materiale", "#tipo_lavorazione", "#dettagli_grafici", "#file_cliente", "#foto_oggetto"]) {
+    await expect(page.locator("#is_ente")).toBeVisible()
+    for (const selector of ["#operatore", "#bozza_grafica", "#materiale", "#tipo_lavorazione", "#dettagli_grafici", "#file_cliente", "#foto_oggetto"]) {
       await expect(page.locator(selector)).toHaveCount(0)
     }
     await expect(page.getByRole("button", { name: "+ Aggiungi articolo" })).toHaveCount(0)
@@ -113,6 +114,25 @@ test.describe("Livello base", () => {
     await expect(page.getByText("Consegnato il")).toBeVisible()
   })
 
+  test("cliente ente/azienda: interruttore, referente e scheda ordine", async ({ page }) => {
+    const nome = `E2E BaseEnte ${Date.now()}`
+    await page.goto("/orders/new")
+    await page.locator("#is_ente").check()
+    await expect(page.getByLabel("Nome ente/azienda *")).toBeVisible()
+    await expect(page.locator("#cognome")).toHaveCount(0)
+    await page.locator("#nome").fill(nome)
+    await page.locator("#referente").fill("Referente Test")
+    await page.locator("#telefono").fill("3331234567")
+    await page.locator("#data_consegna").fill("2026-12-15")
+    const riga1 = page.locator("div.rounded-lg.border-border.p-3").first()
+    await riga1.getByPlaceholder("Es. targa plexiglass, timbro, portachiavi inciso...").fill("Riparazione — test E2E")
+    await riga1.locator('input[type="number"]').nth(1).fill("120")
+    await creaEAnnota(page)
+
+    await expect(page.getByRole("heading", { name: nome })).toBeVisible()
+    await expect(page.getByText("Ref. Referente Test")).toBeVisible()
+  })
+
   test("la scheda ordine offre solo il foglio lavoro e la stampa mostra il foglio", async ({ page }) => {
     const nome = `E2E BaseStampa ${Date.now()}`
     await compilaOrdineBase(page, nome)
@@ -128,6 +148,18 @@ test.describe("Livello base", () => {
     await expect(fogliolavoro).toBeVisible()
     await expect(fogliolavoro).toContainText(nome)
     await expect(fogliolavoro).toContainText("Da pagare: €40.00")
+
+    // Solo il logo, senza il nome della bottega (l'utente di prova ha nome "Bottega E2E").
+    await expect(fogliolavoro.locator('img[src="/icon-mono.png"]')).toBeVisible()
+    await expect(fogliolavoro).not.toContainText("Bottega E2E")
+
+    // 150 mm di larghezza con 30 mm di margine a sinistra (1 mm ≈ 3,78 px).
+    const box = await fogliolavoro.boundingBox()
+    expect(box).not.toBeNull()
+    expect(box!.width).toBeGreaterThan(560)
+    expect(box!.width).toBeLessThan(575)
+    expect(box!.x).toBeGreaterThan(110)
+    expect(box!.x).toBeLessThan(117)
   })
 
   test("la bacheca ha 4 colonne, senza Bozza grafica", async ({ page }) => {

@@ -15,7 +15,7 @@ export type Plan = "base" | "completo"
  */
 export type Feature =
   | "multi_riga"
-  | "ente"
+  | "nome_su_stampa" // nome della bottega sul foglio lavoro: nel base c'è solo il logo
   | "materiale"
   | "bozza_grafica"
   | "campi_avanzati" // tipo lavorazione, dettagli grafici, file cliente, foto oggetto
@@ -28,7 +28,7 @@ export type Feature =
 
 const OFF_IN_BASE: ReadonlySet<Feature> = new Set<Feature>([
   "multi_riga",
-  "ente",
+  "nome_su_stampa",
   "materiale",
   "bozza_grafica",
   "campi_avanzati",

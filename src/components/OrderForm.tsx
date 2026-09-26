@@ -248,20 +248,18 @@ export function OrderForm({ order, operatori = [] }: Props) {
       {/* CLIENTE */}
       <section className="space-y-4">
         <h2 className="font-semibold text-foreground border-b pb-1">Cliente</h2>
-        {hasFeature("ente") && (
-          <div className="flex items-center gap-2">
-            <input
-              id="is_ente"
-              type="checkbox"
-              checked={isEnte}
-              onChange={(e) => setIsEnte(e.target.checked)}
-              className="h-4 w-4 rounded border-border"
-            />
-            <Label htmlFor="is_ente" className="mb-0 font-normal text-sm cursor-pointer">
-              È un ente/azienda (non una persona)
-            </Label>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <input
+            id="is_ente"
+            type="checkbox"
+            checked={isEnte}
+            onChange={(e) => setIsEnte(e.target.checked)}
+            className="h-4 w-4 rounded border-border"
+          />
+          <Label htmlFor="is_ente" className="mb-0 font-normal text-sm cursor-pointer">
+            È un ente/azienda (non una persona)
+          </Label>
+        </div>
         <div className="grid grid-cols-3 gap-3">
           <div ref={suggRef} className="relative">
             <Label htmlFor="nome">{isEnte ? "Nome ente/azienda *" : "Nome *"}</Label>

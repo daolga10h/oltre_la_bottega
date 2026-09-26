@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { getOrder } from "@/actions/orders"
 import { createClient } from "@/lib/supabase/server"
 import { getShopName } from "@/lib/shop-name"
-import { getPlan, resolvePrintFormat } from "@/lib/plan"
+import { getPlan, hasFeature, resolvePrintFormat } from "@/lib/plan"
 import { PrintClient } from "./PrintClient"
 import { FoglioLavoroClient } from "./FoglioLavoroClient"
 
@@ -34,7 +34,6 @@ export default async function PrintPage({
     articoli: order.items.map((item) => ({ cosa_ordinato: item.cosa_ordinato, quantita: item.quantita })),
     dataConsegna: order.data_consegna,
     saldo: order.saldo,
-    shopName,
   }
 
   return (
@@ -50,7 +49,11 @@ export default async function PrintPage({
         body { margin: 0; background: white; }
       `}
       </style>
-      {format === "foglio" ? <FoglioLavoroClient {...data} /> : <PrintClient {...data} />}
+      {format === "foglio" ? (
+        <FoglioLavoroClient {...data} shopName={hasFeature("nome_su_stampa") ? shopName : null} />
+      ) : (
+        <PrintClient {...data} shopName={shopName} />
+      )}
     </>
   )
 }
