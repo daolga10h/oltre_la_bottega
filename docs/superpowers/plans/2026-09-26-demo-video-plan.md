@@ -125,6 +125,31 @@ describe("parseEnvFile", () => {
   it("un valore vuoto resta una stringa vuota", () => {
     expect(parseEnvFile("A=")).toEqual({ A: "" })
   })
+
+  it("accetta il prefisso export davanti alla chiave", () => {
+    expect(parseEnvFile("export A=uno")).toEqual({ A: "uno" })
+  })
+
+  it("taglia il commento in coda a un valore senza virgolette", () => {
+    expect(parseEnvFile("A=https://x.supabase.co # vero")).toEqual({ A: "https://x.supabase.co" })
+  })
+
+  it("taglia il commento in coda a un valore tra virgolette", () => {
+    expect(parseEnvFile('A="uno" # c')).toEqual({ A: "uno" })
+    expect(parseEnvFile("B='due' # c")).toEqual({ B: "due" })
+  })
+
+  it("un # dentro il valore (senza spazio prima) non è un commento", () => {
+    expect(parseEnvFile("A=pa#ss")).toEqual({ A: "pa#ss" })
+  })
+
+  it("con virgolette non chiuse prende il testo dopo la virgoletta di apertura", () => {
+    expect(parseEnvFile('A="uno')).toEqual({ A: "uno" })
+  })
+
+  it("ignora il BOM a inizio file", () => {
+    expect(parseEnvFile("﻿A=uno")).toEqual({ A: "uno" })
+  })
 })
 ```
 
@@ -140,8 +165,9 @@ Creare `src/lib/demo/envFile.ts`:
 ```ts
 /**
  * Legge il contenuto di un file .env: coppie CHIAVE=valore, righe vuote e
- * commenti (#) ignorati, virgolette facoltative intorno al valore. Serve agli
- * script della demo, che leggono `.env.demo.local` senza dipendenze in più.
+ * commenti (#) ignorati, prefisso `export` e virgolette facoltativi, commenti in
+ * coda alla riga tagliati come fanno Next.js e dotenv. Serve agli script della
+ * demo, che leggono `.env.demo.local` senza dipendenze in più.
  */
 export function parseEnvFile(testo: string): Record<string, string> {
   const risultato: Record<string, string> = {}
@@ -150,12 +176,22 @@ export function parseEnvFile(testo: string): Record<string, string> {
     if (!riga || riga.startsWith("#")) continue
     const uguale = riga.indexOf("=")
     if (uguale <= 0) continue
-    const chiave = riga.slice(0, uguale).trim()
-    let valore = riga.slice(uguale + 1).trim()
-    const virgolettato =
-      valore.length >= 2 &&
-      ((valore.startsWith('"') && valore.endsWith('"')) || (valore.startsWith("'") && valore.endsWith("'")))
-    if (virgolettato) valore = valore.slice(1, -1)
+    const chiave = riga
+      .slice(0, uguale)
+      .trim()
+      .replace(/^export\s+/, "")
+    if (!chiave) continue
+    const grezzo = riga.slice(uguale + 1).trim()
+    const apertura = grezzo[0]
+    let valore: string
+    if (apertura === '"' || apertura === "'") {
+      // Tra virgolette: si prende il testo fino alla virgoletta di chiusura, il resto è un commento.
+      const chiusura = grezzo.indexOf(apertura, 1)
+      valore = chiusura === -1 ? grezzo.slice(1) : grezzo.slice(1, chiusura)
+    } else {
+      // Senza virgolette: un commento inizia al primo `#` preceduto da uno spazio.
+      valore = grezzo.split(/\s+#/)[0].trim()
+    }
     risultato[chiave] = valore
   }
   return risultato
@@ -165,7 +201,7 @@ export function parseEnvFile(testo: string): Record<string, string> {
 - [ ] **Step 4: Verificare che passino**
 
 Run: `npx jest --roots=src --testPathPatterns=envFile`
-Expected: PASS (8 test).
+Expected: PASS (14 test).
 
 - [ ] **Step 5: Commit**
 
@@ -202,6 +238,14 @@ describe("hostOf", () => {
     expect(hostOf("  HTTPS://ABC.Supabase.co/ ")).toBe("abc.supabase.co")
   })
 
+  it("ignora credenziali, porta e frammento", () => {
+    expect(hostOf("https://u:p@VERO.supabase.co:443/x#y")).toBe("vero.supabase.co")
+  })
+
+  it("ignora il punto finale del nome host", () => {
+    expect(hostOf("vero.supabase.co.")).toBe("vero.supabase.co")
+  })
+
   it("restituisce null se manca", () => {
     expect(hostOf(undefined)).toBeNull()
     expect(hostOf("")).toBeNull()
@@ -214,6 +258,7 @@ describe("assertSafeTarget", () => {
     demoUrl: "https://demo.supabase.co",
     prodUrls: ["https://vero.supabase.co", undefined],
     existingOrderCount: 0,
+    existingUserCount: 0,
     hasDemoMarkerUser: false,
   }
 
@@ -222,12 +267,13 @@ describe("assertSafeTarget", () => {
   })
 
   it("non fa niente per un database demo già usato (contiene l'utente marcato)", () => {
-    expect(() => assertSafeTarget({ ...base, existingOrderCount: 25, hasDemoMarkerUser: true })).not.toThrow()
+    expect(() => assertSafeTarget({ ...base, existingOrderCount: 25, existingUserCount: 1, hasDemoMarkerUser: true })).not.toThrow()
   })
 
   it("rifiuta se manca l'indirizzo della demo", () => {
     expect(() => assertSafeTarget({ ...base, demoUrl: undefined })).toThrow(/non tocco niente/)
     expect(() => assertSafeTarget({ ...base, demoUrl: "" })).toThrow(/non tocco niente/)
+    expect(() => assertSafeTarget({ ...base, demoUrl: "   " })).toThrow(/non tocco niente/)
   })
 
   it("rifiuta se l'indirizzo è quello del progetto vero, anche scritto in modo diverso", () => {
@@ -246,6 +292,36 @@ describe("assertSafeTarget", () => {
       /non sembra il progetto demo/
     )
   })
+
+  it("rifiuta un database senza ordini ma con utenti e senza l'utente marcato demo", () => {
+    expect(() => assertSafeTarget({ ...base, existingOrderCount: 0, existingUserCount: 1, hasDemoMarkerUser: false })).toThrow(
+      /non sembra il progetto demo/
+    )
+  })
+
+  it("non fa niente per un database completamente vuoto (prima esecuzione)", () => {
+    expect(() =>
+      assertSafeTarget({ ...base, existingOrderCount: 0, existingUserCount: 0, hasDemoMarkerUser: false })
+    ).not.toThrow()
+  })
+
+  it("rifiuta se l'indirizzo del progetto vero non è noto (fail-closed)", () => {
+    expect(() => assertSafeTarget({ ...base, prodUrls: [undefined, ""] })).toThrow(/non tocco niente/)
+    expect(() => assertSafeTarget({ ...base, prodUrls: [undefined, ""] })).toThrow(/progetto vero/)
+    expect(() => assertSafeTarget({ ...base, prodUrls: [] })).toThrow(/progetto vero/)
+  })
+
+  it("l'utente marcato demo non basta se l'indirizzo è quello del progetto vero", () => {
+    expect(() =>
+      assertSafeTarget({
+        ...base,
+        demoUrl: "https://vero.supabase.co",
+        existingOrderCount: 10,
+        existingUserCount: 1,
+        hasDemoMarkerUser: true,
+      })
+    ).toThrow(/bottega vera/)
+  })
 })
 ```
 
@@ -259,16 +335,21 @@ Expected: FAIL con `Cannot find module '../safety'`.
 Creare `src/lib/demo/safety.ts`:
 
 ```ts
-/** Host di un indirizzo Supabase, in minuscolo, con o senza `https://`; null se manca. */
+/**
+ * Host di un indirizzo Supabase, in minuscolo, con o senza `https://`; null se manca.
+ * Usa il parser URL standard, così credenziali, porta, frammento e punto finale
+ * non possono mascherare un indirizzo uguale a quello vero.
+ */
 export function hostOf(url: string | undefined | null): string | null {
   if (!url) return null
-  const host = url
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, "")
-    .split("/")[0]
-    .split("?")[0]
-  return host || null
+  const testo = url.trim()
+  if (!testo) return null
+  try {
+    const conSchema = /^[a-z][a-z0-9+.-]*:\/\//i.test(testo) ? testo : `https://${testo}`
+    return new URL(conSchema).hostname.replace(/\.$/, "") || null
+  } catch {
+    return testo.toLowerCase()
+  }
 }
 
 export type SafeTargetInput = {
@@ -278,6 +359,8 @@ export type SafeTargetInput = {
   prodUrls: Array<string | undefined>
   /** Quanti ordini contiene già il database di destinazione. */
   existingOrderCount: number
+  /** Quanti utenti (Auth) contiene già il database di destinazione. */
+  existingUserCount: number
   /** Il database contiene l'utente marcato `demo: true`. */
   hasDemoMarkerUser: boolean
 }
@@ -287,22 +370,34 @@ export type SafeTargetInput = {
  * destinazione potrebbe essere quello della bottega vera. Lancia un errore
  * (in italiano) prima che qualunque scrittura sia stata fatta.
  */
-export function assertSafeTarget({ demoUrl, prodUrls, existingOrderCount, hasDemoMarkerUser }: SafeTargetInput): void {
+export function assertSafeTarget({
+  demoUrl,
+  prodUrls,
+  existingOrderCount,
+  existingUserCount,
+  hasDemoMarkerUser,
+}: SafeTargetInput): void {
   const demoHost = hostOf(demoUrl)
   if (!demoHost) {
     throw new Error("DEMO_SUPABASE_URL manca: non so quale database svuotare, non tocco niente.")
   }
 
   const prodHosts = prodUrls.map(hostOf).filter((h): h is string => h !== null)
+  if (prodHosts.length === 0) {
+    throw new Error(
+      "Non trovo l'indirizzo del progetto vero (NEXT_PUBLIC_SUPABASE_URL in .env.local): non posso escludere che sia lui, non tocco niente."
+    )
+  }
   if (prodHosts.includes(demoHost)) {
     throw new Error(
       `DEMO_SUPABASE_URL (${demoHost}) è lo stesso progetto della bottega vera: mi fermo, non tocco niente.`
     )
   }
 
-  if (existingOrderCount > 0 && !hasDemoMarkerUser) {
+  // Un'istanza vera ha sempre almeno un utente; una demo appena creata non ne ha.
+  if ((existingOrderCount > 0 || existingUserCount > 0) && !hasDemoMarkerUser) {
     throw new Error(
-      "Il database contiene ordini ma non l'utente marcato come demo: non sembra il progetto demo, mi fermo, non tocco niente."
+      "Il database contiene già ordini o utenti ma non l'utente marcato come demo: non sembra il progetto demo, mi fermo, non tocco niente."
     )
   }
 }
@@ -311,7 +406,7 @@ export function assertSafeTarget({ demoUrl, prodUrls, existingOrderCount, hasDem
 - [ ] **Step 4: Verificare che passino**
 
 Run: `npx jest --roots=src --testPathPatterns=safety`
-Expected: PASS (10 test).
+Expected: PASS (16 test).
 
 - [ ] **Step 5: Commit**
 
@@ -860,6 +955,7 @@ async function main() {
     demoUrl: url,
     prodUrls: [vero.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_URL],
     existingOrderCount: count ?? 0,
+    existingUserCount: elencoUtenti?.users.length ?? 0,
     hasDemoMarkerUser: Boolean(utenteDemo),
   })
 

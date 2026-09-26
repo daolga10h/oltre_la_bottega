@@ -41,8 +41,9 @@ Un comando che **svuota la demo e la riempie di nuovo**, con date calcolate risp
 ### 3. Protezioni contro lo svuotamento del database vero
 Lo script **si rifiuta di partire** se:
 1. `DEMO_SUPABASE_URL` manca, o è uguale a `NEXT_PUBLIC_SUPABASE_URL` del file `.env.local` (il progetto vero);
-2. il database non è vuoto e non contiene l'utente marcato `demo: true`.
-La verifica è una funzione pura `assertSafeTarget(...)` con test Jest (progetto vero → rifiuto; database con dati e senza marcatore → rifiuto; database vuoto o con marcatore → ok).
+2. il database contiene ordini **o utenti** ma non l'utente marcato `demo: true`;
+3. non si conosce l'indirizzo del progetto vero (manca `NEXT_PUBLIC_SUPABASE_URL` in `.env.local`): non si può escludere che sia lui.
+La verifica è una funzione pura `assertSafeTarget(...)` con test Jest (progetto vero → rifiuto; indirizzo vero sconosciuto → rifiuto; database con ordini o utenti e senza marcatore → rifiuto; database vuoto o con marcatore → ok).
 
 ### 4. Il video
 - **Un video di circa 2 minuti**, registrato dall'utente sul computer (programma gratuito, per esempio OBS o Win+G) sulla demo con dati finti, in italiano, con la sua voce.
