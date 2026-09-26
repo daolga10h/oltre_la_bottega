@@ -3,6 +3,7 @@ import { BottomNav } from "@/components/nav/BottomNav"
 import { SearchBar } from "@/components/SearchBar"
 import { RefreshButton } from "@/components/RefreshButton"
 import { CalculatorWidget } from "@/components/CalculatorWidget"
+import { hasFeature } from "@/lib/plan"
 
 export default function DashboardLayout({
   children,
@@ -20,7 +21,7 @@ export default function DashboardLayout({
         <main className="flex-1 p-4 md:p-8 pb-24 md:pb-8">{children}</main>
       </div>
       <BottomNav />
-      <CalculatorWidget />
+      {hasFeature("calcolatrice") && <CalculatorWidget />}
     </div>
   )
 }
