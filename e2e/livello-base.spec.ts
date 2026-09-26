@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test"
-import { getTestAuthCookies, deleteTestOrder } from "./helpers/auth"
+import { getTestAuthCookies, deleteTestOrder, deleteTestOrdersByNamePrefix } from "./helpers/auth"
 
 // Gira solo con NEXT_PUBLIC_PLAN=base (vedere playwright.base.config.ts);
 // con la configurazione normale (livello completo) viene saltato.
@@ -20,6 +20,8 @@ test.describe("Livello base", () => {
     while (orderIds.length > 0) {
       await deleteTestOrder(orderIds.pop()!).catch(() => {})
     }
+    // Rete di sicurezza: anche un ordine creato ma mai annotato (redirect fallito).
+    await deleteTestOrdersByNamePrefix("E2E Base")
   })
 
   async function compilaOrdineBase(page: Page, nome: string) {
@@ -68,11 +70,11 @@ test.describe("Livello base", () => {
 
   test("il form ordine ha solo i campi del livello", async ({ page }) => {
     await page.goto("/orders/new")
+    await expect(page.locator("#preventivo")).toBeVisible()
     for (const selector of ["#is_ente", "#operatore", "#bozza_grafica", "#materiale", "#tipo_lavorazione", "#dettagli_grafici", "#file_cliente", "#foto_oggetto"]) {
       await expect(page.locator(selector)).toHaveCount(0)
     }
     await expect(page.getByRole("button", { name: "+ Aggiungi articolo" })).toHaveCount(0)
-    await expect(page.locator("#preventivo")).toBeVisible()
     await expect(page.getByRole("button", { name: "Crea ordine" })).toBeEnabled()
   })
 
@@ -80,8 +82,8 @@ test.describe("Livello base", () => {
     await compilaOrdineBase(page, `E2E Base ${Date.now()}`)
     await creaEAnnota(page)
 
-    await expect(page.getByRole("button", { name: "Bozza grafica" })).toHaveCount(0)
     await expect(page.locator("form button.bg-espresso")).toHaveText("Da fare")
+    await expect(page.getByRole("button", { name: "Bozza grafica" })).toHaveCount(0)
     // Senza elenco Ordini, la freccia indietro porta alla Bacheca.
     await expect(page.locator("main").getByRole("link", { name: "Bacheca" })).toHaveAttribute("href", "/kanban")
 
@@ -95,7 +97,7 @@ test.describe("Livello base", () => {
     await expect(page.getByText("Consegnato il")).toBeVisible()
   })
 
-  test("ordine con preventivo: passa a Da fare quando viene approvato", async ({ page }) => {
+  test("ordine con preventivo: passa a Da fare quando viene approvato e arriva a Consegnato", async ({ page }) => {
     await compilaOrdineBase(page, `E2E BasePrev ${Date.now()}`)
     await page.locator("#preventivo").click()
     await page.getByRole("option", { name: "Da inviare" }).click()
@@ -104,6 +106,11 @@ test.describe("Livello base", () => {
     await expect(page.locator("form button.bg-espresso")).toHaveText("Preventivo")
     await page.getByRole("button", { name: "Approvato" }).click()
     await expect(page.locator("form button.bg-espresso")).toHaveText("Da fare")
+
+    await page.getByRole("button", { name: "In lavorazione", exact: true }).click()
+    await page.getByRole("button", { name: "Pronto", exact: true }).click()
+    await page.getByRole("button", { name: "Consegnato", exact: true }).click()
+    await expect(page.getByText("Consegnato il")).toBeVisible()
   })
 
   test("la scheda ordine offre solo il foglio lavoro e la stampa mostra il foglio", async ({ page }) => {
@@ -111,9 +118,9 @@ test.describe("Livello base", () => {
     await compilaOrdineBase(page, nome)
     const id = await creaEAnnota(page)
 
-    await expect(page.getByRole("link", { name: "Etichetta" })).toHaveCount(0)
     const foglio = page.getByRole("link", { name: "Foglio lavoro" })
     await expect(foglio).toHaveAttribute("href", `/orders/${id}/print?formato=foglio`)
+    await expect(page.getByRole("link", { name: "Etichetta" })).toHaveCount(0)
 
     // Anche aprendo a mano l'indirizzo dell'etichetta si vede il foglio.
     await page.goto(`/orders/${id}/print`)
