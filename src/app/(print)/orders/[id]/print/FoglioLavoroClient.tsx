@@ -19,11 +19,12 @@ interface Props {
 }
 
 /**
- * Foglio lavoro per stampante normale: 150 mm di larghezza centrati su un A4
- * (210 mm), quindi 30 mm di margine per lato e in alto. Non conosciamo i margini
- * non stampabili della stampante di ogni cliente: 30 mm sono abbondanti.
- * L'altezza segue il contenuto. Stessi dati e stesso QR dell'etichetta termica,
- * caratteri più grandi.
+ * Foglio lavoro per stampante normale: tutta la larghezza di un A4 (210 mm),
+ * con caratteri grandi. Il contenuto sta 20 mm dentro i bordi (lati e alto):
+ * non conosciamo i margini non stampabili della stampante di ogni cliente
+ * (in genere 4-6 mm), 20 mm sono abbondanti. Nessun bordo sul filo del foglio,
+ * verrebbe tagliato. L'altezza segue il contenuto. Stessi dati e stesso QR
+ * dell'etichetta termica.
  */
 export function FoglioLavoroClient({ orderId, nome, cognome, azienda, referente, telefono, articoli, dataConsegna, saldo, shopName }: Props) {
   const [url, setUrl] = useState("")
@@ -44,45 +45,41 @@ export function FoglioLavoroClient({ orderId, nome, cognome, azienda, referente,
     <div
       data-testid="foglio-lavoro"
       style={{
-        width: "150mm",
-        margin: "30mm 30mm 0 30mm",
+        width: "210mm",
         boxSizing: "border-box",
-        padding: "8mm",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        gap: "8mm",
+        padding: "20mm",
         fontFamily: "Arial, Helvetica, sans-serif",
-        fontSize: "18px",
+        fontSize: "24px",
         lineHeight: 1.4,
-        border: "1px dashed #999",
       }}
     >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", paddingBottom: "8px", borderBottom: "2px solid #000" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon-mono.png" alt="" style={{ width: "40px", height: "40px", display: "block" }} />
-          {shopName && <span style={{ fontSize: "16px", fontWeight: "bold", letterSpacing: "0.5px" }}>{shopName}</span>}
-        </div>
-        <p style={{ fontWeight: "bold", fontSize: "28px", margin: "0 0 6px 0" }}>{clientName}</p>
-        {azienda && <p style={{ fontSize: "18px", margin: "0 0 4px 0" }}>{azienda}</p>}
-        {referente && <p style={{ fontSize: "18px", margin: "0 0 4px 0" }}>Ref. {referente}</p>}
-        {telefono && <p style={{ fontSize: "20px", margin: "0 0 12px 0" }}>{telefono}</p>}
-        {articoli.length > 0 && (
-          <div style={{ margin: "0 0 12px 0", fontSize: "20px" }}>
-            {articoli.map((a, i) => (
-              <p key={i} style={{ margin: 0 }}>
-                {articoli.length > 1 ? "• " : ""}{a.cosa_ordinato}{a.quantita > 1 ? ` × ${a.quantita}` : ""}
-              </p>
-            ))}
-          </div>
-        )}
-        {date && <p style={{ fontSize: "22px", fontWeight: "bold", margin: "0 0 6px 0" }}>Consegnare: {date}</p>}
-        <p style={{ fontSize: "22px", fontWeight: "bold", margin: 0 }}>Da pagare: €{formatEUR(saldo)}</p>
+      <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "28px", paddingBottom: "16px", borderBottom: "3px solid #000" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/icon-mono.png" alt="" style={{ width: "64px", height: "64px", display: "block" }} />
+        {shopName && <span style={{ fontSize: "26px", fontWeight: "bold", letterSpacing: "0.5px" }}>{shopName}</span>}
       </div>
-      <div style={{ flexShrink: 0, textAlign: "center" }}>
-        {url && <QRCodeSVG value={url} size={130} />}
-        <p style={{ fontSize: "11px", margin: "6px 0 0 0" }}>Scansiona per aprire la scheda</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12mm" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontWeight: "bold", fontSize: "44px", lineHeight: 1.2, margin: "0 0 10px 0" }}>{clientName}</p>
+          {azienda && <p style={{ fontSize: "26px", margin: "0 0 6px 0" }}>{azienda}</p>}
+          {referente && <p style={{ fontSize: "26px", margin: "0 0 6px 0" }}>Ref. {referente}</p>}
+          {telefono && <p style={{ fontSize: "30px", margin: "0 0 24px 0" }}>{telefono}</p>}
+          {articoli.length > 0 && (
+            <div style={{ margin: "0 0 24px 0", fontSize: "30px" }}>
+              {articoli.map((a, i) => (
+                <p key={i} style={{ margin: "0 0 4px 0" }}>
+                  {articoli.length > 1 ? "• " : ""}{a.cosa_ordinato}{a.quantita > 1 ? ` × ${a.quantita}` : ""}
+                </p>
+              ))}
+            </div>
+          )}
+          {date && <p style={{ fontSize: "34px", fontWeight: "bold", margin: "0 0 10px 0" }}>Consegnare: {date}</p>}
+          <p style={{ fontSize: "34px", fontWeight: "bold", margin: 0 }}>Da pagare: €{formatEUR(saldo)}</p>
+        </div>
+        <div style={{ flexShrink: 0, textAlign: "center" }}>
+          {url && <QRCodeSVG value={url} size={200} />}
+          <p style={{ fontSize: "14px", margin: "8px 0 0 0" }}>Scansiona per aprire la scheda</p>
+        </div>
       </div>
     </div>
   )

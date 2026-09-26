@@ -153,13 +153,13 @@ test.describe("Livello base", () => {
     await expect(fogliolavoro.locator('img[src="/icon-mono.png"]')).toBeVisible()
     await expect(fogliolavoro).not.toContainText("Bottega E2E")
 
-    // 150 mm di larghezza con 30 mm di margine a sinistra (1 mm ≈ 3,78 px).
+    // Tutta la larghezza di un A4 (210 mm ≈ 794 px), attaccato al bordo sinistro:
+    // i 20 mm di margine sono padding interno, non spazio fuori dal foglio.
     const box = await fogliolavoro.boundingBox()
     expect(box).not.toBeNull()
-    expect(box!.width).toBeGreaterThan(560)
-    expect(box!.width).toBeLessThan(575)
-    expect(box!.x).toBeGreaterThan(110)
-    expect(box!.x).toBeLessThan(117)
+    expect(box!.width).toBeGreaterThan(785)
+    expect(box!.width).toBeLessThan(802)
+    expect(box!.x).toBeLessThan(2)
   })
 
   test("la bacheca ha 4 colonne, senza Bozza grafica", async ({ page }) => {
