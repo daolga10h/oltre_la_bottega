@@ -594,6 +594,34 @@ describe("buildDemoData — promemoria", () => {
       expect(r.due_at.slice(0, 10) <= "2026-09-30").toBe(true)
     }
   })
+
+  it("un solo promemoria attivo è in ritardo; quelli di oggi scadono più tardi nella giornata", () => {
+    const attivi = reminders.filter((r) => r.status === "attivo")
+    const inRitardo = attivi.filter((r) => new Date(r.due_at).getTime() < OGGI.getTime())
+    expect(inRitardo).toHaveLength(1)
+    expect(inRitardo[0].due_at.slice(0, 10)).toBe("2026-09-29")
+    const diOggi = attivi.filter((r) => r.due_at.slice(0, 10) === "2026-09-30")
+    expect(diOggi).toHaveLength(2)
+    for (const r of diOggi) expect(new Date(r.due_at).getTime()).toBeGreaterThan(OGGI.getTime())
+  })
+})
+
+describe("buildDemoData — nessun istante di oggi nel futuro", () => {
+  const momenti = [OGGI, new Date("2026-09-30T00:10:00Z")]
+
+  it.each(momenti.map((m) => [m.toISOString(), m] as const))("con generazione alle %s", (_etichetta, adesso) => {
+    const limite = adesso.getTime()
+    const dati = buildDemoData(adesso)
+    for (const o of dati.orders) {
+      expect(new Date(o.order.created_at).getTime()).toBeLessThanOrEqual(limite)
+      expect(new Date(o.order.updated_at).getTime()).toBeLessThanOrEqual(limite)
+      for (const e of o.events) expect(new Date(e.created_at).getTime()).toBeLessThanOrEqual(limite)
+    }
+    for (const r of dati.reminders) {
+      if (r.completed_at) expect(new Date(r.completed_at).getTime()).toBeLessThanOrEqual(limite)
+    }
+    expect(JSON.stringify(buildDemoData(adesso))).toBe(JSON.stringify(dati))
+  })
 })
 ```
 
@@ -662,6 +690,11 @@ export function giorno(oggi: Date, offset: number): string {
   return new Date(base + offset * GIORNO_MS).toISOString().slice(0, 10)
 }
 
+/** Un istante di oggi non può stare nel futuro rispetto al momento in cui si genera la demo. */
+function nonFuturo(oggi: Date, iso: string): string {
+  return new Date(iso).getTime() > oggi.getTime() ? oggi.toISOString() : iso
+}
+
 type Cliente = {
   nome: string
   cognome: string | null
@@ -722,8 +755,8 @@ function costruisci(oggi: Date, s: Specifica): DemoOrder {
   const acconto = consegnato ? prezzo : s.acconto ?? 0
   const dataOrdine = giorno(oggi, s.ordine)
   const dataConsegnato = consegnato && s.consegnato !== undefined ? giorno(oggi, s.consegnato) : null
-  const creato = `${dataOrdine}T09:00:00Z`
-  const chiuso = dataConsegnato ? `${dataConsegnato}T16:00:00Z` : creato
+  const creato = nonFuturo(oggi, `${dataOrdine}T09:00:00Z`)
+  const chiuso = dataConsegnato ? nonFuturo(oggi, `${dataConsegnato}T16:00:00Z`) : creato
   const ente = s.cliente.ente
 
   const events: DemoEvent[] = [{ event_type: "created", note: "Ordine creato", created_at: creato }]
@@ -805,10 +838,10 @@ export function buildDemoData(oggi: Date): DemoData {
   ]
 
   const reminders: DemoReminder[] = [
-    { title: "Ordinare il cartoncino dal fornitore", due_at: `${giorno(oggi, 0)}T09:00:00Z`, status: "attivo", completed_at: null },
-    { title: "Richiamare Anna Bellini: ordine pronto", due_at: `${giorno(oggi, 0)}T10:00:00Z`, status: "attivo", completed_at: null },
+    { title: "Ordinare il cartoncino dal fornitore", due_at: `${giorno(oggi, 0)}T21:59:00Z`, status: "attivo", completed_at: null },
+    { title: "Richiamare Anna Bellini: ordine pronto", due_at: `${giorno(oggi, 0)}T21:59:00Z`, status: "attivo", completed_at: null },
     { title: "Pagare la bolletta della luce", due_at: `${giorno(oggi, -1)}T09:00:00Z`, status: "attivo", completed_at: null },
-    { title: "Chiamare il corriere", due_at: `${giorno(oggi, 0)}T08:00:00Z`, status: "completato", completed_at: `${giorno(oggi, 0)}T08:30:00Z` },
+    { title: "Chiamare il corriere", due_at: `${giorno(oggi, 0)}T08:00:00Z`, status: "completato", completed_at: nonFuturo(oggi, `${giorno(oggi, 0)}T08:30:00Z`) },
   ]
 
   return { orders: specifiche.map((s) => costruisci(oggi, s)), reminders }
