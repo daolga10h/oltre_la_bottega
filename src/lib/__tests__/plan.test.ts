@@ -8,19 +8,23 @@ import {
 } from "../plan"
 import { STATUS_ORDER } from "../orderConstants"
 
-const ALL_FEATURES: Feature[] = [
-  "multi_riga",
-  "ente",
-  "materiale",
-  "bozza_grafica",
-  "campi_avanzati",
-  "elenco_ordini",
-  "operatore",
-  "da_incassare",
-  "riepilogo",
-  "etichetta_termica",
-  "calcolatrice",
-]
+// Record<Feature, true> obbliga a elencare ogni funzione: una nuova voce nel tipo
+// senza aggiornare questa mappa non compila, quindi i test "per ogni funzione"
+// non possono passare a vuoto.
+const ALL_FEATURES_MAP: Record<Feature, true> = {
+  multi_riga: true,
+  ente: true,
+  materiale: true,
+  bozza_grafica: true,
+  campi_avanzati: true,
+  elenco_ordini: true,
+  operatore: true,
+  da_incassare: true,
+  riepilogo: true,
+  etichetta_termica: true,
+  calcolatrice: true,
+}
+const ALL_FEATURES = Object.keys(ALL_FEATURES_MAP) as Feature[]
 
 describe("parsePlan", () => {
   it("riconosce 'base'", () => {
@@ -73,14 +77,21 @@ describe("hasFeature", () => {
       expect(hasFeature(feature, "base")).toBe(false)
     }
   })
+})
 
-  it("senza livello esplicito usa quello dell'ambiente", () => {
-    const original = process.env.NEXT_PUBLIC_PLAN
+describe("hasFeature senza livello esplicito", () => {
+  const original = process.env.NEXT_PUBLIC_PLAN
+
+  afterEach(() => {
+    if (original === undefined) delete process.env.NEXT_PUBLIC_PLAN
+    else process.env.NEXT_PUBLIC_PLAN = original
+  })
+
+  it("usa il livello dell'ambiente", () => {
     process.env.NEXT_PUBLIC_PLAN = "base"
     expect(hasFeature("materiale")).toBe(false)
     delete process.env.NEXT_PUBLIC_PLAN
     expect(hasFeature("materiale")).toBe(true)
-    if (original !== undefined) process.env.NEXT_PUBLIC_PLAN = original
   })
 })
 
@@ -99,9 +110,12 @@ describe("statusOrderForPlan", () => {
     ])
   })
 
-  it("non modifica la costante originale", () => {
-    statusOrderForPlan("base")
-    expect(STATUS_ORDER).toContain("bozza_grafica")
+  it("restituisce una copia, non la costante originale", () => {
+    const risultato = statusOrderForPlan("completo")
+    expect(risultato).not.toBe(STATUS_ORDER)
+    const lunghezza = STATUS_ORDER.length
+    risultato.push("extra")
+    expect(STATUS_ORDER).toHaveLength(lunghezza)
   })
 })
 
