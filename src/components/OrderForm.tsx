@@ -17,6 +17,7 @@ import { appendDictatedText } from "@/lib/dictation"
 import { VoiceDictationButton } from "@/components/VoiceDictationButton"
 import type { OrderItemRow } from "@/actions/orders"
 import { getRememberedOperator, setRememberedOperator } from "@/lib/device-operator"
+import { hasFeature } from "@/lib/plan"
 import Link from "next/link"
 
 const CANALI = ["negozio", "WhatsApp", "telefono", "mail", "sito", "altro"]
@@ -194,7 +195,7 @@ export function OrderForm({ order, operatori = [] }: Props) {
       telefono: telefonoValue.trim() || null,
       email_cliente: emailValue.trim() || null,
       canale,
-      operatore: isEdit ? undefined : operatoreValue,
+      operatore: isEdit || !hasFeature("operatore") ? undefined : operatoreValue,
       data_ordine: isEdit ? (order.data_ordine ?? null) : undefined,
       data_consegna: v("data_consegna"),
       data_consegnato: isEdit ? v("data_consegnato") : undefined,
@@ -205,9 +206,15 @@ export function OrderForm({ order, operatori = [] }: Props) {
       materiale_fornitore: materialeFornitore.trim() || null,
       materiale_cosa_manca: materialeCosaManca.trim() || null,
       materiale_data_ordine: isEdit ? (order.materiale_data_ordine ?? null) : undefined,
-      foto_oggetto: v("foto_oggetto"),
-      dettagli_grafici: v("dettagli_grafici"),
-      file_cliente: fileCliente || null,
+      // Nel livello base questi campi non ci sono: non vanno inviati, altrimenti
+      // il salvataggio azzererebbe i valori già presenti nell'ordine.
+      ...(hasFeature("campi_avanzati")
+        ? {
+            foto_oggetto: v("foto_oggetto"),
+            dettagli_grafici: v("dettagli_grafici"),
+            file_cliente: fileCliente || null,
+          }
+        : {}),
       note: v("note"),
       acconto,
       saldo,
@@ -225,7 +232,7 @@ export function OrderForm({ order, operatori = [] }: Props) {
         window.location.href = `/orders/${order.id}`
       } else {
         const { id } = await createOrder(payload)
-        setRememberedOperator(operatoreValue)
+        if (hasFeature("operatore")) setRememberedOperator(operatoreValue)
         window.location.href = `/orders/${id}`
       }
     } catch (err) {
@@ -241,18 +248,20 @@ export function OrderForm({ order, operatori = [] }: Props) {
       {/* CLIENTE */}
       <section className="space-y-4">
         <h2 className="font-semibold text-foreground border-b pb-1">Cliente</h2>
-        <div className="flex items-center gap-2">
-          <input
-            id="is_ente"
-            type="checkbox"
-            checked={isEnte}
-            onChange={(e) => setIsEnte(e.target.checked)}
-            className="h-4 w-4 rounded border-border"
-          />
-          <Label htmlFor="is_ente" className="mb-0 font-normal text-sm cursor-pointer">
-            È un ente/azienda (non una persona)
-          </Label>
-        </div>
+        {hasFeature("ente") && (
+          <div className="flex items-center gap-2">
+            <input
+              id="is_ente"
+              type="checkbox"
+              checked={isEnte}
+              onChange={(e) => setIsEnte(e.target.checked)}
+              className="h-4 w-4 rounded border-border"
+            />
+            <Label htmlFor="is_ente" className="mb-0 font-normal text-sm cursor-pointer">
+              È un ente/azienda (non una persona)
+            </Label>
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-3">
           <div ref={suggRef} className="relative">
             <Label htmlFor="nome">{isEnte ? "Nome ente/azienda *" : "Nome *"}</Label>
@@ -383,7 +392,7 @@ export function OrderForm({ order, operatori = [] }: Props) {
       {/* ORDINE */}
       <section className="space-y-4">
         <h2 className="font-semibold text-foreground border-b pb-1">Ordine</h2>
-        {!isEdit && (
+        {!isEdit && hasFeature("operatore") && (
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label htmlFor="operatore">Operatore *</Label>
@@ -469,42 +478,50 @@ export function OrderForm({ order, operatori = [] }: Props) {
               </div>
             </div>
           ))}
-          <Button type="button" variant="outline" size="sm" onClick={addItem}>
-            + Aggiungi articolo
-          </Button>
+          {hasFeature("multi_riga") && (
+            <Button type="button" variant="outline" size="sm" onClick={addItem}>
+              + Aggiungi articolo
+            </Button>
+          )}
           <p className="text-sm text-muted-foreground">
             Totale: <span className="font-semibold text-foreground">€{itemsTotal.toFixed(2)}</span>
           </p>
         </div>
-        <div>
-          <Label htmlFor="dettagli_grafici">Dettagli grafici</Label>
-          <Textarea id="dettagli_grafici" name="dettagli_grafici" rows={2} defaultValue={(order as any)?.dettagli_grafici ?? ""} placeholder="Font, posizione logo, colori, misure..." />
-        </div>
+        {hasFeature("campi_avanzati") && (
+          <div>
+            <Label htmlFor="dettagli_grafici">Dettagli grafici</Label>
+            <Textarea id="dettagli_grafici" name="dettagli_grafici" rows={2} defaultValue={(order as any)?.dettagli_grafici ?? ""} placeholder="Font, posizione logo, colori, misure..." />
+          </div>
+        )}
 
         {/* Tipo lavorazione · Bozza grafica · Inviare preventivo — stessa riga */}
         <div className="grid grid-cols-3 gap-3">
-          <div>
-            <Label htmlFor="tipo_lavorazione">Tipo lavorazione</Label>
-            <Select value={tipoLavorazione} onValueChange={(v) => setTipoLavorazione(v ?? "")}>
-              <SelectTrigger id="tipo_lavorazione" className="w-full">
-                <SelectValue placeholder="— Seleziona —" />
-              </SelectTrigger>
-              <SelectContent>
-                {TIPI_LAVORAZIONE.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="bozza_grafica">Bozza grafica</Label>
-            <Select items={BOZZA_OPTIONS} value={bozza} onValueChange={(v) => v && setBozza(v)}>
-              <SelectTrigger id="bozza_grafica" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {BOZZA_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          {hasFeature("campi_avanzati") && (
+            <div>
+              <Label htmlFor="tipo_lavorazione">Tipo lavorazione</Label>
+              <Select value={tipoLavorazione} onValueChange={(v) => setTipoLavorazione(v ?? "")}>
+                <SelectTrigger id="tipo_lavorazione" className="w-full">
+                  <SelectValue placeholder="— Seleziona —" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIPI_LAVORAZIONE.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {hasFeature("bozza_grafica") && (
+            <div>
+              <Label htmlFor="bozza_grafica">Bozza grafica</Label>
+              <Select items={BOZZA_OPTIONS} value={bozza} onValueChange={(v) => v && setBozza(v)}>
+                <SelectTrigger id="bozza_grafica" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {BOZZA_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <Label htmlFor="preventivo">Preventivo</Label>
             <Select items={PREVENTIVO_OPTIONS} value={preventivo} onValueChange={(v) => v && setPreventivo(v)}>
@@ -518,49 +535,53 @@ export function OrderForm({ order, operatori = [] }: Props) {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <Label htmlFor="materiale">Materiale fornitore</Label>
-            <Select items={MATERIALE_OPTIONS} value={materiale} onValueChange={(v) => {
-              if (!v) return
-              setMateriale(v)
-              if (v === "non_serve") {
-                setMaterialeFornitore("")
-                setMaterialeCosaManca("")
-              }
-            }}>
-              <SelectTrigger id="materiale" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {MATERIALE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+        {hasFeature("materiale") && (
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label htmlFor="materiale">Materiale fornitore</Label>
+              <Select items={MATERIALE_OPTIONS} value={materiale} onValueChange={(v) => {
+                if (!v) return
+                setMateriale(v)
+                if (v === "non_serve") {
+                  setMaterialeFornitore("")
+                  setMaterialeCosaManca("")
+                }
+              }}>
+                <SelectTrigger id="materiale" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MATERIALE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {materiale !== "non_serve" && (
+              <>
+                <div>
+                  <Label htmlFor="materiale_fornitore">Fornitore</Label>
+                  <Input id="materiale_fornitore" value={materialeFornitore} onChange={(e) => setMaterialeFornitore(e.target.value)} placeholder="Nome fornitore" />
+                </div>
+                <div>
+                  <Label htmlFor="materiale_cosa_manca">Cosa manca</Label>
+                  <Input id="materiale_cosa_manca" value={materialeCosaManca} onChange={(e) => setMaterialeCosaManca(e.target.value)} placeholder="Es. cartoncino 300gr" />
+                </div>
+              </>
+            )}
           </div>
-          {materiale !== "non_serve" && (
-            <>
-              <div>
-                <Label htmlFor="materiale_fornitore">Fornitore</Label>
-                <Input id="materiale_fornitore" value={materialeFornitore} onChange={(e) => setMaterialeFornitore(e.target.value)} placeholder="Nome fornitore" />
-              </div>
-              <div>
-                <Label htmlFor="materiale_cosa_manca">Cosa manca</Label>
-                <Input id="materiale_cosa_manca" value={materialeCosaManca} onChange={(e) => setMaterialeCosaManca(e.target.value)} placeholder="Es. cartoncino 300gr" />
-              </div>
-            </>
-          )}
-        </div>
+        )}
 
-        <div className="grid grid-cols-3 gap-3">
-          <div className="col-span-2">
-            <Label htmlFor="file_cliente">File inviati dal cliente</Label>
-            <Input id="file_cliente" value={fileCliente} onChange={(e) => setFileCliente(e.target.value)} placeholder="Nome file, link Drive, foto WhatsApp..." />
+        {hasFeature("campi_avanzati") && (
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2">
+              <Label htmlFor="file_cliente">File inviati dal cliente</Label>
+              <Input id="file_cliente" value={fileCliente} onChange={(e) => setFileCliente(e.target.value)} placeholder="Nome file, link Drive, foto WhatsApp..." />
+            </div>
+            <div>
+              <Label htmlFor="foto_oggetto">Foto oggetto</Label>
+              <Input id="foto_oggetto" name="foto_oggetto" defaultValue={order?.foto_oggetto ?? ""} placeholder="Nome file o link" />
+            </div>
           </div>
-          <div>
-            <Label htmlFor="foto_oggetto">Foto oggetto</Label>
-            <Input id="foto_oggetto" name="foto_oggetto" defaultValue={order?.foto_oggetto ?? ""} placeholder="Nome file o link" />
-          </div>
-        </div>
+        )}
       </section>
 
       {/* DATE — solo in modifica */}
@@ -650,7 +671,7 @@ export function OrderForm({ order, operatori = [] }: Props) {
       </section>
 
       <div className="flex gap-3 pt-2">
-        <Button type="submit" disabled={saving || (!isEdit && !operatoreValue)}>
+        <Button type="submit" disabled={saving || (!isEdit && hasFeature("operatore") && !operatoreValue)}>
           {saving ? "Salvataggio…" : isEdit ? "Salva modifiche" : "Crea ordine"}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()}>
