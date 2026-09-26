@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { getOrder, updateOrderStatus, updateBozzaGrafica, updatePreventivo, updateMaterialeFornitore, markPaymentReceived } from "@/actions/orders"
-import { STATUS_LABELS, STATUS_ORDER, preventivoStage, bozzaStage, materialeStage, type Stage } from "@/lib/orderConstants"
+import { STATUS_LABELS, preventivoStage, bozzaStage, materialeStage, type Stage } from "@/lib/orderConstants"
+import { getPlan, hasFeature, statusOrderForPlan } from "@/lib/plan"
 import { StatusBadge } from "@/components/OrderCard"
 import { DeadlineDot } from "@/components/DeadlineDot"
 import { deadlineLevel } from "@/lib/deadline"
@@ -69,7 +70,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     revalidatePath("/riepilogo")
   }
 
-  const currentIdx = STATUS_ORDER.indexOf(order.status)
+  const statusOrder = statusOrderForPlan(getPlan())
+  const currentIdx = statusOrder.indexOf(order.status)
   const clientName = buildClientDisplayName(order.nome, order.cognome, order.azienda)
 
   const EVENT_LABELS: Record<string, string> = {
@@ -81,12 +83,17 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <Link href="/orders" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="w-3 h-3" />Ordini
+        <Link href={hasFeature("elenco_ordini") ? "/orders" : "/kanban"} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="w-3 h-3" />{hasFeature("elenco_ordini") ? "Ordini" : "Bacheca"}
         </Link>
         <div className="flex gap-2">
-          <Link href={`/orders/${id}/print`} target="_blank" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "flex items-center gap-1")}>
-            <Printer className="w-3 h-3" />Etichetta
+          {hasFeature("etichetta_termica") && (
+            <Link href={`/orders/${id}/print`} target="_blank" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "flex items-center gap-1")}>
+              <Printer className="w-3 h-3" />Etichetta
+            </Link>
+          )}
+          <Link href={`/orders/${id}/print?formato=foglio`} target="_blank" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "flex items-center gap-1")}>
+            <Printer className="w-3 h-3" />Foglio lavoro
           </Link>
           <Link href={`/orders/${id}/edit`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "flex items-center gap-1")}>
             <Edit className="w-3 h-3" />Modifica
@@ -96,7 +103,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
       {/* Status stepper */}
       <div className="flex items-center gap-1 flex-wrap">
-        {STATUS_ORDER.map((s, i) => (
+        {statusOrder.map((s, i) => (
           <form key={s} action={changeStatus}>
             <input type="hidden" name="status" value={s} />
             <button

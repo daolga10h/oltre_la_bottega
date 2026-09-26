@@ -7,6 +7,7 @@ import { getOperatorNames } from "@/lib/operators"
 import { getShopName } from "@/lib/shop-name"
 import { OperatoriSettings } from "@/components/OperatoriSettings"
 import { ShopNameSettings } from "@/components/ShopNameSettings"
+import { hasFeature } from "@/lib/plan"
 
 export default async function ImpostazioniPage() {
   const supabase = await createClient()
@@ -35,7 +36,7 @@ export default async function ImpostazioniPage() {
         </CardContent>
       </Card>
 
-      <OperatoriSettings initialOperatori={operatori} />
+      {hasFeature("operatore") && <OperatoriSettings initialOperatori={operatori} />}
     </div>
   )
 }

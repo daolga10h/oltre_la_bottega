@@ -4,21 +4,26 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { LayoutDashboard, ShoppingBag, Users, Calendar, LayoutGrid, Star, Settings, Euro, ClipboardList } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { hasFeature, type Feature } from "@/lib/plan"
 
-const mainLinks = [
+type NavItem = { href: string; label: string; icon: React.ElementType; feature?: Feature }
+
+const mainLinks: NavItem[] = [
   { href: "/dashboard", label: "Oggi", icon: LayoutDashboard },
   { href: "/kanban", label: "Bacheca", icon: LayoutGrid },
-  { href: "/orders", label: "Ordini", icon: ShoppingBag },
+  { href: "/orders", label: "Ordini", icon: ShoppingBag, feature: "elenco_ordini" },
 ]
 
-const managementLinks = [
+const managementLinks: NavItem[] = [
   { href: "/agenda", label: "Agenda", icon: Calendar },
   { href: "/recensioni", label: "Recensioni", icon: Star },
-  { href: "/pagamenti", label: "Da incassare", icon: Euro },
-  { href: "/riepilogo", label: "Riepilogo", icon: ClipboardList },
+  { href: "/pagamenti", label: "Da incassare", icon: Euro, feature: "da_incassare" },
+  { href: "/riepilogo", label: "Riepilogo", icon: ClipboardList, feature: "riepilogo" },
   { href: "/customers", label: "Clienti", icon: Users },
   { href: "/impostazioni", label: "Impostazioni", icon: Settings },
 ]
+
+const visible = (links: NavItem[]) => links.filter((l) => !l.feature || hasFeature(l.feature))
 
 function NavLink({ href, label, icon: Icon, pathname }: { href: string; label: string; icon: React.ElementType; pathname: string }) {
   const active = pathname.startsWith(href)
@@ -58,13 +63,13 @@ export function Sidebar() {
 
         {/* Principale */}
         <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-warm-ash">Principale</p>
-        {mainLinks.map(({ href, label, icon }) => (
+        {visible(mainLinks).map(({ href, label, icon }) => (
           <NavLink key={href} href={href} label={label} icon={icon} pathname={pathname} />
         ))}
 
         {/* Gestione */}
         <p className="px-3 mt-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-warm-ash">Gestione</p>
-        {managementLinks.map(({ href, label, icon }) => (
+        {visible(managementLinks).map(({ href, label, icon }) => (
           <NavLink key={href} href={href} label={label} icon={icon} pathname={pathname} />
         ))}
       </div>

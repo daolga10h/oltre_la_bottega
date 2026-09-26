@@ -13,7 +13,8 @@ test.describe("Flusso A — Avvio giornata", () => {
 
   test("/login page renders the form", async ({ page }) => {
     await page.goto("/login")
-    await expect(page.getByText(/Oltre la Bottega/i).first()).toBeVisible()
+    // Dal 2026-09-16 il marchio è un'immagine (logo ufficiale): si cerca dal testo alternativo.
+    await expect(page.getByAltText(/Oltre la Bottega/i)).toBeVisible()
     await expect(page.getByLabel(/Email/i)).toBeVisible()
     await expect(page.getByRole("button", { name: /Invia link di accesso/i })).toBeVisible()
   })
