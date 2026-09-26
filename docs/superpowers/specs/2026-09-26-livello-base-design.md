@@ -23,7 +23,7 @@ Tre bisogni del target, dal documento "PEP - Oltre la bottega":
 
 ## Cosa contiene il livello base
 
-**Menu (5 voci):** Oggi, Ordini (lista e bacheca insieme), Agenda, Clienti, Recensioni.
+**Menu (6 voci):** Oggi, Bacheca, Ordini, Agenda, Clienti, Recensioni. Bacheca e Ordini restano due voci separate, come oggi nell'app (in fase di piano si è visto che non sono un'unica voce). Impostazioni resta com'è, solo su desktop.
 
 **Oggi:** da consegnare oggi, consegnati oggi, da avvisare, promemoria del giorno. Nessuna sezione sul materiale del fornitore.
 
@@ -34,6 +34,7 @@ Tre bisogni del target, dal documento "PEP - Oltre la bottega":
 - Campi obbligatori: nome, cognome, telefono, cosa ordinato, data di consegna.
 - Campi facoltativi: prezzo, acconto, note. Il saldo si calcola da solo.
 - Assenti: operatore, ente/azienda con referente, materiale del fornitore, bozza grafica.
+- Nascosti nel form perché troppo specifici o tecnici per il base: tipo lavorazione (l'elenco attuale è quello della mia bottega), dettagli grafici, file inviati dal cliente, foto oggetto. Restano email e canale d'ingresso (il canale serve alla regola sul canale mail).
 
 **Scheda ordine:**
 - Riquadro "Avvisa il cliente" con WhatsApp o email, che rispetta il canale "mail".
@@ -62,13 +63,14 @@ Il foglio riusa gli stessi dati dell'etichetta e lo stesso QR verso la scheda or
 
 ## Come si realizza
 
-**Un solo codice, un interruttore per installazione.** Ogni cliente ha la propria istanza (single-tenant), quindi il livello si sceglie con una variabile d'ambiente, ad esempio `PLAN=base` oppure `PLAN=completo`. Nessun fork.
+**Un solo codice, un interruttore per installazione.** Ogni cliente ha la propria istanza (single-tenant), quindi il livello si sceglie con una variabile d'ambiente, ad esempio `NEXT_PUBLIC_PLAN=base` oppure `NEXT_PUBLIC_PLAN=completo` (il prefisso `NEXT_PUBLIC_` serve perché anche i componenti nel browser leggano il livello; il valore viene fissato al momento della pubblicazione, quindi il cambio richiede un nuovo deploy). Nessun fork.
 
 - Nuovo file `src/lib/plan.ts`: funzione pura che, dato il livello, dice quali funzioni sono attive (`hasFeature("materiale")`). Tutte le regole stanno lì.
 - Se la variabile manca o ha un valore non riconosciuto, l'app parte in **completo** (la mia installazione non deve rompersi).
 - Sidebar e bottom nav nascondono le voci che non fanno parte del livello.
 - `OrderForm` mostra solo i campi del livello e una sola riga articolo.
-- `TodayBoard` e `/api/dashboard/today` saltano le sezioni del materiale.
+- Oggi non richiede modifiche: le sezioni del materiale si nascondono da sole perché nel base nessun ordine ha un materiale da ordinare.
+- La Bacheca mostra 4 colonne (senza Bozza grafica) e il selettore di stato delle card non offre Bozza grafica; la lista Ordini non ha il filtro "Bozza".
 - Le pagine fuori livello (`/pagamenti`, `/riepilogo`, sezione operatori in Impostazioni) rispondono 404 se aperte a mano.
 - Lo stato Bozza grafica e il suo sottostato non compaiono in nessun selettore, colonna della bacheca o badge nel livello base. Preventivo resta attivo.
 - I componenti non conoscono i livelli: chiedono solo se una funzione è attiva.
@@ -82,8 +84,8 @@ Il foglio riusa gli stessi dati dell'etichetta e lo stesso QR verso la scheda or
 ## Verifica
 
 1. **Test unitari Jest** su `plan.ts`: ogni livello espone le funzioni giuste; variabile mancante o non valida → completo.
-2. **Prova reale con Playwright** su un'istanza avviata con `PLAN=base` (utente di test, ordini creati e poi cancellati via service role, come nei flussi già esistenti): menu a 5 voci, form con soli campi del livello, ordine con preventivo portato da "Preventivo" fino a "Consegnato", ordine senza preventivo, foglio lavoro raggiungibile con i dati giusti e senza bottone etichetta, indirizzo dell'etichetta che mostra comunque il foglio, pagine fuori livello → 404.
-3. **Nessuna regressione sul completo:** con `PLAN=completo` (o variabile assente) l'app è identica a oggi. Suite Jest esistente verde, `npx tsc --noEmit` pulito, flussi E2E A-D invariati.
+2. **Prova reale con Playwright** su un'istanza avviata con `NEXT_PUBLIC_PLAN=base` (utente di test, ordini creati e poi cancellati via service role, come nei flussi già esistenti): menu a 6 voci, form con soli campi del livello, ordine con preventivo portato da "Preventivo" fino a "Consegnato", ordine senza preventivo, foglio lavoro raggiungibile con i dati giusti e senza bottone etichetta, indirizzo dell'etichetta che mostra comunque il foglio, pagine fuori livello → 404.
+3. **Nessuna regressione sul completo:** con `NEXT_PUBLIC_PLAN=completo` (o variabile assente) l'app è identica a oggi. Suite Jest esistente verde, `npx tsc --noEmit` pulito, flussi E2E A-D invariati.
 
 ## Ordine di lavoro
 
