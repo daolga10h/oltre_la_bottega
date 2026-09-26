@@ -4,7 +4,7 @@
 
 **Goal:** Aggiungere un livello "base" all'app, scelto con una variabile d'ambiente per installazione, che nasconde le funzioni avanzate e offre il foglio lavoro A4 al posto dell'etichetta termica, lasciando il livello "completo" identico a oggi.
 
-**Architecture:** Un file puro `src/lib/plan.ts` legge `NEXT_PUBLIC_PLAN` (`base` | `completo`, default `completo`) ed espone `hasFeature(...)`, l'elenco degli stati per livello e la scelta del formato di stampa. Menu, form ordine, lista, bacheca, scheda ordine, pagine fuori livello e pagina di stampa chiedono a `plan.ts` cosa mostrare; non conoscono i livelli. Nessuna modifica al database.
+**Architecture:** Un file puro `src/lib/plan.ts` legge `NEXT_PUBLIC_PLAN` (`base` | `completo`, default `completo`) ed espone `hasFeature(...)`, l'elenco degli stati per livello e la scelta del formato di stampa. Menu, form ordine, bacheca, scheda ordine, pagine fuori livello e pagina di stampa chiedono a `plan.ts` cosa mostrare; non conoscono i livelli. Nessuna modifica al database.
 
 **Tech Stack:** Next.js 16 (App Router, server components + client components), TypeScript, Jest (`ts-jest`) per i test unitari, Playwright per la prova reale, Supabase invariato.
 
@@ -33,9 +33,8 @@
 | `src/app/(dashboard)/riepilogo/page.tsx` | modifica | 404 nel base |
 | `src/app/(dashboard)/impostazioni/page.tsx` | modifica | Nasconde "Operatori" nel base |
 | `src/components/OrderForm.tsx` | modifica | Nasconde i campi fuori livello |
-| `src/app/(dashboard)/orders/page.tsx` | modifica | Toglie il filtro "Bozza" nel base |
 | `src/components/KanbanBoard.tsx` | modifica | Colonne e selettore di stato per livello |
-| `src/app/(dashboard)/orders/[id]/page.tsx` | modifica | Stepper per livello, bottoni di stampa |
+| `src/app/(dashboard)/orders/[id]/page.tsx` | modifica | Stepper per livello, bottoni di stampa, freccia indietro |
 | `src/app/(print)/orders/[id]/print/FoglioLavoroClient.tsx` | crea | Layout del foglio lavoro (mezzo A4) |
 | `src/app/(print)/orders/[id]/print/page.tsx` | modifica | Sceglie etichetta o foglio |
 | `playwright.base.config.ts` | crea | Avvia l'app con `NEXT_PUBLIC_PLAN=base` sulla porta 3100 |
@@ -107,6 +106,7 @@ const ALL_FEATURES: Feature[] = [
   "materiale",
   "bozza_grafica",
   "campi_avanzati",
+  "elenco_ordini",
   "operatore",
   "da_incassare",
   "riepilogo",
@@ -249,6 +249,7 @@ export type Feature =
   | "materiale"
   | "bozza_grafica"
   | "campi_avanzati" // tipo lavorazione, dettagli grafici, file cliente, foto oggetto
+  | "elenco_ordini" // voce di menu "Ordini": nel base si lavora dalla Bacheca
   | "operatore"
   | "da_incassare"
   | "riepilogo"
@@ -261,6 +262,7 @@ const OFF_IN_BASE: ReadonlySet<Feature> = new Set<Feature>([
   "materiale",
   "bozza_grafica",
   "campi_avanzati",
+  "elenco_ordini",
   "operatore",
   "da_incassare",
   "riepilogo",
@@ -354,7 +356,7 @@ type NavItem = { href: string; label: string; icon: React.ElementType; feature?:
 const mainLinks: NavItem[] = [
   { href: "/dashboard", label: "Oggi", icon: LayoutDashboard },
   { href: "/kanban", label: "Bacheca", icon: LayoutGrid },
-  { href: "/orders", label: "Ordini", icon: ShoppingBag },
+  { href: "/orders", label: "Ordini", icon: ShoppingBag, feature: "elenco_ordini" },
 ]
 
 const managementLinks: NavItem[] = [
@@ -389,7 +391,7 @@ type NavItem = { href: string; label: string; icon: React.ElementType; feature?:
 const allLinks: NavItem[] = [
   { href: "/dashboard", label: "Oggi", icon: LayoutDashboard },
   { href: "/kanban", label: "Bacheca", icon: LayoutGrid },
-  { href: "/orders", label: "Ordini", icon: ShoppingBag },
+  { href: "/orders", label: "Ordini", icon: ShoppingBag, feature: "elenco_ordini" },
   { href: "/agenda", label: "Agenda", icon: Calendar },
   { href: "/recensioni", label: "Recensioni", icon: Star },
   { href: "/pagamenti", label: "Da incassare", icon: Euro, feature: "da_incassare" },
@@ -725,30 +727,13 @@ git commit -m "feat: il form ordine mostra solo i campi del livello" -m "Co-Auth
 
 ---
 
-### Task 4: Lista, bacheca e scheda ordine per livello
+### Task 4: Bacheca e scheda ordine per livello
 
 **Files:**
-- Modify: `src/app/(dashboard)/orders/page.tsx`
 - Modify: `src/components/KanbanBoard.tsx`
 - Modify: `src/app/(dashboard)/orders/[id]/page.tsx`
 
-- [ ] **Step 1: Lista ordini — niente filtro "Bozza" nel base**
-
-In `src/app/(dashboard)/orders/page.tsx` aggiungere l'import:
-
-```tsx
-import { hasFeature } from "@/lib/plan"
-```
-
-Nel corpo di `OrdersPage`, subito dopo `const active = params.status ?? "tutti"`, aggiungere:
-
-```tsx
-  const filters = FILTERS.filter((f) => f.value !== "bozza_grafica" || hasFeature("bozza_grafica"))
-```
-
-e sostituire `{FILTERS.map(({ value, label }) => (` con `{filters.map(({ value, label }) => (`.
-
-- [ ] **Step 2: Bacheca — colonne e selettore di stato**
+- [ ] **Step 1: Bacheca — colonne e selettore di stato**
 
 In `src/components/KanbanBoard.tsx` sostituire l'import
 
@@ -786,7 +771,7 @@ con
 
 Sostituire `{STATUS_ORDER.map((s) => (` (nel selettore di stato della card) con `{statusOrder.map((s) => (`.
 
-- [ ] **Step 3: Scheda ordine — stepper per livello**
+- [ ] **Step 2: Scheda ordine — stepper per livello**
 
 In `src/app/(dashboard)/orders/[id]/page.tsx` sostituire la riga di import
 
@@ -810,7 +795,7 @@ Sostituire `  const currentIdx = STATUS_ORDER.indexOf(order.status)` con:
 
 Sostituire `{STATUS_ORDER.map((s, i) => (` con `{statusOrder.map((s, i) => (`.
 
-- [ ] **Step 4: Scheda ordine — bottoni di stampa**
+- [ ] **Step 3: Scheda ordine — bottoni di stampa**
 
 Sostituire il blocco
 
@@ -833,6 +818,24 @@ con
           </Link>
 ```
 
+- [ ] **Step 4: Scheda ordine — freccia "indietro"**
+
+Nel base non c'è l'elenco Ordini nel menu: la freccia in alto nella scheda ordine riporta alla Bacheca. Sostituire
+
+```tsx
+        <Link href="/orders" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="w-3 h-3" />Ordini
+        </Link>
+```
+
+con
+
+```tsx
+        <Link href={hasFeature("elenco_ordini") ? "/orders" : "/kanban"} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="w-3 h-3" />{hasFeature("elenco_ordini") ? "Ordini" : "Bacheca"}
+        </Link>
+```
+
 - [ ] **Step 5: Verificare**
 
 Run: `npx tsc --noEmit`
@@ -841,8 +844,8 @@ Expected: nessun errore.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/app/\(dashboard\)/orders src/components/KanbanBoard.tsx
-git commit -m "feat: lista, bacheca e scheda ordine seguono il livello" -m "Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+git add "src/app/(dashboard)/orders" src/components/KanbanBoard.tsx
+git commit -m "feat: bacheca e scheda ordine seguono il livello" -m "Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 ```
 
 ---
@@ -1118,7 +1121,6 @@ test.describe("Livello base", () => {
     await expect(page.locator("aside a")).toHaveText([
       "Oggi",
       "Bacheca",
-      "Ordini",
       "Agenda",
       "Recensioni",
       "Clienti",
@@ -1155,6 +1157,8 @@ test.describe("Livello base", () => {
 
     await expect(page.getByRole("button", { name: "Bozza grafica" })).toHaveCount(0)
     await expect(page.locator("form button.bg-espresso")).toHaveText("Da fare")
+    // Senza elenco Ordini, la freccia indietro porta alla Bacheca.
+    await expect(page.locator("main").getByRole("link", { name: "Bacheca" })).toHaveAttribute("href", "/kanban")
 
     await page.getByRole("button", { name: "In lavorazione", exact: true }).click()
     await expect(page.locator("form button.bg-espresso")).toHaveText("In lavorazione")
@@ -1269,7 +1273,7 @@ In più, controllo a occhio con `npm run dev` (livello completo): aprire un ordi
 Nella tabella "Decisioni chiave e motivazioni" aggiungere una riga:
 
 ```
-| Livello "base" dell'app scelto con `NEXT_PUBLIC_PLAN` (2026-09-26) | Nasce dal lavoro sul target (PEP: controllo del lavoro, semplicità, storico clienti): una versione semplificata da vendere, con la promessa "apri l'app e sai cosa fare oggi", accanto al livello "completo" (quello della mia bottega). Un solo codice, un interruttore per installazione: `src/lib/plan.ts` legge `NEXT_PUBLIC_PLAN` (`base`/`completo`, valore mancante o non valido = completo) ed espone `hasFeature`, `statusOrderForPlan`, `resolvePrintFormat`; i componenti non conoscono i livelli. Il valore è fissato al build, quindi il cambio richiede un nuovo deploy; il database non cambia. Nel base: menu a 6 voci senza "Da incassare"/"Riepilogo", niente operatore/ente/materiale/bozza/multi-riga/calcolatrice, campi avanzati del form nascosti (tipo lavorazione, dettagli grafici, file cliente, foto oggetto), preventivo e WhatsApp per "ordine pronto" e recensioni inclusi, stampa solo come **foglio lavoro** A4 (mezza pagina, `?formato=foglio`) al posto dell'etichetta termica, che resta nel completo. Livello di mezzo non definito. Design in `docs/superpowers/specs/2026-09-26-livello-base-design.md`, piano in `docs/superpowers/plans/2026-09-26-livello-base-plan.md` |
+| Livello "base" dell'app scelto con `NEXT_PUBLIC_PLAN` (2026-09-26) | Nasce dal lavoro sul target (PEP: controllo del lavoro, semplicità, storico clienti): una versione semplificata da vendere, con la promessa "apri l'app e sai cosa fare oggi", accanto al livello "completo" (quello della mia bottega). Un solo codice, un interruttore per installazione: `src/lib/plan.ts` legge `NEXT_PUBLIC_PLAN` (`base`/`completo`, valore mancante o non valido = completo) ed espone `hasFeature`, `statusOrderForPlan`, `resolvePrintFormat`; i componenti non conoscono i livelli. Il valore è fissato al build, quindi il cambio richiede un nuovo deploy; il database non cambia. Nel base: menu a 5 voci (Oggi, Bacheca, Agenda, Clienti, Recensioni; l'elenco Ordini non compare, si lavora dalla Bacheca e si crea da Oggi) senza "Da incassare"/"Riepilogo", niente operatore/ente/materiale/bozza/multi-riga/calcolatrice, campi avanzati del form nascosti (tipo lavorazione, dettagli grafici, file cliente, foto oggetto), preventivo e WhatsApp per "ordine pronto" e recensioni inclusi, stampa solo come **foglio lavoro** A4 (mezza pagina, `?formato=foglio`) al posto dell'etichetta termica, che resta nel completo. Livello di mezzo non definito. Design in `docs/superpowers/specs/2026-09-26-livello-base-design.md`, piano in `docs/superpowers/plans/2026-09-26-livello-base-plan.md` |
 ```
 
 Nella sezione "Testing" aggiungere un punto:
@@ -1297,7 +1301,7 @@ Il lavoro è pronto per il merge su `main`. Usare la skill `superpowers:finishin
 
 ## Autoverifica del piano rispetto al documento di progetto
 
-- **Menu a 6 voci** → Task 2 (Sidebar/BottomNav), verificato nel Task 6 (test "il menu…").
+- **Menu a 5 voci (senza Ordini nel base)** → Task 1 (`elenco_ordini`), Task 2 (Sidebar/BottomNav), verificato nel Task 6 (test "il menu…"). Freccia indietro verso la Bacheca → Task 4 step 4, test nel Task 6.
 - **Oggi senza sezioni materiale** → nessuna modifica necessaria (spiegato nel design); nessun test dedicato perché non c'è codice da testare.
 - **Stati con Preventivo, senza Bozza grafica** → Task 1 (`statusOrderForPlan`), Task 4 (stepper, bacheca, filtro lista); test nel Task 6 (ordine con e senza preventivo, bacheca a 4 colonne).
 - **Una sola riga articolo, campi obbligatori, campi nascosti** → Task 3; test "il form ordine ha solo i campi del livello".
