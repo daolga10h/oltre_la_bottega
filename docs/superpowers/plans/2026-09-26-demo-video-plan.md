@@ -1127,7 +1127,7 @@ Ti servono due cose: un progetto **Supabase** (il database, l'hai già creato) e
 
 ## Prima di cominciare
 
-Apri la cartella del progetto in Esplora file, clicca sulla barra dell'indirizzo, scrivi `powershell` e premi Invio: si apre il terminale già nella cartella giusta. Scrivi `git branch --show-current`: deve rispondere `feature/demo-video` (o `main`, dopo l'unione); se risponde altro, fermati e chiedimi. Poi scrivi `npm install` e aspetta la fine. Deve esistere il file `.env.local` (quello di sempre): serve alla protezione per riconoscere il progetto vero. Ogni volta che riapri il terminale, riparti da qui (cartella giusta).
+Apri in Esplora file la cartella `D:\Documenti\Projects\oltre_la_bottega\.claude\worktrees\demo-video`: è la cartella di lavoro della demo. Finché il lavoro non sarà unito al resto del progetto, i comandi di questa guida esistono solo lì (la cartella principale del progetto è sul ramo del sito e non li ha). Clicca sulla barra dell'indirizzo, scrivi `powershell` e premi Invio: si apre il terminale già nella cartella giusta. Scrivi `git branch --show-current`: deve rispondere `feature/demo-video`; se risponde altro, fermati e chiedimi. In questa cartella le dipendenze sono già installate e il file `.env.local` (quello di sempre, serve alla protezione per riconoscere il progetto vero) c'è già. Ogni volta che riapri il terminale, riparti da qui. Dopo l'unione in `main` potrai usare la cartella principale del progetto (in quel caso, la prima volta, scrivi `npm install` e aspetta la fine).
 
 ## A. Il database (Supabase)
 
