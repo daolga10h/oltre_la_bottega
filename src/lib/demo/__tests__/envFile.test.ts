@@ -33,4 +33,29 @@ describe("parseEnvFile", () => {
   it("un valore vuoto resta una stringa vuota", () => {
     expect(parseEnvFile("A=")).toEqual({ A: "" })
   })
+
+  it("accetta il prefisso export davanti alla chiave", () => {
+    expect(parseEnvFile("export A=uno")).toEqual({ A: "uno" })
+  })
+
+  it("taglia il commento in coda a un valore senza virgolette", () => {
+    expect(parseEnvFile("A=https://x.supabase.co # vero")).toEqual({ A: "https://x.supabase.co" })
+  })
+
+  it("taglia il commento in coda a un valore tra virgolette", () => {
+    expect(parseEnvFile('A="uno" # c')).toEqual({ A: "uno" })
+    expect(parseEnvFile("B='due' # c")).toEqual({ B: "due" })
+  })
+
+  it("un # dentro il valore (senza spazio prima) non è un commento", () => {
+    expect(parseEnvFile("A=pa#ss")).toEqual({ A: "pa#ss" })
+  })
+
+  it("con virgolette non chiuse prende il testo dopo la virgoletta di apertura", () => {
+    expect(parseEnvFile('A="uno')).toEqual({ A: "uno" })
+  })
+
+  it("ignora il BOM a inizio file", () => {
+    expect(parseEnvFile("﻿A=uno")).toEqual({ A: "uno" })
+  })
 })
