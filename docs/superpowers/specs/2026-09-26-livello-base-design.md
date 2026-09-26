@@ -33,13 +33,14 @@ Tre bisogni del target, dal documento "PEP - Oltre la bottega":
 - Una sola riga articolo.
 - Campi obbligatori: nome, cognome, telefono, cosa ordinato, data di consegna.
 - Campi facoltativi: prezzo, acconto, note. Il saldo si calcola da solo.
-- Assenti: operatore, ente/azienda con referente, materiale del fornitore, bozza grafica.
+- Presente: l'interruttore "È un ente/azienda" con il referente, come nel completo, e il campo Azienda facoltativo. Serve, per esempio, a un'officina a cui portano i mezzi di un'azienda: il mezzo è dell'azienda (che poi viene fatturata), quindi non si può mettere nome e cognome di una persona.
+- Assenti: operatore, materiale del fornitore, bozza grafica.
 - Nascosti nel form perché troppo specifici o tecnici per il base: tipo lavorazione (l'elenco attuale è quello della mia bottega), dettagli grafici, file inviati dal cliente, foto oggetto. Restano email e canale d'ingresso (il canale serve alla regola sul canale mail).
 
 **Scheda ordine:**
 - Riquadro "Avvisa il cliente" con WhatsApp o email, che rispetta il canale "mail".
 - Bottone "Segna come pagato".
-- Stampa **solo come foglio lavoro** per stampante normale: QR code, elenco articoli e "Da pagare", caratteri grandi, su mezzo foglio A4 (formato A5 orizzontale, nella metà superiore del foglio). Si allega alla busta o al lavoro. Non serve nessuna stampante speciale. L'etichetta termica da 62 mm non fa parte del livello base (resta nel completo).
+- Stampa **solo come foglio lavoro** per stampante normale: QR code, elenco articoli e "Da pagare", caratteri grandi, larghezza 150 mm centrata su un foglio A4 (210 mm), cioè 30 mm di margine per lato e in alto. Non possiamo conoscere i margini non stampabili della stampante di ogni cliente: 30 mm sono abbondanti. L'altezza segue il contenuto. In testa c'è solo il logo, senza il nome della bottega. Si allega alla busta o al lavoro. Non serve nessuna stampante speciale. L'etichetta termica da 62 mm non fa parte del livello base (resta nel completo).
 - Nessun riquadro "Invia anteprima".
 
 **Recensioni:** richiesta recensione via WhatsApp o email, come oggi.
@@ -48,7 +49,7 @@ Tre bisogni del target, dal documento "PEP - Oltre la bottega":
 
 **Sicurezza:** backup automatico via email e copia tecnica giornaliera (risposta a "sapere che i dati sono recuperabili").
 
-**Fuori dal livello base (livelli superiori):** ordini multi-riga, ente/referente, materiale del fornitore, bozza grafica e anteprima, "Da incassare", Riepilogo stampabile, campo operatore, etichetta termica da 62 mm, calcolatrice.
+**Fuori dal livello base (livelli superiori):** ordini multi-riga, materiale del fornitore, bozza grafica e anteprima, "Da incassare", Riepilogo stampabile, campo operatore, etichetta termica da 62 mm, calcolatrice.
 
 Il **livello di mezzo** non è definito: si decide dopo i primi clienti veri. Per ora esistono solo "base" e "completo".
 

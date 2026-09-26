@@ -1299,6 +1299,262 @@ Il lavoro è pronto per il merge su `main`. Usare la skill `superpowers:finishin
 
 ---
 
+### Task 8: Correzioni dopo la revisione (ente/azienda nel base, foglio a 150 mm senza nome)
+
+**Questo task sostituisce le parti dei Task 1, 3 e 5 che riguardano `ente`, il layout del foglio e il nome sulla stampa.** Motivo (richieste dell'utente a lavoro finito): (1) l'interruttore "È un ente/azienda" con referente serve anche nel base (es. un'officina a cui portano i mezzi di aziende: non si può mettere nome e cognome di una persona); (2) nel base sul foglio compare solo il logo, senza il nome della bottega; (3) i margini di stampa non si controllano: il foglio passa da 210 mm a **150 mm di larghezza con 30 mm di margine per lato** e in alto.
+
+**Files:**
+- Modify: `src/lib/plan.ts`, `src/lib/__tests__/plan.test.ts`
+- Modify: `src/components/OrderForm.tsx`
+- Modify: `src/app/(print)/orders/[id]/print/FoglioLavoroClient.tsx`, `src/app/(print)/orders/[id]/print/page.tsx`
+- Modify: `e2e/livello-base.spec.ts`
+- Modify: `CLAUDE.md`
+
+- [ ] **Step 1: `plan.ts` — `ente` diventa sempre attivo, nasce `nome_su_stampa`**
+
+In `src/lib/plan.ts` sostituire, nel tipo `Feature`, la riga `  | "ente"` con:
+
+```ts
+  | "nome_su_stampa" // nome della bottega sul foglio lavoro: nel base c'è solo il logo
+```
+
+e, nell'insieme `OFF_IN_BASE`, sostituire `  "ente",` con `  "nome_su_stampa",`.
+
+In `src/lib/__tests__/plan.test.ts`, nella mappa `ALL_FEATURES_MAP` sostituire `  ente: true,` con `  nome_su_stampa: true,`.
+
+Run: `npx jest --roots=src` — Expected: PASS, stesso numero di test di prima (19 suite / 188).
+
+- [ ] **Step 2: `OrderForm` — l'interruttore ente non è più nascosto**
+
+In `src/components/OrderForm.tsx` sostituire il blocco
+
+```tsx
+        {hasFeature("ente") && (
+          <div className="flex items-center gap-2">
+            <input
+              id="is_ente"
+              type="checkbox"
+              checked={isEnte}
+              onChange={(e) => setIsEnte(e.target.checked)}
+              className="h-4 w-4 rounded border-border"
+            />
+            <Label htmlFor="is_ente" className="mb-0 font-normal text-sm cursor-pointer">
+              È un ente/azienda (non una persona)
+            </Label>
+          </div>
+        )}
+```
+
+con il codice originale (identico a `git show 2fe17ec:src/components/OrderForm.tsx`):
+
+```tsx
+        <div className="flex items-center gap-2">
+          <input
+            id="is_ente"
+            type="checkbox"
+            checked={isEnte}
+            onChange={(e) => setIsEnte(e.target.checked)}
+            className="h-4 w-4 rounded border-border"
+          />
+          <Label htmlFor="is_ente" className="mb-0 font-normal text-sm cursor-pointer">
+            È un ente/azienda (non una persona)
+          </Label>
+        </div>
+```
+
+Run: `npx tsc --noEmit` — Expected: nessun errore (non deve restare nessun `hasFeature("ente")` nel codice).
+
+- [ ] **Step 3: foglio lavoro a 150 mm, solo logo**
+
+Sostituire l'intero contenuto di `src/app/(print)/orders/[id]/print/FoglioLavoroClient.tsx` con:
+
+```tsx
+"use client"
+
+import { useEffect, useState } from "react"
+import { QRCodeSVG } from "qrcode.react"
+import { formatEUR } from "@/lib/utils"
+
+interface Props {
+  orderId: string
+  nome: string
+  cognome: string | null
+  azienda: string | null
+  referente: string | null
+  telefono: string | null
+  articoli: { cosa_ordinato: string; quantita: number }[]
+  dataConsegna: string | null
+  saldo: number
+  /** Nome della bottega da mostrare accanto al logo; null = solo il logo (livello base). */
+  shopName: string | null
+}
+
+/**
+ * Foglio lavoro per stampante normale: 150 mm di larghezza centrati su un A4
+ * (210 mm), quindi 30 mm di margine per lato e in alto. Non conosciamo i margini
+ * non stampabili della stampante di ogni cliente: 30 mm sono abbondanti.
+ * L'altezza segue il contenuto. Stessi dati e stesso QR dell'etichetta termica,
+ * caratteri più grandi.
+ */
+export function FoglioLavoroClient({ orderId, nome, cognome, azienda, referente, telefono, articoli, dataConsegna, saldo, shopName }: Props) {
+  const [url, setUrl] = useState("")
+
+  useEffect(() => {
+    setUrl(`${window.location.origin}/orders/${orderId}`)
+    const timer = setTimeout(() => window.print(), 400)
+    return () => clearTimeout(timer)
+  }, [orderId])
+
+  const clientName = [nome, cognome].filter(Boolean).join(" ")
+
+  const date = dataConsegna
+    ? new Date(dataConsegna).toLocaleDateString("it-IT", { day: "2-digit", month: "long", year: "numeric" })
+    : null
+
+  return (
+    <div
+      data-testid="foglio-lavoro"
+      style={{
+        width: "150mm",
+        margin: "30mm 30mm 0 30mm",
+        boxSizing: "border-box",
+        padding: "8mm",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        gap: "8mm",
+        fontFamily: "Arial, Helvetica, sans-serif",
+        fontSize: "18px",
+        lineHeight: 1.4,
+        border: "1px dashed #999",
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", paddingBottom: "8px", borderBottom: "2px solid #000" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icon-mono.png" alt="" style={{ width: "40px", height: "40px", display: "block" }} />
+          {shopName && <span style={{ fontSize: "16px", fontWeight: "bold", letterSpacing: "0.5px" }}>{shopName}</span>}
+        </div>
+        <p style={{ fontWeight: "bold", fontSize: "28px", margin: "0 0 6px 0" }}>{clientName}</p>
+        {azienda && <p style={{ fontSize: "18px", margin: "0 0 4px 0" }}>{azienda}</p>}
+        {referente && <p style={{ fontSize: "18px", margin: "0 0 4px 0" }}>Ref. {referente}</p>}
+        {telefono && <p style={{ fontSize: "20px", margin: "0 0 12px 0" }}>{telefono}</p>}
+        {articoli.length > 0 && (
+          <div style={{ margin: "0 0 12px 0", fontSize: "20px" }}>
+            {articoli.map((a, i) => (
+              <p key={i} style={{ margin: 0 }}>
+                {articoli.length > 1 ? "• " : ""}{a.cosa_ordinato}{a.quantita > 1 ? ` × ${a.quantita}` : ""}
+              </p>
+            ))}
+          </div>
+        )}
+        {date && <p style={{ fontSize: "22px", fontWeight: "bold", margin: "0 0 6px 0" }}>Consegnare: {date}</p>}
+        <p style={{ fontSize: "22px", fontWeight: "bold", margin: 0 }}>Da pagare: €{formatEUR(saldo)}</p>
+      </div>
+      <div style={{ flexShrink: 0, textAlign: "center" }}>
+        {url && <QRCodeSVG value={url} size={130} />}
+        <p style={{ fontSize: "11px", margin: "6px 0 0 0" }}>Scansiona per aprire la scheda</p>
+      </div>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 4: `page.tsx` di stampa — il nome solo se la funzione è attiva**
+
+In `src/app/(print)/orders/[id]/print/page.tsx` cambiare l'import `import { getPlan, resolvePrintFormat } from "@/lib/plan"` in:
+
+```tsx
+import { getPlan, hasFeature, resolvePrintFormat } from "@/lib/plan"
+```
+
+Nell'oggetto `data` **togliere** la riga `    shopName,`. Sostituire la riga di rendering
+
+```tsx
+      {format === "foglio" ? <FoglioLavoroClient {...data} /> : <PrintClient {...data} />}
+```
+
+con
+
+```tsx
+      {format === "foglio" ? (
+        <FoglioLavoroClient {...data} shopName={hasFeature("nome_su_stampa") ? shopName : null} />
+      ) : (
+        <PrintClient {...data} shopName={shopName} />
+      )}
+```
+
+Run: `npx tsc --noEmit` — Expected: nessun errore.
+
+- [ ] **Step 5: prova reale — aggiornare `e2e/livello-base.spec.ts`**
+
+(a) Nel test "il form ordine ha solo i campi del livello" togliere `"#is_ente", ` dall'elenco dei selettori che devono essere assenti e, subito dopo l'attesa che `#preventivo` sia visibile, aggiungere:
+
+```ts
+    await expect(page.locator("#is_ente")).toBeVisible()
+```
+
+(b) Aggiungere questo test dopo quello "ordine con preventivo…":
+
+```ts
+  test("cliente ente/azienda: interruttore, referente e scheda ordine", async ({ page }) => {
+    const nome = `E2E BaseEnte ${Date.now()}`
+    await page.goto("/orders/new")
+    await page.locator("#is_ente").check()
+    await expect(page.getByLabel("Nome ente/azienda *")).toBeVisible()
+    await expect(page.locator("#cognome")).toHaveCount(0)
+    await page.locator("#nome").fill(nome)
+    await page.locator("#referente").fill("Referente Test")
+    await page.locator("#telefono").fill("3331234567")
+    await page.locator("#data_consegna").fill("2026-12-15")
+    const riga1 = page.locator("div.rounded-lg.border-border.p-3").first()
+    await riga1.getByPlaceholder("Es. targa plexiglass, timbro, portachiavi inciso...").fill("Riparazione — test E2E")
+    await riga1.locator('input[type="number"]').nth(1).fill("120")
+    await creaEAnnota(page)
+
+    await expect(page.getByRole("heading", { name: nome })).toBeVisible()
+    await expect(page.getByText("Ref. Referente Test")).toBeVisible()
+  })
+```
+
+(c) Nel test "la scheda ordine offre solo il foglio lavoro e la stampa mostra il foglio", dopo `await expect(fogliolavoro).toContainText("Da pagare: €40.00")` aggiungere:
+
+```ts
+    // Solo il logo, senza il nome della bottega (l'utente di prova ha nome "Bottega E2E").
+    await expect(fogliolavoro.locator('img[src="/icon-mono.png"]')).toBeVisible()
+    await expect(fogliolavoro).not.toContainText("Bottega E2E")
+
+    // 150 mm di larghezza con 30 mm di margine a sinistra (1 mm ≈ 3,78 px).
+    const box = await fogliolavoro.boundingBox()
+    expect(box).not.toBeNull()
+    expect(box!.width).toBeGreaterThan(560)
+    expect(box!.width).toBeLessThan(575)
+    expect(box!.x).toBeGreaterThan(110)
+    expect(box!.x).toBeLessThan(117)
+```
+
+Run (porta 3100 libera, nessun altro `next dev` in questa cartella): `npx playwright test --config playwright.base.config.ts` — Expected: 9 passati. Poi la query dei dati rimasti con `like('nome','E2E%')`: 0.
+
+- [ ] **Step 6: aggiornare `CLAUDE.md`**
+
+Nella riga `Livello "base" dell'app scelto con NEXT_PUBLIC_PLAN (2026-09-26)` della tabella Decisioni chiave: sostituire `niente operatore/ente/materiale/bozza/multi-riga/calcolatrice` con `niente operatore/materiale/bozza/multi-riga/calcolatrice (l'interruttore "È un ente/azienda" con referente resta anche nel base: serve, per esempio, a un'officina a cui portano mezzi intestati ad aziende)` e sostituire `stampa solo come **foglio lavoro** A4 (mezza pagina, ?formato=foglio)` con `stampa solo come **foglio lavoro** A4 (?formato=foglio: 150 mm centrati con 30 mm di margine per lato, perché non controlliamo i margini delle stampanti dei clienti; solo il logo, senza il nome della bottega)`. Nel bullet "Feature (2026-09-26)" della sezione Testing aggiungere in coda: `Aggiornato a fine lavoro: ente/azienda attivo anche nel base, foglio a 150 mm senza nome bottega (9 test nella prova del livello base).`
+
+- [ ] **Step 7: verifiche e commit**
+
+```bash
+npx tsc --noEmit
+npx jest --roots=src
+```
+
+Expected: puliti / 19 suite, 188 test verdi.
+
+```bash
+git add src/lib src/components/OrderForm.tsx "src/app/(print)" e2e/livello-base.spec.ts CLAUDE.md
+git commit -m "feat: ente/azienda anche nel base, foglio a 150 mm con solo il logo" -m "Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+```
+
+---
+
 ## Autoverifica del piano rispetto al documento di progetto
 
 - **Menu a 5 voci (senza Ordini nel base)** → Task 1 (`elenco_ordini`), Task 2 (Sidebar/BottomNav), verificato nel Task 6 (test "il menu…"). Freccia indietro verso la Bacheca → Task 4 step 4, test nel Task 6.
