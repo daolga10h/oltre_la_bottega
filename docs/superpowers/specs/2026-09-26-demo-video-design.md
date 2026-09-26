@@ -5,7 +5,7 @@ Stato: approvato in conversazione, da rileggere prima del piano di implementazio
 
 ## Scopo
 
-Poter **mostrare l'app a una bottega senza mostrare clienti veri**: una copia privata dell'app, nel livello base, con clienti e ordini inventati, usata (1) per registrare un video dimostrativo di circa 2 minuti e (2) per le dimostrazioni dal vivo. Il video si manda con un link su WhatsApp e, più avanti, si mette sul sito vetrina.
+Poter **mostrare l'app a una bottega senza mostrare clienti veri**: una copia privata dell'app, nel livello base, con clienti e ordini inventati, usata (1) per registrare un video dimostrativo di circa 3 minuti e (2) per le dimostrazioni dal vivo. Il video si manda con un link su WhatsApp e, più avanti, si mette sul sito vetrina.
 
 Nasce dalla discussione sul funnel di distribuzione: le vendite sono assistite e locali (setup a mano, installazione singola per bottega), quindi serve una dimostrazione credibile, non un servizio pubblico da difendere.
 
@@ -14,8 +14,8 @@ Nasce dalla discussione sul funnel di distribuzione: le vendite sono assistite e
 | Domanda | Scelta | Motivo |
 |---|---|---|
 | Demo pubblica o privata? | **Privata**: la apro io, dal vivo o per registrare | Una demo pubblica con accesso libero porta rischi (spam, dati rovinati da estranei) e lavoro che con 3-5 botteghe pilota non rende |
-| Video o demo interattiva? | **Video** (più la demo privata dal vivo) | Costa poco, lo si manda su WhatsApp, racconta la storia giusta in 2 minuti; la demo interattiva resta un'idea futura |
-| Quanti video? | **Uno solo, circa 2 minuti**; eventuali corti si ritagliano dopo | Più facile da fare bene |
+| Video o demo interattiva? | **Video** (più la demo privata dal vivo) | Costa poco, lo si manda su WhatsApp, racconta la storia giusta in pochi minuti; la demo interattiva resta un'idea futura |
+| Quanti video? | **Uno solo, circa 3 minuti**; eventuali corti si ritagliano dopo | Più facile da fare bene |
 | Chi parla? | **Io, con la mia voce** (storia in prima persona), testo preparato da noi | La storia di chi ha costruito l'app per la propria bottega è la forza rispetto ai concorrenti |
 | Livello mostrato | **Base** (`NEXT_PUBLIC_PLAN=base`) | È la versione da vendere |
 | Dove vive la copia | Nuovo progetto Supabase gratuito **già creato** (il vecchio progetto in pausa non si può eliminare e si è visto che non impedisce di crearne un altro) + nuovo progetto Vercel | La bottega è un'installazione singola: non si può condividere il database vero |
@@ -34,8 +34,8 @@ Nasce dalla discussione sul funnel di distribuzione: le vendite sono assistite e
 Un comando che **svuota la demo e la riempie di nuovo**, con date calcolate rispetto al giorno in cui parte, così la pagina Oggi è sempre viva.
 
 - La costruzione dei dati è una **funzione pura** `buildDemoData(oggi: Date)` in `src/lib/demo/demoData.ts`, testata con Jest; lo script (`scripts/demo-reset.ts`, eseguito con `tsx`, nuova dipendenza di sviluppo) la usa e scrive nel database con il client `service role` della demo.
-- Contenuto: circa 15 clienti e 20 ordini con nomi e numeri di telefono inventati (numeri con sequenza di zeri, mai usati per inviare), lavori credibili per una bottega di personalizzazione (targhe, timbri, portachiavi incisi, coppe, magliette), due o tre clienti ente/azienda con referente.
-- Una giornata "viva": 2 lavori da consegnare oggi e 1 consegnato oggi; 3 ordini pronti da avvisare (`status = pronto`, `msg_pronto_inviato = false`); 2 in ritardo; alcuni preventivi (da inviare e inviati); ordini in lavorazione e da fare; un cliente con più ordini passati (storico); 3 promemoria in Agenda; almeno una recensione da chiedere. Ogni ordine ha almeno una riga in `order_items` e `orders.cosa_ordinato`/`prezzo` coerenti con `computeOrderSummary`.
+- Contenuto: 15 clienti e 19 ordini con nomi e numeri di telefono inventati (numeri con sequenza di zeri, mai usati per inviare), lavori credibili per una bottega di personalizzazione (targhe, timbri, portachiavi incisi, coppe, magliette), tre clienti ente/azienda con referente (4 ordini).
+- Una giornata "viva": 2 lavori da consegnare oggi e 1 consegnato oggi; 3 ordini pronti da avvisare (`status = pronto`, `msg_pronto_inviato = false`); 2 in ritardo; alcuni preventivi (da inviare e inviati); ordini in lavorazione e da fare; un cliente con più ordini passati (storico); 4 promemoria in Agenda (3 attivi e 1 completato oggi); almeno una recensione da chiedere. Ogni ordine ha almeno una riga in `order_items` e `orders.cosa_ordinato`/`prezzo` coerenti con `computeOrderSummary`.
 - Il file con le chiavi della demo è **separato** (`.env.demo.local`, ignorato da git, con un modello `.env.demo.example`): `DEMO_SUPABASE_URL`, `DEMO_SERVICE_ROLE_KEY`, `DEMO_USER_EMAIL`, `DEMO_PIN`.
 
 ### 3. Protezioni contro lo svuotamento del database vero
@@ -46,7 +46,7 @@ Lo script **si rifiuta di partire** se:
 La verifica è una funzione pura `assertSafeTarget(...)` con test Jest (progetto vero → rifiuto; indirizzo vero sconosciuto → rifiuto; database con ordini o utenti e senza marcatore → rifiuto; database vuoto o con marcatore → ok).
 
 ### 4. Il video
-- **Un video di circa 2 minuti**, registrato dall'utente sul computer (programma gratuito, per esempio OBS o Win+G) sulla demo con dati finti, in italiano, con la sua voce.
+- **Un video di circa 3 minuti**, registrato dall'utente sul computer (programma gratuito, per esempio OBS o Win+G) sulla demo con dati finti, in italiano, con la sua voce.
 - **Scaletta** (deliverable `docs/demo/video-scaletta.md`, con testo da adattare a parole sue e lista di controlli prima di registrare): apertura con la storia in due frasi; 1) Oggi, "cosa devo fare oggi"; 2) Nuovo ordine per un cliente che torna (i dati si compilano); 3) Bacheca, spostare un lavoro in "Pronto"; 4) "Avvisa il cliente" con il messaggio già scritto (si mostra, non si invia); 5) foglio lavoro con il QR; 6) storico del cliente; 7) chiusura: "se non rinnovi, l'app continua a funzionare" e il contatto.
 - **Dove metterlo:** YouTube come video "non in elenco" (gratis); link su WhatsApp e, più avanti, incorporato nel sito.
 

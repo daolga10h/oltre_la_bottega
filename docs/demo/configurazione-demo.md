@@ -61,12 +61,14 @@ Apri l'indirizzo della demo, scegli la scheda **PIN**, scrivi l'email demo e il 
 Controlla due cose:
 
 - Nel menu a sinistra NON devono comparire *Ordini*, *Da incassare*, *Riepilogo* (versione base). Se compaiono, il passo D.5 non è stato fatto.
-- Nella pagina Oggi devi vedere clienti come *Anna Bellini* e *Luca Conti*. Se vedi i tuoi clienti veri, **fermati**: hai usato le chiavi sbagliate.
+- Nella pagina Oggi devi vedere clienti come *Giulia Ferri*, *Anna Bellini* e *Marco Neri* (*Luca Conti* lo trovi nella pagina **Clienti**). Se vedi i tuoi clienti veri, **fermati**: hai usato le chiavi sbagliate.
 
 ## Da ricordare
 
 - **Prima di ogni registrazione o dimostrazione**, scrivi `npm run demo:reset`: rimette i dati con le date di oggi.
 - Se Supabase mette in pausa la demo (dopo una settimana senza uso), nel pannello premi **Restore project** e aspetta un paio di minuti.
 - Se la demo era in pausa: dopo **Restore project** aspetta che il pannello la mostri attiva, poi lancia `npm run demo:reset` (con il progetto in pausa lo script fallisce).
+- Non lanciare `npm run demo:reset` tra mezzanotte e le 2 di notte: le date verrebbero calcolate sul giorno prima.
+- Se PowerShell dice che "l'esecuzione di script è disabilitata", apri il terminale scrivendo `cmd` (al posto di `powershell`) nella barra dell'indirizzo di Esplora file.
 - Il numero del telefono e le email dei clienti della demo sono inventati: non si può contattare nessuno per sbaglio.
 - Facoltativo, più avanti: un indirizzo tutto tuo come `demo.oltrelabottega.it` (record DNS dal registrar, come già fatto per `app.`).
