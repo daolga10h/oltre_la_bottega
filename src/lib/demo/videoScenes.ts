@@ -8,6 +8,15 @@
  */
 export const CONTATTO_WHATSAPP = "[numero WhatsApp]"
 
+/**
+ * Mette il numero vero al posto del segnaposto. Il numero viene da `.env.demo.local`
+ * (`DEMO_VIDEO_WHATSAPP`) e non sta mai nel codice: il repository è pubblico.
+ */
+export function conContatto(testo: string, numero: string | undefined): string {
+  const pulito = numero?.trim()
+  return pulito ? testo.split(CONTATTO_WHATSAPP).join(pulito) : testo
+}
+
 export type Didascalia = {
   /** Testo in italiano, al massimo circa 90 caratteri. */
   testo: string

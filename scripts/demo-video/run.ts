@@ -8,7 +8,7 @@ import os from "node:os"
 import path from "node:path"
 import { chromium, type Browser, type Locator, type Page } from "@playwright/test"
 import { parseEnvFile } from "../../src/lib/demo/envFile"
-import { SCENE, tempoInScena, type Scena } from "../../src/lib/demo/videoScenes"
+import { SCENE, conContatto, tempoInScena, type Scena } from "../../src/lib/demo/videoScenes"
 import { OVERLAY_SCRIPT } from "./overlay"
 
 const radice = process.cwd()
@@ -41,7 +41,7 @@ function leggiDemo() {
   if (!url || !anon || !email || !pin) {
     throw new Error("Mancano dei valori in .env.demo.local (servono DEMO_SUPABASE_URL, DEMO_ANON_KEY, DEMO_USER_EMAIL, DEMO_PIN).")
   }
-  return { url: url.startsWith("http") ? url : `https://${url}`, anon, email, pin }
+  return { url: url.startsWith("http") ? url : `https://${url}`, anon, email, pin, contatto: demo.DEMO_VIDEO_WHATSAPP }
 }
 
 /**
@@ -213,6 +213,9 @@ class Regia {
   }
 }
 
+/** Numero WhatsApp da mostrare nell'ultima scritta (da `.env.demo.local`, mai dal codice). */
+let contattoWhatsApp: string | undefined
+
 async function didascalia(page: Page, testo: string | null): Promise<void> {
   await page.evaluate((t) => (window as unknown as { __setCaption: (t: string | null) => void }).__setCaption(t), testo)
 }
@@ -224,7 +227,7 @@ async function didascalia(page: Page, testo: string | null): Promise<void> {
 async function conDidascalia(page: Page, scena: Scena, indice: number, azioni: () => Promise<void> = async () => {}) {
   const d = scena.didascalie[indice]
   const inizio = Date.now()
-  await didascalia(page, d.testo)
+  await didascalia(page, conContatto(d.testo, contattoWhatsApp))
   await azioni()
   const resto = tempoInScena(d) * 1000 - (Date.now() - inizio)
   if (resto > 0) await attendi(resto)
@@ -410,6 +413,7 @@ function durataVideo(ffmpeg: string, file: string): string {
 async function main() {
   const ffmpeg = percorsoFfmpeg()
   const demo = leggiDemo()
+  contattoWhatsApp = demo.contatto
   if (!(await portaLibera())) throw new Error(`La porta ${PORTA} è già occupata: chiudere il programma che la usa.`)
 
   rinfrescaDemo()

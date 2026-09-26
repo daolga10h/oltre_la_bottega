@@ -1,4 +1,4 @@
-import { CONTATTO_WHATSAPP, SCENE, tempoLettura, tempoInScena, durataPianificata } from "../videoScenes"
+import { CONTATTO_WHATSAPP, SCENE, conContatto, tempoLettura, tempoInScena, durataPianificata } from "../videoScenes"
 
 const tutteLeDidascalie = () => SCENE.flatMap((s) => s.didascalie)
 
@@ -62,5 +62,21 @@ describe("tempoInScena", () => {
   it("aggiunge al tempo di lettura i secondi extra della didascalia", () => {
     const testo = "x".repeat(45)
     expect(tempoInScena({ testo, secondiExtra: 4 })).toBeCloseTo(tempoLettura(testo) + 4, 5)
+  })
+})
+
+describe("conContatto", () => {
+  it("sostituisce il segnaposto con il numero", () => {
+    expect(conContatto(`Scrivimi · WhatsApp ${CONTATTO_WHATSAPP}`, "111 222 3333")).toBe("Scrivimi · WhatsApp 111 222 3333")
+  })
+
+  it("toglie gli spazi intorno al numero", () => {
+    expect(conContatto(CONTATTO_WHATSAPP, "  111 222 3333  ")).toBe("111 222 3333")
+  })
+
+  it("senza numero lascia il testo com'è", () => {
+    expect(conContatto("Ciao", "111")).toBe("Ciao")
+    expect(conContatto(`x ${CONTATTO_WHATSAPP}`, undefined)).toBe(`x ${CONTATTO_WHATSAPP}`)
+    expect(conContatto(`x ${CONTATTO_WHATSAPP}`, "   ")).toBe(`x ${CONTATTO_WHATSAPP}`)
   })
 })

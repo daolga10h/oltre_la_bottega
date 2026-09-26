@@ -17,7 +17,7 @@ Produrre **da solo** un video dimostrativo di circa 2 minuti e mezzo della demo 
 | Formato | MP4 (H.264, senza audio) per WhatsApp e YouTube; resta anche il WebM originale |
 | Risoluzione | 1280×720 |
 | Durata | circa 2:30 |
-| Contatto in chiusura | Numero WhatsApp della titolare (da fornire: nel codice è una costante con segnaposto, sostituita prima del render finale) |
+| Contatto in chiusura | Numero WhatsApp della titolare, letto da `.env.demo.local` (`DEMO_VIDEO_WHATSAPP`) e mai scritto nel codice: il repository è pubblico. Nel codice resta il segnaposto `[numero WhatsApp]` |
 | Dove finisce | cartella `video/` nella radice del progetto, ignorata da git |
 | Applicazione ripresa | Build di produzione locale (`next build` + `next start`), così non compare l'indicatore di sviluppo di Next; collegata al progetto **demo** con `NEXT_PUBLIC_PLAN=base` |
 | Conversione | `ffmpeg-static`, installato con `npm install --no-save` (non entra nel progetto) |

@@ -78,7 +78,7 @@ Controlla due cose:
 Un video muto di circa 2 minuti e mezzo, con le scritte in italiano, si rifà da solo con un comando: un browser automatico percorre la demo come farebbe una persona.
 
 1. Solo la prima volta, nel terminale: `npm install --no-save ffmpeg-static` (il programma che converte il video; non entra nel progetto).
-2. Prima del video definitivo, scrivi il tuo numero WhatsApp nel file `src/lib/demo/videoScenes.ts`, al posto di `[numero WhatsApp]` nella riga `CONTATTO_WHATSAPP`.
+2. Il numero WhatsApp che compare nell'ultima scritta si scrive nel file `.env.demo.local`, su una riga `DEMO_VIDEO_WHATSAPP=333 111 2222` (con il tuo numero al posto di questo d'esempio). Sta solo lì, mai nel codice: il progetto su GitHub è pubblico.
 3. Nel terminale: `npm run demo:video`. Ci vogliono alcuni minuti: rinfresca i dati demo, prepara l'app, registra e converte. Non serve toccare niente mentre lavora.
 4. Il video finisce nella cartella `video` del progetto: `oltre-la-bottega-demo.mp4` (per WhatsApp e YouTube) e `oltre-la-bottega-demo.webm` (l'originale).
 
