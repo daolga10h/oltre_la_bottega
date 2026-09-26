@@ -38,7 +38,9 @@ Tre bisogni del target, dal documento "PEP - Oltre la bottega":
 **Scheda ordine:**
 - Riquadro "Avvisa il cliente" con WhatsApp o email, che rispetta il canale "mail".
 - Bottone "Segna come pagato".
-- Etichetta stampabile con QR code (pagina di stampa esistente, con l'elenco articoli e "Da pagare"). Richiede una stampante per etichette: è un requisito hardware del cliente, da indicare nella checklist.
+- Due modi di stampare, entrambi con QR code, elenco articoli e "Da pagare", disponibili in ogni livello:
+  - **Etichetta** (62 mm, per stampante termica): la pagina di stampa esistente, invariata.
+  - **Foglio lavoro** (per stampante normale): stessi dati e stesso QR con caratteri più grandi, disposti su mezzo foglio A4 (formato A5 orizzontale, nella metà superiore del foglio). Si allega alla busta o al lavoro. Nel livello base è la scelta di riferimento: non serve nessuna stampante speciale.
 - Nessun riquadro "Invia anteprima".
 
 **Recensioni:** richiesta recensione via WhatsApp o email, come oggi.
@@ -50,6 +52,10 @@ Tre bisogni del target, dal documento "PEP - Oltre la bottega":
 **Fuori dal livello base (livelli superiori):** ordini multi-riga, ente/referente, materiale del fornitore, bozza grafica e anteprima, "Da incassare", Riepilogo stampabile, campo operatore, calcolatrice.
 
 Il **livello di mezzo** non è definito: si decide dopo i primi clienti veri. Per ora esistono solo "base" e "completo".
+
+## Stampa: foglio lavoro
+
+La pagina di stampa esistente (`(print)/orders/[id]/print`) accetta un parametro di formato (`?formato=foglio`; assente = etichetta come oggi). La scheda ordine ha due bottoni: "Stampa etichetta" e "Stampa foglio lavoro". Il foglio riusa gli stessi dati dell'etichetta e lo stesso QR verso la scheda ordine; cambiano solo dimensioni e layout. Nessuna migration, nessun nuovo server action.
 
 ## Come si realizza
 
@@ -73,7 +79,7 @@ Il **livello di mezzo** non è definito: si decide dopo i primi clienti veri. Pe
 ## Verifica
 
 1. **Test unitari Jest** su `plan.ts`: ogni livello espone le funzioni giuste; variabile mancante o non valida → completo.
-2. **Prova reale con Playwright** su un'istanza avviata con `PLAN=base` (utente di test, ordini creati e poi cancellati via service role, come nei flussi già esistenti): menu a 5 voci, form con soli campi del livello, ordine con preventivo portato da "Preventivo" fino a "Consegnato", ordine senza preventivo, pagina etichetta raggiungibile, pagine fuori livello → 404.
+2. **Prova reale con Playwright** su un'istanza avviata con `PLAN=base` (utente di test, ordini creati e poi cancellati via service role, come nei flussi già esistenti): menu a 5 voci, form con soli campi del livello, ordine con preventivo portato da "Preventivo" fino a "Consegnato", ordine senza preventivo, pagine di stampa (etichetta e foglio lavoro) raggiungibili con i dati giusti, pagine fuori livello → 404.
 3. **Nessuna regressione sul completo:** con `PLAN=completo` (o variabile assente) l'app è identica a oggi. Suite Jest esistente verde, `npx tsc --noEmit` pulito, flussi E2E A-D invariati.
 
 ## Ordine di lavoro
@@ -88,5 +94,6 @@ Il **livello di mezzo** non è definito: si decide dopo i primi clienti veri. Pe
 - Definizione del livello di mezzo.
 - Segnale "lavori fermi da N giorni" (primo miglioramento da provare con i clienti pilota, dopo la validazione).
 - Cambio di livello da dentro l'app (per ora si cambia la variabile su Vercel).
+- Più etichette per foglio (griglia) e stampa su formati diversi da A4.
 - Funnel di distribuzione, demo online con dati finti, sito vetrina: progetti separati (vedere `2026-09-24-sito-vetrina-design.md`).
 - Prezzi e canone: già discussi a parte (setup una tantum + canone), non fanno parte di questo lavoro.
