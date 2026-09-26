@@ -1555,6 +1555,158 @@ git commit -m "feat: ente/azienda anche nel base, foglio a 150 mm con solo il lo
 
 ---
 
+### Task 9: Il foglio lavoro torna a tutta larghezza (A4), con caratteri grandi
+
+**Questo task sostituisce il layout del foglio del Task 8 (step 3 e il controllo delle misure nello step 5c).** Motivo (richiesta dell'utente dopo aver visto il risultato): un rettangolo di 150 mm al centro di un A4 sembra un foglio quasi vuoto con scritte piccole. Il foglio usa quindi tutta la larghezza (210 mm) e caratteri più grandi. Per non farsi tagliare dalle stampanti, di cui non conosciamo i margini non stampabili (in genere 4-6 mm), il contenuto resta 20 mm dentro i bordi su ogni lato e in alto (abbondanti). Niente bordo tratteggiato: un bordo sul filo del foglio verrebbe tagliato.
+
+**Files:**
+- Modify: `src/app/(print)/orders/[id]/print/FoglioLavoroClient.tsx`
+- Modify: `e2e/livello-base.spec.ts`
+- Modify: `CLAUDE.md`
+
+- [ ] **Step 1: layout a tutta larghezza**
+
+Sostituire l'intero contenuto di `src/app/(print)/orders/[id]/print/FoglioLavoroClient.tsx` con:
+
+```tsx
+"use client"
+
+import { useEffect, useState } from "react"
+import { QRCodeSVG } from "qrcode.react"
+import { formatEUR } from "@/lib/utils"
+
+interface Props {
+  orderId: string
+  nome: string
+  cognome: string | null
+  azienda: string | null
+  referente: string | null
+  telefono: string | null
+  articoli: { cosa_ordinato: string; quantita: number }[]
+  dataConsegna: string | null
+  saldo: number
+  /** Nome della bottega da mostrare accanto al logo; null = solo il logo (livello base). */
+  shopName: string | null
+}
+
+/**
+ * Foglio lavoro per stampante normale: tutta la larghezza di un A4 (210 mm),
+ * con caratteri grandi. Il contenuto sta 20 mm dentro i bordi (lati e alto):
+ * non conosciamo i margini non stampabili della stampante di ogni cliente
+ * (in genere 4-6 mm), 20 mm sono abbondanti. Nessun bordo sul filo del foglio,
+ * verrebbe tagliato. L'altezza segue il contenuto. Stessi dati e stesso QR
+ * dell'etichetta termica.
+ */
+export function FoglioLavoroClient({ orderId, nome, cognome, azienda, referente, telefono, articoli, dataConsegna, saldo, shopName }: Props) {
+  const [url, setUrl] = useState("")
+
+  useEffect(() => {
+    setUrl(`${window.location.origin}/orders/${orderId}`)
+    const timer = setTimeout(() => window.print(), 400)
+    return () => clearTimeout(timer)
+  }, [orderId])
+
+  const clientName = [nome, cognome].filter(Boolean).join(" ")
+
+  const date = dataConsegna
+    ? new Date(dataConsegna).toLocaleDateString("it-IT", { day: "2-digit", month: "long", year: "numeric" })
+    : null
+
+  return (
+    <div
+      data-testid="foglio-lavoro"
+      style={{
+        width: "210mm",
+        boxSizing: "border-box",
+        padding: "20mm",
+        fontFamily: "Arial, Helvetica, sans-serif",
+        fontSize: "24px",
+        lineHeight: 1.4,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "28px", paddingBottom: "16px", borderBottom: "3px solid #000" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/icon-mono.png" alt="" style={{ width: "64px", height: "64px", display: "block" }} />
+        {shopName && <span style={{ fontSize: "26px", fontWeight: "bold", letterSpacing: "0.5px" }}>{shopName}</span>}
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12mm" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontWeight: "bold", fontSize: "44px", lineHeight: 1.2, margin: "0 0 10px 0" }}>{clientName}</p>
+          {azienda && <p style={{ fontSize: "26px", margin: "0 0 6px 0" }}>{azienda}</p>}
+          {referente && <p style={{ fontSize: "26px", margin: "0 0 6px 0" }}>Ref. {referente}</p>}
+          {telefono && <p style={{ fontSize: "30px", margin: "0 0 24px 0" }}>{telefono}</p>}
+          {articoli.length > 0 && (
+            <div style={{ margin: "0 0 24px 0", fontSize: "30px" }}>
+              {articoli.map((a, i) => (
+                <p key={i} style={{ margin: "0 0 4px 0" }}>
+                  {articoli.length > 1 ? "• " : ""}{a.cosa_ordinato}{a.quantita > 1 ? ` × ${a.quantita}` : ""}
+                </p>
+              ))}
+            </div>
+          )}
+          {date && <p style={{ fontSize: "34px", fontWeight: "bold", margin: "0 0 10px 0" }}>Consegnare: {date}</p>}
+          <p style={{ fontSize: "34px", fontWeight: "bold", margin: 0 }}>Da pagare: €{formatEUR(saldo)}</p>
+        </div>
+        <div style={{ flexShrink: 0, textAlign: "center" }}>
+          {url && <QRCodeSVG value={url} size={200} />}
+          <p style={{ fontSize: "14px", margin: "8px 0 0 0" }}>Scansiona per aprire la scheda</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+Il resto (props passate dalla pagina, `@page { margin: 0; size: A4 portrait; }`, `data-testid="foglio-lavoro"`) non cambia.
+
+- [ ] **Step 2: prova reale — aggiornare il controllo delle misure**
+
+In `e2e/livello-base.spec.ts`, nel test "la scheda ordine offre solo il foglio lavoro e la stampa mostra il foglio", sostituire il blocco
+
+```ts
+    // 150 mm di larghezza con 30 mm di margine a sinistra (1 mm ≈ 3,78 px).
+    const box = await fogliolavoro.boundingBox()
+    expect(box).not.toBeNull()
+    expect(box!.width).toBeGreaterThan(560)
+    expect(box!.width).toBeLessThan(575)
+    expect(box!.x).toBeGreaterThan(110)
+    expect(box!.x).toBeLessThan(117)
+```
+
+con
+
+```ts
+    // Tutta la larghezza di un A4 (210 mm ≈ 794 px), attaccato al bordo sinistro:
+    // i 20 mm di margine sono padding interno, non spazio fuori dal foglio.
+    const box = await fogliolavoro.boundingBox()
+    expect(box).not.toBeNull()
+    expect(box!.width).toBeGreaterThan(785)
+    expect(box!.width).toBeLessThan(802)
+    expect(box!.x).toBeLessThan(2)
+```
+
+Run (porta 3100 libera, nessun altro `next dev` in questa cartella): `npx playwright test --config playwright.base.config.ts` — Expected: 9 passati. Se le misure reali differiscono per un motivo legittimo (per esempio una barra di scorrimento), adattare la tolleranza e annotare i valori osservati; non indebolire altri controlli. Poi la query dei dati rimasti con `like('nome','E2E%')`: 0.
+
+- [ ] **Step 3: aggiornare `CLAUDE.md`**
+
+Nella riga `Livello "base" dell'app scelto con NEXT_PUBLIC_PLAN (2026-09-26)` sostituire `150 mm centrati con 30 mm di margine per lato, perché non controlliamo i margini delle stampanti dei clienti; solo il logo, senza il nome della bottega` con `A4 a tutta larghezza (210 mm) con caratteri grandi e 20 mm di margine interno, perché non controlliamo i margini non stampabili delle stampanti dei clienti; solo il logo, senza il nome della bottega`. Nel bullet "Feature (2026-09-26)" sostituire `foglio a 150 mm senza nome bottega (9 test nella prova del livello base)` con `foglio A4 a tutta larghezza senza nome bottega (9 test nella prova del livello base)`.
+
+- [ ] **Step 4: verifiche e commit**
+
+```bash
+npx tsc --noEmit
+npx jest --roots=src
+```
+
+Expected: puliti / 19 suite, 188 test verdi.
+
+```bash
+git add "src/app/(print)" e2e/livello-base.spec.ts CLAUDE.md
+git commit -m "feat: il foglio lavoro torna a tutta larghezza A4, con caratteri grandi" -m "Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+```
+
+---
+
 ## Autoverifica del piano rispetto al documento di progetto
 
 - **Menu a 5 voci (senza Ordini nel base)** → Task 1 (`elenco_ordini`), Task 2 (Sidebar/BottomNav), verificato nel Task 6 (test "il menu…"). Freccia indietro verso la Bacheca → Task 4 step 4, test nel Task 6.

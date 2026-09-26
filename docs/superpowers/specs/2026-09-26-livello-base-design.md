@@ -40,7 +40,7 @@ Tre bisogni del target, dal documento "PEP - Oltre la bottega":
 **Scheda ordine:**
 - Riquadro "Avvisa il cliente" con WhatsApp o email, che rispetta il canale "mail".
 - Bottone "Segna come pagato".
-- Stampa **solo come foglio lavoro** per stampante normale: QR code, elenco articoli e "Da pagare", caratteri grandi, larghezza 150 mm centrata su un foglio A4 (210 mm), cioè 30 mm di margine per lato e in alto. Non possiamo conoscere i margini non stampabili della stampante di ogni cliente: 30 mm sono abbondanti. L'altezza segue il contenuto. In testa c'è solo il logo, senza il nome della bottega. Si allega alla busta o al lavoro. Non serve nessuna stampante speciale. L'etichetta termica da 62 mm non fa parte del livello base (resta nel completo).
+- Stampa **solo come foglio lavoro** per stampante normale: QR code, elenco articoli e "Da pagare", caratteri grandi, a tutta larghezza di un foglio A4 (210 mm), con caratteri grandi perché il foglio non sembri vuoto. Il contenuto sta 20 mm dentro i bordi (lati e alto): non possiamo conoscere i margini non stampabili della stampante di ogni cliente (in genere 4-6 mm), 20 mm sono abbondanti. Nessun bordo sul filo del foglio. L'altezza segue il contenuto. In testa c'è solo il logo, senza il nome della bottega. Si allega alla busta o al lavoro. Non serve nessuna stampante speciale. L'etichetta termica da 62 mm non fa parte del livello base (resta nel completo).
 - Nessun riquadro "Invia anteprima".
 
 **Recensioni:** richiesta recensione via WhatsApp o email, come oggi.
