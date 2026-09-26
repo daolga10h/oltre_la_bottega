@@ -1125,25 +1125,31 @@ Ti servono due cose: un progetto **Supabase** (il database, l'hai già creato) e
 
 > **Regola d'oro:** non incollare mai chiavi o password in una chat. Vanno solo nel file `.env.demo.local` sul tuo computer.
 
+## Prima di cominciare
+
+Apri la cartella del progetto in Esplora file, clicca sulla barra dell'indirizzo, scrivi `powershell` e premi Invio: si apre il terminale già nella cartella giusta. Scrivi `git branch --show-current`: deve rispondere `feature/demo-video` (o `main`, dopo l'unione); se risponde altro, fermati e chiedimi. Poi scrivi `npm install` e aspetta la fine. Deve esistere il file `.env.local` (quello di sempre): serve alla protezione per riconoscere il progetto vero. Ogni volta che riapri il terminale, riparti da qui (cartella giusta).
+
 ## A. Il database (Supabase)
 
 1. Nella cartella del progetto, apri il terminale e scrivi `npm run demo:schema`. Crea un file `demo-schema.sql`.
-2. Apri quel file, seleziona tutto (Ctrl+A) e copia (Ctrl+C).
-3. In Supabase apri il **progetto demo** (controlla il nome in alto a sinistra: deve essere quello nuovo, non quello della bottega!). Vai su **SQL Editor** → **New query**, incolla e premi **Run**. Deve comparire "Success". Se compare un errore, copiami il messaggio. Il file controlla da solo che il progetto sia vuoto: se ti dice 'Questo progetto non è vuoto', **non è un errore tuo**, vuol dire che sei nel progetto sbagliato (o in uno già usato): fermati e controlla il nome in alto.
-4. Vai su **Project Settings → API** (o **API Keys**). Ti servono tre valori:
+2. Scrivi `notepad demo-schema.sql`, premi Ctrl+A e Ctrl+C, poi chiudi.
+3. In Supabase apri il **progetto demo** (controlla il nome in alto a sinistra: deve essere quello nuovo, non quello della bottega!). Vai su **SQL Editor** → **New query**, incolla e premi **Run**. Deve comparire "Success". Se compare un errore, copiami il messaggio. Il file controlla da solo che il progetto sia vuoto: se ti dice 'Questo progetto non è vuoto', **non è un errore tuo**, vuol dire che sei nel progetto sbagliato (o in uno già usato): fermati e controlla il nome in alto. Supabase ti mostrerà un avviso giallo su operazioni che cancellano dati: è normale (lo schema ricrea le tabelle). Premi conferma **solo se il nome in alto è il progetto demo**.
+4. Vai su **Project Settings → Data API** (oppure il bottone **Connect**) per l'indirizzo, e su **Settings → API Keys** per le chiavi. Ti servono tre valori:
    - l'indirizzo del progetto (Project URL);
    - la chiave pubblica (`anon` o `publishable`);
    - la chiave segreta (`service_role` o `secret`).
 
+   Se vedi due schede di chiavi ('nuove' e 'legacy'), va bene una qualunque coppia purché sia dello **stesso progetto demo**.
+
 ## B. Il file con le chiavi
 
-1. Nella cartella del progetto copia il file `.env.demo.example` e chiama la copia `.env.demo.local`.
-2. Aprilo e sostituisci i valori con i tre dell'punto A.4. Scegli un **PIN di 6 cifre** (esattamente 6) e un'email a piacere per l'utente demo (va bene quella già scritta).
-3. Salva. Questo file **non** viene mai caricato su GitHub: resta solo sul tuo computer.
+1. Nel terminale scrivi `copy .env.demo.example .env.demo.local`, poi `notepad .env.demo.local`.
+2. Sostituisci i valori con i tre del punto A.4. Scegli un **PIN di 6 cifre** (esattamente 6) e un'email a piacere per l'utente demo (va bene quella già scritta). **Attenzione: copia questi valori solo dal progetto demo, controlla il nome del progetto in alto a sinistra. Quelli della bottega vera non vanno mai in questo file né in Vercel.**
+3. Salva con Ctrl+S e chiudi. Controlla che il nome del file non finisca con `.txt`. Questo file **non** viene mai caricato su GitHub: resta solo sul tuo computer.
 
 ## C. I dati finti
 
-Lancialo subito dopo aver incollato lo schema: **non creare utenti a mano** nel progetto demo (né con 'Add user' né con un link via email), altrimenti la protezione si rifiuta di partire.
+Esegui questo passo subito dopo aver incollato lo schema (e aver compilato il file del punto B). **Non creare utenti a mano** nel progetto demo (né con 'Add user' né con un link via email), altrimenti la protezione si rifiuta di partire.
 
 1. Nel terminale scrivi `npm run demo:reset`.
 2. Deve rispondere `Demo rinfrescata: 19 ordini ...`. La prima volta crea anche l'utente demo.
@@ -1151,28 +1157,36 @@ Lancialo subito dopo aver incollato lo schema: **non creare utenti a mano** nel 
 
 ## D. Il sito (Vercel)
 
-1. Su vercel.com: **Add New… → Project**, scegli il repository `oltre_la_bottega` e premi **Import**.
+1. Su vercel.com: **Add New… → Project** (o **New Project**), scegli il repository `oltre_la_bottega` e premi **Import**.
 2. Chiama il progetto `oltre-la-bottega-demo`.
 3. Apri **Environment Variables** e aggiungi **solo queste tre**:
-   - `NEXT_PUBLIC_SUPABASE_URL` = l'indirizzo del progetto demo;
+   - `NEXT_PUBLIC_SUPABASE_URL` = l'indirizzo **completo** del progetto demo, che inizia con `https://` e finisce con `.supabase.co`;
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = la chiave **pubblica** della demo;
    - `NEXT_PUBLIC_PLAN` = `base`.
-   Non aggiungere nient'altro (in particolare niente chiave segreta e niente impostazioni della posta): così la demo non può inviare email.
-4. Se la Pull Request del livello base non è ancora stata unita in `main`: dopo l'importazione vai su **Settings → Git → Production Branch** e scrivi `feature/livello-base`. Quando la Pull Request sarà unita, rimetti `main`.
-5. Premi **Deploy**. Alla fine copia l'indirizzo che finisce con `.vercel.app`.
+
+   Copia i valori solo dal progetto demo: quelli della bottega vera non vanno mai in Vercel. Non aggiungere nient'altro (in particolare niente chiave segreta e niente impostazioni della posta): così la demo non può inviare email. Inserisci le variabili **prima** di premere Deploy: i valori `NEXT_PUBLIC_` vengono fissati durante la pubblicazione; se le cambi dopo, devi fare **Redeploy**.
+4. Premi **Deploy**. Se la Pull Request del livello base non è ancora unita in `main`, questo primo sito sarà la versione completa: va bene, si corregge subito.
+5. Solo se la Pull Request non è ancora unita: nel progetto Vercel vai su **Settings → Environments → Production → Branch Tracking**, scrivi `feature/livello-base` e premi **Save**. Poi vai su **Deployments**, apri i tre puntini sull'ultimo deploy e scegli **Redeploy**. Quando la Pull Request sarà unita in `main`, rimetti `main`.
+6. Alla fine copia l'indirizzo che finisce con `.vercel.app`.
 
 ## E. Ultimo ritocco in Supabase
 
-Nel progetto demo vai su **Authentication → URL Configuration** e scrivi l'indirizzo della demo in **Site URL**; aggiungi lo stesso indirizzo seguito da `/**` in **Redirect URLs**. Serve solo per il login con il link via email; il login con il PIN funziona anche senza.
+Nel progetto demo vai su **Authentication → URL Configuration** e scrivi l'indirizzo della demo in **Site URL**; aggiungi lo stesso indirizzo seguito da `/**` in **Redirect URLs** (premi **Add URL** poi **Save**). Serve solo per il login con il link via email; il login con il PIN funziona anche senza.
 
 ## F. Prova
 
 Apri l'indirizzo della demo, scegli la scheda **PIN**, scrivi l'email demo e il PIN. Devi entrare nella pagina **Oggi** e vedere consegne, ordini pronti da avvisare e promemoria.
 
+Controlla due cose:
+
+- Nel menu a sinistra NON devono comparire *Ordini*, *Da incassare*, *Riepilogo* (versione base). Se compaiono, il passo D.5 non è stato fatto.
+- Nella pagina Oggi devi vedere clienti come *Anna Bellini* e *Luca Conti*. Se vedi i tuoi clienti veri, **fermati**: hai usato le chiavi sbagliate.
+
 ## Da ricordare
 
 - **Prima di ogni registrazione o dimostrazione**, scrivi `npm run demo:reset`: rimette i dati con le date di oggi.
 - Se Supabase mette in pausa la demo (dopo una settimana senza uso), nel pannello premi **Restore project** e aspetta un paio di minuti.
+- Se la demo era in pausa: dopo **Restore project** aspetta che il pannello la mostri attiva, poi lancia `npm run demo:reset` (con il progetto in pausa lo script fallisce).
 - Il numero del telefono e le email dei clienti della demo sono inventati: non si può contattare nessuno per sbaglio.
 - Facoltativo, più avanti: un indirizzo tutto tuo come `demo.oltrelabottega.it` (record DNS dal registrar, come già fatto per `app.`).
 ````
@@ -1182,17 +1196,21 @@ Apri l'indirizzo della demo, scegli la scheda **PIN**, scrivi l'email demo e il 
 ````markdown
 # Video dimostrativo — scaletta e testo
 
-Un video di circa **2 minuti e mezzo** che racconta una giornata in bottega. Lo registri tu, con la tua voce, sulla demo con i dati finti. Il testo qui sotto è un punto di partenza: cambialo con parole tue.
+Un video di circa **3 minuti** che racconta una giornata in bottega. Lo registri tu, con la tua voce, sulla demo con i dati finti. Il testo qui sotto è un punto di partenza: cambialo con parole tue.
 
 ## Prima di registrare
 
 1. Nel terminale: `npm run demo:reset` (rimette i dati con le date di oggi).
-2. Apri la demo e accedi con email e PIN.
-3. Nel browser: schermo intero, zoom al 110-125% (il testo si legge meglio anche da telefono), nascondi la barra dei preferiti, chiudi le altre schede.
+2. Apri il browser in una **finestra in incognito** (Ctrl+Maiusc+N) oppure con un profilo vuoto: niente segnalibri, estensioni, email salvate o suggerimenti di password. Apri la demo e accedi con email e PIN **prima** di premere Registra.
+3. Nel browser: zoom al 110-125% (il testo si legge meglio anche da telefono), chiudi le altre schede.
 4. Spegni le notifiche di Windows (modalità "Non disturbare") e chiudi WhatsApp Web e la posta.
-5. Programma di registrazione (gratuito): **OBS** (scena "Cattura schermo", 1920×1080, microfono attivo) oppure **Win+G** di Windows. Fai una prova di 10 secondi e riascolta la voce.
-6. **Non premere mai "invia"** quando si apre WhatsApp o la posta: si mostra il messaggio già scritto e si torna indietro.
+5. Programma di registrazione (gratuito):
+   - **OBS** (microfono attivo): scegli "Cattura finestra" oppure metti il browser a schermo intero (F11), così non si vedono la barra di Windows e le icone vicino all'orologio.
+   - **Win+G** (Xbox Game Bar) di Windows registra **una sola finestra di un programma**: funziona con una finestra di Chrome o Edge, non con il desktop né con Esplora file. Si avvia e si ferma con **Win+Alt+R**; il file finisce nella cartella `Video\Acquisizioni`. Controlla che il microfono sia acceso.
+   - Fai una prova di 10 secondi e riascolta la voce.
+6. Nel riquadro **Avvisa il cliente** **non cliccare su WhatsApp né su Email**: aprirebbero i tuoi programmi veri, con le tue chat, e segnerebbero l'ordine come già avvisato. Fai vedere il riquadro e premi **QR**: compare il codice da inquadrare con il telefono. **Non premere "Fatto"** e non inquadrare niente. Dopo la ripresa rilancia `npm run demo:reset`.
 7. Registra a pezzi, una scena alla volta: se sbagli, rifai solo quella. Ogni volta che rifai una scena in cui crei un ordine, rilancia `npm run demo:reset`.
+8. Suggerimento: puoi registrare la voce per ultima, sopra le riprese, così parli con calma.
 
 ## Scaletta
 
@@ -1200,19 +1218,19 @@ Un video di circa **2 minuti e mezzo** che racconta una giornata in bottega. Lo 
 |---|---|---|
 | 0:00 | Pagina **Oggi** già aperta | "Ciao, sono Olga. Ho una bottega e mi sono costruita un'app per non tenere più tutto a mente. Si chiama Oltre la Bottega. Ti faccio vedere una giornata." |
 | 0:20 | Ferma sui numeri e sulle liste di Oggi | "Ogni mattina apro questa pagina e so cosa devo fare: i lavori da consegnare oggi, quelli già pronti e i clienti da avvisare, quello che è in ritardo." |
-| 0:45 | **Nuovo ordine**: scrivi "Luca", scegli *Luca Conti* dai suggerimenti, poi cosa ordinato ("Targa per condominio"), prezzo, data → **Crea ordine** | "Se il cliente è già stato da me, i dati si compilano da soli. Registro un lavoro in meno di un minuto, anche con il cliente davanti." |
-| 1:15 | **Bacheca**: sposta un lavoro da *In lavorazione* a *Pronto* | "La Bacheca è la mia lavagna: ogni colonna è una fase del lavoro. Quando finisco, lo sposto in Pronto." |
-| 1:35 | Apri un ordine *Pronto* (per esempio Anna Bellini) → riquadro **Avvisa il cliente** | "Quando un lavoro è pronto, con un tocco il messaggio al cliente è già scritto. Io devo solo inviarlo." *(non inviare)* |
-| 1:55 | Bottone **Foglio lavoro** → anteprima di stampa | "Con una stampante normale stampo un foglio da mettere insieme al lavoro, con il codice per riaprire la scheda dal telefono." |
-| 2:15 | **Clienti** → *Luca Conti* | "Quando un cliente torna, vedo subito tutto quello che ha già ordinato." |
-| 2:30 | Torna su **Oggi** | "È semplice, perché l'ho fatta per chi lavora in bottega. Se non rinnovi, l'app continua a funzionare. Se vuoi vederla dal vivo, scrivimi." *(mostra il contatto: WhatsApp o email da confermare)* |
+| 0:45 | **Nuovo ordine** (bottone in alto su Oggi): scrivi *Luca*, scegli *Luca Conti* dai suggerimenti (nome, cognome e telefono si compilano); scrivi l'articolo ("Targa per condominio"), il prezzo unitario e la data di consegna → **Crea ordine** | "Se il cliente è già stato da me, i dati si compilano da soli. Registro un lavoro in meno di un minuto, anche con il cliente davanti." |
+| 1:20 | **Bacheca**: sulla scheda di un lavoro *In lavorazione* apri il menu dello stato e scegli **Pronto** | "La Bacheca è la mia lavagna: ogni colonna è una fase del lavoro. Quando finisco, lo sposto in Pronto." |
+| 1:40 | Apri un ordine *Pronto* (Anna Bellini) → riquadro **Avvisa il cliente** → premi **QR** (non WhatsApp, non Email, non Fatto) | "Quando un lavoro è pronto, il messaggio al cliente è già scritto: lo mando da WhatsApp o per email, oppure inquadro il codice col telefono." |
+| 2:05 | Bottone **Foglio lavoro** → anteprima di stampa. Il foglio si apre in una nuova scheda e si apre da solo la finestra di stampa: mostrala un paio di secondi, poi premi **Esc** (non stampare) e **Ctrl+W** per chiudere la scheda. Se nell'elenco delle stampanti compare quella della bottega, scegli "Salva come PDF" prima di registrare. | "Con una stampante normale stampo un foglio da mettere insieme al lavoro, con il codice per riaprire la scheda dal telefono." |
+| 2:30 | **Clienti** → *Luca Conti* | "Quando un cliente torna, vedo subito tutto quello che ha già ordinato." |
+| 2:45 | Torna su **Oggi** | "È semplice, perché l'ho fatta per chi lavora in bottega. Se non rinnovi, l'app continua a funzionare. Se vuoi vederla dal vivo, scrivimi." *(mostra il contatto: WhatsApp o email da confermare)* |
 
 ## Dopo la registrazione
 
 1. **Ritaglia** l'inizio e la fine (OBS e Windows lo permettono, oppure usa l'editor gratuito di YouTube).
 2. Carica su **YouTube**: *Crea → Carica video*, visibilità **Non in elenco** (solo chi ha il link lo vede).
 3. Attiva i **sottotitoli automatici in italiano** (YouTube Studio → Sottotitoli) e correggi le parole sbagliate: molte persone guardano senza audio.
-4. Copia il link e mandalo su WhatsApp a una bottega, con una frase tua ("Ti mando un video di 2 minuti, dimmi cosa ne pensi").
+4. Copia il link e mandalo su WhatsApp a una bottega, con una frase tua ("Ti mando un video di 3 minuti, dimmi cosa ne pensi").
 5. Più avanti: pulsante **"Guarda come funziona"** nel sito vetrina, con il video incorporato.
 
 ## Da non dimenticare
