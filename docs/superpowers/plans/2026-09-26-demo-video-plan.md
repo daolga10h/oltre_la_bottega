@@ -895,11 +895,27 @@ const righe = [
   "-- Generato da scripts/demo-schema.mjs. Incollare tutto nel SQL Editor di Supabase ed eseguire,",
   "-- UNA SOLA VOLTA e SOLO su un progetto vuoto. La prima migration cancella e ricrea le tabelle:",
   "-- non eseguire mai questo file sul progetto della bottega vera.",
+  "-- Il file si rifiuta da solo di partire su un progetto che ha già delle tabelle o degli utenti.",
+  "",
+  "do $$",
+  "begin",
+  "  if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'orders')",
+  "     or exists (select 1 from auth.users) then",
+  "    raise exception 'Questo progetto non è vuoto: schema demo NON applicato (nessuna modifica fatta).';",
+  "  end if;",
+  "end $$;",
   "",
 ]
 for (const f of file) {
   righe.push(`-- ===== ${f} =====`, readFileSync(path.join(cartella, f), "utf-8").trim(), "")
 }
+righe.push(
+  "-- Permessi sulle tabelle (di solito già concessi da Supabase; qui per sicurezza, solo per la demo).",
+  "grant usage on schema public to anon, authenticated, service_role;",
+  "grant all on all tables in schema public to anon, authenticated, service_role;",
+  "grant all on all sequences in schema public to anon, authenticated, service_role;",
+  ""
+)
 
 const destinazione = path.join(radice, "demo-schema.sql")
 writeFileSync(destinazione, righe.join("\n"), "utf-8")
@@ -975,7 +991,7 @@ async function main() {
   })
 
   // Solo letture, finché non abbiamo verificato che il database sia quello giusto.
-  const { count, error: erroreConteggio } = await supabase.from("orders").select("id", { count: "exact", head: true })
+  const { count, error: erroreConteggio } = await supabase.from("orders").select("id", { count: "exact" }).limit(1)
   controlla(
     erroreConteggio,
     "Non riesco a leggere il database demo (lo schema è stato creato? vedere docs/demo/configurazione-demo.md)"
@@ -1066,7 +1082,7 @@ npm install --save-dev tsx
 npm run demo:schema
 ```
 
-Expected: stampa `Scritto ...demo-schema.sql (11 migration, da 20260626000001_order_schema_v2.sql a 20260909000001_add_ente_referente.sql).` Controllare che il file esista, inizi con l'intestazione di avvertimento, **non** contenga `20260625000001_initial_schema` e che `git status` **non** lo mostri (è ignorato).
+Expected: stampa `Scritto ...demo-schema.sql (11 migration, da 20260626000001_order_schema_v2.sql a 20260909000001_add_ente_referente.sql).` Controllare che il file esista, inizi con l'intestazione di avvertimento seguita, subito dopo, dal blocco di guardia `do $$ ... raise exception 'Questo progetto non è vuoto ...'`, finisca con le tre righe `grant ... to anon, authenticated, service_role;` (precedute dal commento sui permessi), **non** contenga `20260625000001_initial_schema` e che `git status` **non** lo mostri (è ignorato).
 
 ```bash
 npm run demo:reset
@@ -1113,7 +1129,7 @@ Ti servono due cose: un progetto **Supabase** (il database, l'hai già creato) e
 
 1. Nella cartella del progetto, apri il terminale e scrivi `npm run demo:schema`. Crea un file `demo-schema.sql`.
 2. Apri quel file, seleziona tutto (Ctrl+A) e copia (Ctrl+C).
-3. In Supabase apri il **progetto demo** (controlla il nome in alto a sinistra: deve essere quello nuovo, non quello della bottega!). Vai su **SQL Editor** → **New query**, incolla e premi **Run**. Deve comparire "Success". Se compare un errore, copiami il messaggio.
+3. In Supabase apri il **progetto demo** (controlla il nome in alto a sinistra: deve essere quello nuovo, non quello della bottega!). Vai su **SQL Editor** → **New query**, incolla e premi **Run**. Deve comparire "Success". Se compare un errore, copiami il messaggio. Il file controlla da solo che il progetto sia vuoto: se ti dice 'Questo progetto non è vuoto', **non è un errore tuo**, vuol dire che sei nel progetto sbagliato (o in uno già usato): fermati e controlla il nome in alto.
 4. Vai su **Project Settings → API** (o **API Keys**). Ti servono tre valori:
    - l'indirizzo del progetto (Project URL);
    - la chiave pubblica (`anon` o `publishable`);
@@ -1126,6 +1142,8 @@ Ti servono due cose: un progetto **Supabase** (il database, l'hai già creato) e
 3. Salva. Questo file **non** viene mai caricato su GitHub: resta solo sul tuo computer.
 
 ## C. I dati finti
+
+Lancialo subito dopo aver incollato lo schema: **non creare utenti a mano** nel progetto demo (né con 'Add user' né con un link via email), altrimenti la protezione si rifiuta di partire.
 
 1. Nel terminale scrivi `npm run demo:reset`.
 2. Deve rispondere `Demo rinfrescata: 19 ordini ...`. La prima volta crea anche l'utente demo.
@@ -1270,6 +1288,8 @@ Expected: due host diversi e `diversi: ok`. Se stampa `ATTENZIONE`, **fermarsi e
 ```bash
 npm run demo:reset
 ```
+
+Se `npm run demo:reset` fallisce con `permission denied for table ...`, i permessi (`grant`) in fondo allo schema non sono stati applicati: riferirlo all'utente invece di improvvisare.
 
 Expected: `Demo rinfrescata: 19 ordini (di cui 4 di enti/aziende), 4 promemoria.` Rilanciarlo una seconda volta: stesso messaggio, nessun errore (ripetibilità, nessun dato duplicato). Poi:
 
