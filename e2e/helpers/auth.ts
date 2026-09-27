@@ -118,3 +118,15 @@ export async function getTestAuthCookies(): Promise<AuthCookie[]> {
 export async function deleteTestOrder(orderId: string): Promise<void> {
   await adminClient().from("orders").delete().eq("id", orderId)
 }
+
+/**
+ * Rete di sicurezza: cancella gli ordini di prova il cui nome inizia con il
+ * prefisso dato, anche se il test è fallito prima di annotarne l'id.
+ * Usare solo prefissi che non possono coincidere con clienti veri.
+ */
+export async function deleteTestOrdersByNamePrefix(prefix: string): Promise<void> {
+  const { error } = await adminClient().from("orders").delete().like("nome", `${prefix}%`)
+  if (error) {
+    throw new Error(`Pulizia degli ordini di prova "${prefix}" non riuscita: ${error.message}`)
+  }
+}

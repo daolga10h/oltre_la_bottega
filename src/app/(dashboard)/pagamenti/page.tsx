@@ -9,8 +9,11 @@ import { createClient } from "@/lib/supabase/server"
 import { getShopName } from "@/lib/shop-name"
 import { MessageCircle, Mail } from "lucide-react"
 import Link from "next/link"
+import { notFound } from "next/navigation"
+import { hasFeature } from "@/lib/plan"
 
 export default async function PagamentiPage() {
+  if (!hasFeature("da_incassare")) notFound()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const shopName = getShopName(user)

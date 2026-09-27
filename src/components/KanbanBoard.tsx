@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react"
 import { updateOrderStatus } from "@/actions/orders"
-import { STATUS_ORDER, STATUS_LABELS, preventivoStage, bozzaStage, materialeStage } from "@/lib/orderConstants"
+import { STATUS_LABELS, preventivoStage, bozzaStage, materialeStage } from "@/lib/orderConstants"
+import { getPlan, statusOrderForPlan } from "@/lib/plan"
 import { formatDate, cn, buildClientDisplayName } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -24,6 +25,8 @@ const STATUS_BADGE_COLORS: Record<string, string> = {
 export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
   const [orders, setOrders] = useState(initialOrders)
   const [isPending, startTransition] = useTransition()
+  const statusOrder = statusOrderForPlan(getPlan())
+  const columns = statusOrder.filter((s) => s !== "consegnato")
 
   function handleStatusChange(orderId: string, newStatus: string) {
     setOrders((prev) =>
@@ -36,8 +39,8 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
 
   return (
     <div className="overflow-x-auto pb-2">
-      <div className="grid grid-cols-[repeat(5,minmax(170px,1fr))] gap-3">
-      {STATUS_ORDER.filter((s) => s !== "consegnato").map((status) => {
+      <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(170px, 1fr))` }}>
+      {columns.map((status) => {
         const colOrders = orders.filter((o) => o.status === status)
         return (
           <div
@@ -104,7 +107,7 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {STATUS_ORDER.map((s) => (
+                          {statusOrder.map((s) => (
                             <SelectItem key={s} value={s}>
                               {STATUS_LABELS[s]}
                             </SelectItem>
