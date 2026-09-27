@@ -58,3 +58,4 @@ demo-schema.sql
 
 # video dimostrativo generato da npm run demo:video
 /video/
+/.demo-video-tmp/

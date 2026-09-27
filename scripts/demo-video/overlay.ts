@@ -84,6 +84,37 @@ export const OVERLAY_SCRIPT = String.raw`
   };
   window.__ripple = (x, y) => cerchio(x, y);
 
+  // Anteprima del messaggio pronto per WhatsApp o email: un riquadro sopra la
+  // pagina, senza navigare davvero verso siti o programmi esterni. La
+  // registrazione video cattura solo il contenuto della PAGINA: una vera
+  // apertura di wa.me (sito diverso) o di un programma di posta non
+  // resterebbe nel video (cambio di dominio o app esterna), quindi qui si
+  // mostra un'anteprima disegnata sulla stessa pagina.
+  const ID_ANTEPRIMA = "__demo-anteprima";
+  window.__mostraAnteprima = (canale, testo, destinatario) => {
+    document.getElementById(ID_ANTEPRIMA)?.remove();
+    if (!radice()) return;
+    const verde = canale === "whatsapp";
+    const overlay = document.createElement("div");
+    overlay.id = ID_ANTEPRIMA;
+    overlay.style.cssText = "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(59,39,22,.35);z-index:2147483644;opacity:0;transition:opacity .3s ease;";
+    overlay.innerHTML =
+      '<div style="width:420px;max-width:88vw;border-radius:14px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.35);font:15px/1.45 system-ui,-apple-system,\'Segoe UI\',Roboto,Arial,sans-serif;background:#fff;">' +
+      '<div style="background:' + (verde ? "#25d366" : "#3b2716") + ';color:#fff;padding:12px 18px;font-weight:600;">' + (verde ? "WhatsApp" : "Email") + "</div>" +
+      '<div style="padding:16px 18px;">' +
+      '<p style="margin:0 0 8px 0;font-size:12px;color:#8a8a8a;">A: ' + destinatario + '</p>' +
+      '<div style="background:' + (verde ? "#dcf8c6" : "#f2e4c9") + ';border-radius:10px;padding:12px 14px;color:#2b2318;">' + testo + "</div>" +
+      "</div></div>";
+    radice().appendChild(overlay);
+    requestAnimationFrame(() => { overlay.style.opacity = "1"; });
+  };
+  window.__nascondiAnteprima = () => {
+    const el = document.getElementById(ID_ANTEPRIMA);
+    if (!el) return;
+    el.style.opacity = "0";
+    setTimeout(() => el.remove(), 300);
+  };
+
   document.addEventListener("mousemove", (e) => {
     pos = { x: e.clientX, y: e.clientY };
     scrivi(CHIAVE_POS, JSON.stringify(pos));

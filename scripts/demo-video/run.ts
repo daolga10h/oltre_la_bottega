@@ -4,7 +4,6 @@
 import { spawn, spawnSync, type ChildProcess } from "node:child_process"
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs"
 import { createRequire } from "node:module"
-import os from "node:os"
 import path from "node:path"
 import { chromium, type Browser, type Locator, type Page } from "@playwright/test"
 import { parseEnvFile } from "../../src/lib/demo/envFile"
@@ -17,11 +16,29 @@ const BASE_URL = `http://localhost:${PORTA}`
 const LARGHEZZA = 1280
 const ALTEZZA = 720
 const CARTELLA_VIDEO = path.join(radice, "video")
+const CARTELLA_TMP_RIPRESE = path.join(radice, ".demo-video-tmp")
 const FILE_WEBM = path.join(CARTELLA_VIDEO, "oltre-la-bottega-demo.webm")
 const FILE_MP4 = path.join(CARTELLA_VIDEO, "oltre-la-bottega-demo.mp4")
 const BIN_NEXT = path.join(radice, "node_modules", "next", "dist", "bin", "next")
 
 const attendi = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+/**
+ * Cancella una cartella riprovando qualche volta: su Windows un antivirus può
+ * tenere per un istante un file del video appena scritto, e la prima
+ * cancellazione fallisce con EPERM anche se il file non è più in uso.
+ */
+async function rimuoviConReprove(cartella: string, tentativi = 5): Promise<void> {
+  for (let i = 1; i <= tentativi; i++) {
+    try {
+      rmSync(cartella, { recursive: true, force: true })
+      return
+    } catch (errore) {
+      if (i === tentativi) throw errore
+      await attendi(500 * i)
+    }
+  }
+}
 
 // ---------------------------------------------------------------- preparazione
 
@@ -320,19 +337,56 @@ async function gira(page: Page): Promise<void> {
     await attendi(1500)
   })
 
-  // 5. Avvisa il cliente: ordine Pronto di Anna Bellini, pulsante QR
-  await conDidascalia(page, scena("avvisa"), 0, async () => {
+  // 5. Avvisa il cliente: ordine Pronto di Anna Bellini, anteprima di WhatsApp ed Email.
+  // Non si naviga davvero su wa.me né si apre un vero programma di posta: la
+  // registrazione cattura solo il contenuto della PAGINA, e un cambio di
+  // dominio reale (o un'app esterna) non ci resterebbe dentro. Si mostra
+  // quindi un riquadro sulla stessa pagina con il testo vero, letto
+  // dall'indirizzo reale del bottone (stesso messaggio che l'app prepara
+  // davvero). Il clic su Email resta vero: è un mailto: che non naviga la
+  // pagina, quindi segna comunque l'ordine come avvisato.
+  const avvisaScena = scena("avvisa")
+  await conDidascalia(page, avvisaScena, 0, async () => {
     const scheda = page.locator("div.rounded-lg.space-y-2").filter({ hasText: "Anna Bellini" })
     await regia.clicca(scheda.getByRole("link", { name: "Scheda" }))
     await page.waitForURL(/\/orders\/[0-9a-f-]{36}$/)
-    const avvisa = page.getByText("Avvisa il cliente:")
-    await avvisa.waitFor()
+    const box = page.locator("div.flex-wrap").filter({ hasText: "Avvisa il cliente:" })
+    await box.waitFor()
     await attendi(800)
-    await regia.puntaA(avvisa)
+    await regia.puntaA(box)
     await attendi(900)
-    await regia.clicca(page.getByRole("button", { name: "QR" }))
-    await attendi(1200)
-    await regia.muoviA(900, 420, 25)
+
+    const wa = box.getByRole("link", { name: "WhatsApp" })
+    const indirizzoWa = await wa.getAttribute("href")
+    if (!indirizzoWa) throw new Error("Link WhatsApp non trovato sull'ordine di Anna Bellini.")
+    const testoWa = new URL(indirizzoWa).searchParams.get("text") ?? ""
+    await regia.cliccaSoloEffetto(wa)
+    await page.evaluate(
+      ([testo, numero]) =>
+        (window as unknown as { __mostraAnteprima: (c: string, t: string, d: string) => void }).__mostraAnteprima("whatsapp", testo, numero),
+      [testoWa, "333 0000103"]
+    )
+    await attendi(1800)
+    await page.evaluate(() => (window as unknown as { __nascondiAnteprima: () => void }).__nascondiAnteprima())
+    await attendi(500)
+  })
+  await conDidascalia(page, avvisaScena, 1, async () => {
+    const box = page.locator("div.flex-wrap").filter({ hasText: "Avvisa il cliente:" })
+    const email = box.getByRole("link", { name: "Email" })
+    const indirizzoEmail = await email.getAttribute("href")
+    if (!indirizzoEmail) throw new Error("Link Email non trovato sull'ordine di Anna Bellini.")
+    const url = new URL(indirizzoEmail)
+    const testoEmail = url.searchParams.get("body") ?? ""
+    await regia.clicca(email)
+    await attendi(500)
+    await page.evaluate(
+      ([testo, destinatario]) =>
+        (window as unknown as { __mostraAnteprima: (c: string, t: string, d: string) => void }).__mostraAnteprima("email", testo, destinatario),
+      [testoEmail, "anna.bellini@example.com"]
+    )
+    await attendi(1600)
+    await page.evaluate(() => (window as unknown as { __nascondiAnteprima: () => void }).__nascondiAnteprima())
+    await attendi(400)
   })
 
   // 6. Foglio lavoro, nella stessa scheda (nessuna nuova scheda = un solo file video)
@@ -420,7 +474,11 @@ async function main() {
 
   let server: ChildProcess | null = null
   let browser: Browser | null = null
-  const cartellaRiprese = mkdtempSync(path.join(os.tmpdir(), "demo-video-"))
+  // Dentro il progetto, non nella cartella temporanea di sistema: su Windows
+  // un antivirus può bloccare a intermittenza le scritture nella cartella
+  // temp di sistema appena creata, causando EPERM durante la registrazione.
+  mkdirSync(CARTELLA_TMP_RIPRESE, { recursive: true })
+  const cartellaRiprese = mkdtempSync(path.join(CARTELLA_TMP_RIPRESE, "riprese-"))
   try {
     const env = ambienteApp(demo)
     costruisciApp(env)
@@ -463,7 +521,13 @@ async function main() {
   } finally {
     await browser?.close().catch(() => {})
     fermaServer(server)
-    rmSync(cartellaRiprese, { recursive: true, force: true })
+    await rimuoviConReprove(cartellaRiprese).catch((errore) => {
+      console.error(
+        "ATTENZIONE: non riesco a cancellare la cartella temporanea delle riprese, si può cancellare a mano:",
+        cartellaRiprese,
+        errore instanceof Error ? errore.message : errore
+      )
+    })
     // Le riprese hanno creato un ordine e spostato un lavoro: dati di nuovo puliti.
     try {
       rinfrescaDemo()
@@ -474,6 +538,6 @@ async function main() {
 }
 
 main().catch((errore: unknown) => {
-  console.error("ERRORE:", errore instanceof Error ? errore.message : errore)
+  console.error("ERRORE:", errore instanceof Error ? (errore.stack ?? errore.message) : errore)
   process.exit(1)
 })

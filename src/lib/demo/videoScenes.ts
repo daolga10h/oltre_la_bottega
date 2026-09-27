@@ -57,7 +57,10 @@ export const SCENE: Scena[] = [
   },
   {
     id: "avvisa",
-    didascalie: [{ testo: "Quando è pronto, il messaggio al cliente è già scritto.", secondiExtra: 12 }],
+    didascalie: [
+      { testo: "Quando è pronto, il messaggio al cliente è già scritto: lo mando da WhatsApp…", secondiExtra: 9 },
+      { testo: "…oppure via email, con lo stesso testo pronto.", secondiExtra: 7 },
+    ],
   },
   {
     id: "foglio",

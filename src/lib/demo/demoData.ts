@@ -71,7 +71,9 @@ type Cliente = {
 const CLIENTI = {
   giulia: { nome: "Giulia", cognome: "Ferri", telefono: "333 0000101", canale: "negozio" },
   marco: { nome: "Marco", cognome: "Neri", telefono: "333 0000102", canale: "telefono" },
-  anna: { nome: "Anna", cognome: "Bellini", telefono: "333 0000103", canale: "WhatsApp" },
+  // Email presente oltre al telefono: serve al video automatico per mostrare
+  // entrambi i bottoni "Avvisa il cliente" (WhatsApp ed Email) sulla stessa scheda.
+  anna: { nome: "Anna", cognome: "Bellini", telefono: "333 0000103", canale: "WhatsApp", email: "anna.bellini@example.com" },
   luca: { nome: "Luca", cognome: "Conti", telefono: "333 0000104", canale: "negozio" },
   sara: { nome: "Sara", cognome: "Moretti", telefono: "333 0000105", canale: "negozio" },
   paolo: { nome: "Paolo", cognome: "Riva", telefono: "333 0000106", canale: "telefono" },
