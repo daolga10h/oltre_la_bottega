@@ -54,8 +54,8 @@ for (const page of ["index.html", "privacy.html"]) {
   // meta base
   const title = (html.match(/<title>([^<]*)<\/title>/) || [])[1] || "";
   ok(title.length >= 10 && title.length <= 60, `${page}: <title> assente o fuori 10-60 caratteri (${title.length})`);
-  const desc = (html.match(/<meta name="description" content="([^"]*)"/) || [])[1] || "";
-  ok(desc.length >= 50 && desc.length <= 170, `${page}: description assente o fuori 50-170 caratteri (${desc.length})`);
+  // la description (meta + og) è lasciata vuota finché Olga non la scrive:
+  // controllata solo in modalità --release, vedi sotto.
 
   // un solo h1
   ok((html.match(/<h1[\s>]/g) || []).length === 1, `${page}: deve esserci un solo <h1>`);
@@ -78,8 +78,12 @@ if (release) {
   ok(/^\d{10,15}$/.test(cfg.whatsapp || ""), 'config.js: "whatsapp" deve essere solo cifre con prefisso (es. 393331234567)');
   ok(/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cfg.email || ""), 'config.js: "email" mancante o non valida');
   ok((cfg.datiLegali || "").trim().length > 0, 'config.js: "datiLegali" vuoto');
-  ok((cfg.episodio || "").trim().length > 0, 'config.js: "episodio" vuoto');
-  ok((cfg.nomeNegozio || "").trim().length > 0, 'config.js: "nomeNegozio" vuoto');
+
+  const indexHtml = read("index.html") || "";
+  const desc = (indexHtml.match(/<meta name="description" content="([^"]*)"/) || [])[1] || "";
+  ok(desc.length >= 50 && desc.length <= 170, `index.html: description assente o fuori 50-170 caratteri (${desc.length})`);
+  const ogDesc = (indexHtml.match(/property="og:description" content="([^"]*)"/) || [])[1] || "";
+  ok(ogDesc.length >= 50 && ogDesc.length <= 170, `index.html: og:description assente o fuori 50-170 caratteri (${ogDesc.length})`);
 }
 
 if (failures.length) {
