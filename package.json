@@ -10,7 +10,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "jest"
+    "test": "jest",
+    "demo:schema": "node scripts/demo-schema.mjs",
+    "demo:reset": "tsx scripts/demo-reset.ts",
+    "demo:video": "tsx scripts/demo-video/run.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -42,6 +45,7 @@
     "supabase": "^2.108.0",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.11",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }
