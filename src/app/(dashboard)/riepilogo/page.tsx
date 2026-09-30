@@ -6,8 +6,11 @@ import { formatDate, formatEUR, buildClientDisplayName } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/server"
 import { getShopName } from "@/lib/shop-name"
 import { StampaButton } from "./StampaButton"
+import { notFound } from "next/navigation"
+import { hasFeature } from "@/lib/plan"
 
 export default async function RiepilogoPage() {
+  if (!hasFeature("riepilogo")) notFound()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const shopName = getShopName(user)

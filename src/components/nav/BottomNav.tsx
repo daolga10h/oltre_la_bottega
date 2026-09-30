@@ -4,17 +4,22 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, ShoppingBag, Users, Calendar, LayoutGrid, Star, Euro, ClipboardList } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { hasFeature, type Feature } from "@/lib/plan"
 
-const links = [
+type NavItem = { href: string; label: string; icon: React.ElementType; feature?: Feature }
+
+const allLinks: NavItem[] = [
   { href: "/dashboard", label: "Oggi", icon: LayoutDashboard },
   { href: "/kanban", label: "Bacheca", icon: LayoutGrid },
-  { href: "/orders", label: "Ordini", icon: ShoppingBag },
+  { href: "/orders", label: "Ordini", icon: ShoppingBag, feature: "elenco_ordini" },
   { href: "/agenda", label: "Agenda", icon: Calendar },
   { href: "/recensioni", label: "Recensioni", icon: Star },
-  { href: "/pagamenti", label: "Da incassare", icon: Euro },
-  { href: "/riepilogo", label: "Riepilogo", icon: ClipboardList },
+  { href: "/pagamenti", label: "Da incassare", icon: Euro, feature: "da_incassare" },
+  { href: "/riepilogo", label: "Riepilogo", icon: ClipboardList, feature: "riepilogo" },
   { href: "/customers", label: "Clienti", icon: Users },
 ]
+
+const links = allLinks.filter((l) => !l.feature || hasFeature(l.feature))
 
 export function BottomNav() {
   const pathname = usePathname()

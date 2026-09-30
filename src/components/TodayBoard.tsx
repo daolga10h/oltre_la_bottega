@@ -4,7 +4,9 @@ import { useEffect, useState, type ComponentType } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
-import { buildClientDisplayName } from "@/lib/utils"
+import { buildClientDisplayName, cn } from "@/lib/utils"
+import { deadlineLevel } from "@/lib/deadline"
+import { DeadlineDot, DEADLINE_CARD_CLASSES } from "@/components/DeadlineDot"
 import { Clock, CheckCircle2, Package } from "lucide-react"
 import Link from "next/link"
 
@@ -39,6 +41,8 @@ interface OrderSummary {
   cognome: string | null
   azienda: string | null
   referente: string | null
+  status?: string
+  data_consegna?: string | null
 }
 
 interface DashboardData {
@@ -102,6 +106,7 @@ export function TodayBoard() {
         items={daAvvisare}
         badgeClassName="bg-honey border-gold/40 text-bark"
         chevron
+        showDeadline
       />
 
       <DashboardListCard
@@ -116,6 +121,7 @@ export function TodayBoard() {
         items={materialeDaOrdinare}
         badgeClassName="bg-terracotta/15 border-terracotta/30 text-terracotta"
         chevron
+        showDeadline
       />
 
       <DashboardListCard
@@ -157,12 +163,14 @@ function DashboardListCard({
   badgeClassName,
   icon: Icon,
   chevron = false,
+  showDeadline = false,
 }: {
   title: string
   items: OrderSummary[]
   badgeClassName: string
   icon?: ComponentType<{ className?: string }>
   chevron?: boolean
+  showDeadline?: boolean
 }) {
   if (items.length === 0) return null
 
@@ -175,25 +183,37 @@ function DashboardListCard({
         </span>
       </CardHeader>
       <CardContent className="space-y-2">
-        {items.map((o) => (
-          <Link
-            key={o.id}
-            href={`/orders/${o.id}`}
-            className={`flex items-center bg-background rounded-lg px-4 py-3 hover:bg-muted/60 transition-colors group ${Icon ? "gap-3" : "justify-between"}`}
-          >
-            {Icon && <Icon className="w-4 h-4 text-[#3a5a2e] shrink-0" />}
-            <div>
-              <p className="font-semibold text-sm text-foreground">{o.cosa_ordinato}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {buildClientDisplayName(o.nome, o.cognome, o.azienda)}
-              </p>
-              {o.referente && (
-                <p className="text-xs text-muted-foreground">Ref. {o.referente}</p>
+        {items.map((o) => {
+          const level = showDeadline ? deadlineLevel(o.data_consegna, o.status ?? "") : null
+          return (
+            <Link
+              key={o.id}
+              href={`/orders/${o.id}`}
+              className={cn(
+                "flex items-center bg-background rounded-lg px-4 py-3 hover:bg-muted/60 transition-colors group",
+                Icon ? "gap-3" : "justify-between",
+                level && cn("border", DEADLINE_CARD_CLASSES[level])
               )}
-            </div>
-            {chevron && <span className="text-muted-foreground/50 group-hover:text-muted-foreground text-sm">›</span>}
-          </Link>
-        ))}
+            >
+              {Icon && <Icon className="w-4 h-4 text-[#3a5a2e] shrink-0" />}
+              <div>
+                <p className="font-semibold text-sm text-foreground">{o.cosa_ordinato}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {buildClientDisplayName(o.nome, o.cognome, o.azienda)}
+                </p>
+                {o.referente && (
+                  <p className="text-xs text-muted-foreground">Ref. {o.referente}</p>
+                )}
+              </div>
+              {(level || chevron) && (
+                <div className="flex items-center gap-3">
+                  <DeadlineDot level={level} />
+                  {chevron && <span className="text-muted-foreground/50 group-hover:text-muted-foreground text-sm">›</span>}
+                </div>
+              )}
+            </Link>
+          )
+        })}
       </CardContent>
     </Card>
   )

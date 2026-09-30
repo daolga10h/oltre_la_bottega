@@ -126,6 +126,20 @@ describe("GET /api/dashboard/today", () => {
     expect(results[7].value.select.mock.calls[0][0]).toContain("referente")
   })
 
+  it("includes status and data_consegna in the select for materialeDaOrdinare and daAvvisare (needed for the deadline dot)", async () => {
+    const client = mockOrdersSequence({ open: 0, urgent: 0, overdue: 0 }, [], [])
+    mockCreateClient.mockResolvedValue(client)
+
+    await GET()
+
+    const results = client.from.mock.results
+    for (const index of [5, 7]) {
+      const select = results[index].value.select.mock.calls[0][0]
+      expect(select).toContain("status")
+      expect(select).toContain("data_consegna")
+    }
+  })
+
   it("returns 500 and does not leak internals if a query throws", async () => {
     mockCreateClient.mockImplementation(() => {
       throw new Error("supabase unreachable")
