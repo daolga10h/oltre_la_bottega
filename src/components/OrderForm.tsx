@@ -21,7 +21,7 @@ import { hasFeature } from "@/lib/plan"
 import Link from "next/link"
 
 const CANALI = ["negozio", "WhatsApp", "telefono", "mail", "sito", "altro"]
-const TIPI_LAVORAZIONE = ["Stampa UV", "Taglio + stampa", "Incisione/taglio laser", "Fresatura", "Stampa"]
+const TIPI_LAVORAZIONE = ["Stampa UV", "Taglio + stampa", "Incisione/taglio laser", "Fresatura", "Stampa", "Terzi"]
 const BOZZA_OPTIONS = [
   { value: "non_serve", label: "Non serve" },
   { value: "da_fare", label: "Da fare" },
@@ -119,6 +119,7 @@ export function OrderForm({ order, operatori = [] }: Props) {
     return remembered && operatori.includes(remembered) ? remembered : ""
   })
   const [tipoLavorazione, setTipoLavorazione] = useState(order?.tipo_lavorazione ?? "")
+  const [terziDitta, setTerziDitta] = useState((order as any)?.terzi_ditta ?? "")
   const [bozza, setBozza] = useState(order?.bozza_grafica ?? "non_serve")
   const [preventivo, setPreventivo] = useState(order?.preventivo ?? "non_inviare")
   const [materiale, setMateriale] = useState(order?.materiale ?? "non_serve")
@@ -201,6 +202,7 @@ export function OrderForm({ order, operatori = [] }: Props) {
       data_consegnato: isEdit ? v("data_consegnato") : undefined,
       items: itemInputs,
       tipo_lavorazione: tipoLavorazione || null,
+      terzi_ditta: terziDitta.trim() || null,
       bozza_grafica: bozza,
       materiale,
       materiale_fornitore: materialeFornitore.trim() || null,
@@ -505,6 +507,12 @@ export function OrderForm({ order, operatori = [] }: Props) {
                   {TIPI_LAVORAZIONE.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {tipoLavorazione === "Terzi" && (
+                <div className="mt-2">
+                  <Label htmlFor="terzi_ditta">Affidato a</Label>
+                  <Input id="terzi_ditta" value={terziDitta} onChange={(e) => setTerziDitta(e.target.value)} placeholder="Nome ditta/artigiano" />
+                </div>
+              )}
             </div>
           )}
           {hasFeature("bozza_grafica") && (
