@@ -119,7 +119,7 @@ export function OrderForm({ order, operatori = [] }: Props) {
     return remembered && operatori.includes(remembered) ? remembered : ""
   })
   const [tipoLavorazione, setTipoLavorazione] = useState(order?.tipo_lavorazione ?? "")
-  const [terziDitta, setTerziDitta] = useState((order as any)?.terzi_ditta ?? "")
+  const [terziDitta, setTerziDitta] = useState(order?.terzi_ditta ?? "")
   const [bozza, setBozza] = useState(order?.bozza_grafica ?? "non_serve")
   const [preventivo, setPreventivo] = useState(order?.preventivo ?? "non_inviare")
   const [materiale, setMateriale] = useState(order?.materiale ?? "non_serve")
