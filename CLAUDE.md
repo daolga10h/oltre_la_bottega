@@ -146,7 +146,7 @@ Migrations da applicare in ordine:
 9. `20260829000001_add_azienda.sql` — colonna `azienda` su `orders` (applicata il 2026-08-29)
 10. `20260829000002_add_order_items.sql` — tabella `order_items` per ordini multi-riga, con backfill (applicata il 2026-08-30)
 11. `20260909000001_add_ente_referente.sql` — colonne `is_ente`/`referente` su `orders` per clienti ente/azienda (applicata il 2026-09-10)
-12. `20260930000001_add_terzi_ditta.sql` — colonna `terzi_ditta` su `orders`
+12. `20260930000001_add_terzi_ditta.sql` — colonna `terzi_ditta` su `orders` (da applicare manualmente da SQL Editor del Supabase Dashboard)
 
 Vincoli critici:
 - Niente `shop_id` — installazione dedicata per bottega
