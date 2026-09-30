@@ -11,14 +11,13 @@ window.SITE = {
   firmaRuolo: "titolare",
 
   // Contatti. whatsapp: solo cifre con prefisso internazionale, es. 393331234567
-  whatsapp: "",
+  whatsapp: "393756394969",
   email: "",
   messaggioWhatsapp: "Buongiorno, vorrei una dimostrazione di Oltre la Bottega.",
   oggettoEmail: "Richiesta dimostrazione Oltre la Bottega",
 
   // Piè di pagina e privacy: ragione sociale, P.IVA, sede, PEC (una riga)
-  // Manca ancora la sede: aggiungerla qui prima della pubblicazione.
-  datiLegali: "Centro Laser Viterbese - P.IVA 01816580565",
+  datiLegali: "Centro Laser Viterbese - P.IVA 01816580565 - Via della Pila 24/L, Viterbo",
 
   // Episodio che ha fatto nascere l'idea, due righe con le parole di Olga.
   // Finché è vuoto la frase non compare nella pagina.
