@@ -36,6 +36,7 @@ export type OrderRow = {
   cosa_ordinato: string
   testo_da_scrivere: string | null
   tipo_lavorazione: string | null
+  terzi_ditta: string | null
   quantita: number
   bozza_grafica: string
   preventivo: string
