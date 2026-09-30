@@ -274,11 +274,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       )}
 
       {/* Files */}
-      {(order.file_cliente || order.foto_oggetto) && (
+      {(order.file_cliente || order.foto_oggetto || order.terzi_ditta) && (
         <Card>
           <CardContent className="pt-4 space-y-1 text-sm">
             {order.file_cliente && <p><span className="text-muted-foreground">File cliente: </span>{order.file_cliente}</p>}
             {order.foto_oggetto && <p><span className="text-muted-foreground">Foto oggetto: </span>{order.foto_oggetto}</p>}
+            {order.terzi_ditta && <p><span className="text-muted-foreground">Affidato a: </span>{order.terzi_ditta}</p>}
           </CardContent>
         </Card>
       )}
