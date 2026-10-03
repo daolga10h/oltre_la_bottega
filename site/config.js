@@ -12,7 +12,7 @@ window.SITE = {
 
   // Contatti. whatsapp: solo cifre con prefisso internazionale, es. 393331234567
   whatsapp: "393756394969",
-  email: "",
+  email: "info@oltrelabottega.it",
   messaggioWhatsapp: "Buongiorno, vorrei una dimostrazione di Oltre la Bottega.",
   oggettoEmail: "Richiesta dimostrazione Oltre la Bottega",
 
