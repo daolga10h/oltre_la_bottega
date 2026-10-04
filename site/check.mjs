@@ -24,7 +24,9 @@ if (configSrc !== null) new Function("window", configSrc)(sandbox);
 const cfg = sandbox.SITE || {};
 
 // --- pagine ---
-for (const page of ["index.html", "privacy.html"]) {
+const landingPages = ["quiz.html", "modulo.html", "svuota-la-testa.html", "un-foglio-solo.html"];
+const noindexPages = ["privacy.html", ...landingPages];
+for (const page of ["index.html", "privacy.html", ...landingPages]) {
   const html = read(page);
   if (html === null) {
     failures.push(`manca site/${page}`);
@@ -59,6 +61,17 @@ for (const page of ["index.html", "privacy.html"]) {
 
   // un solo h1
   ok((html.match(/<h1[\s>]/g) || []).length === 1, `${page}: deve esserci un solo <h1>`);
+
+  // pagine non indicizzate
+  if (noindexPages.includes(page)) {
+    ok(/<meta name="robots" content="noindex">/.test(html), `${page}: manca <meta name="robots" content="noindex">`);
+  }
+
+  // pagine di atterraggio: nessun menu, nessun link al resto del sito (solo la privacy)
+  if (landingPages.includes(page)) {
+    ok(!/href="\/"/.test(html), `${page}: pagina di atterraggio, non deve collegare la home`);
+    ok(!/href="\/(?!privacy")[^"]*"/.test(html), `${page}: collegamento al sito non ammesso (solo /privacy)`);
+  }
 
   // niente segnaposto rimasti
   ok(!/lorem|\bTODO\b|\[Nome/i.test(html), `${page}: segnaposto rimasto (lorem/TODO/[Nome)`);
