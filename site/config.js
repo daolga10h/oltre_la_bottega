@@ -15,6 +15,8 @@ window.SITE = {
   email: "info@oltrelabottega.it",
   messaggioWhatsapp: "Buongiorno, vorrei una dimostrazione di Oltre la Bottega.",
   oggettoEmail: "Richiesta dimostrazione Oltre la Bottega",
+  // Messaggio WhatsApp preimpostato dal pulsante finale del quiz
+  messaggioQuiz: "Buongiorno, ho fatto il quiz e scaricato il foglio. Vorrei vedere come funziona Oltre la Bottega.",
 
   // Piè di pagina e privacy: ragione sociale, P.IVA, sede, PEC (una riga)
   datiLegali: "Centro Laser Viterbese - P.IVA 01816580565 - Via della Pila 24/L, Viterbo",
