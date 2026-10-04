@@ -1,0 +1,27 @@
+/* pagina di atterraggio del quiz: si appoggia a style.css */
+.q-top { padding-block: 16px; }
+.q-top img { height: 26px; width: auto; display: block; }
+.q-main { padding-bottom: 48px; }
+.q-hero .lead { max-width: 36ch; }
+.q-noscript { margin-top: 16px; color: var(--bark); }
+
+.q-card { max-width: 640px; margin: 24px auto 0; background: var(--paper); border: 1px solid var(--linen); border-radius: 12px; padding: 28px 24px; box-shadow: var(--shadow); }
+.q-card h2 { font-size: clamp(22px, 3.4vw, 28px); margin-bottom: 20px; }
+.q-card h2:focus { outline: none; }
+.q-prog { font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--drift); margin-bottom: 10px; }
+
+.q-ans { display: grid; gap: 10px; }
+.q-opt { font: inherit; font-weight: 600; text-align: left; padding: 16px 18px; border-radius: 8px; border: 1px solid var(--stone); background: var(--cream); color: var(--esp); cursor: pointer; }
+.q-opt:hover, .q-opt:focus-visible { border-color: var(--gold); background: var(--honey); }
+
+.q-intro { color: var(--bark); font-size: 17px; }
+.q-list { padding-left: 20px; color: var(--bark); margin: 12px 0 0; }
+.q-list li { margin-bottom: 8px; }
+
+.q-gift { margin-top: 28px; padding: 20px; background: var(--honey); border: 1px solid rgba(232, 155, 1, 0.4); border-radius: 8px; }
+.q-gift h3 { font-size: 22px; margin: 6px 0; }
+.q-gift p { color: var(--bark); }
+.q-gift .btn { margin-top: 14px; }
+
+.q-invito { margin-top: 28px; }
+.q-invito p { color: var(--bark); font-size: 17px; margin-bottom: 14px; }

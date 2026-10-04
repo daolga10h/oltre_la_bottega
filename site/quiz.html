@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quanto tieni a mente? Il quiz di due minuti</title>
+<meta name="description" content="Sette domande per capire se la tua bottega dipende dalla tua memoria. Alla fine un foglio da stampare in regalo, senza lasciare nessun dato.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#f8f7f5">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="quiz.css">
+</head>
+<body>
+<a class="skip" href="#contenuto">Vai al contenuto</a>
+
+<header class="wrap q-top"><img src="img/logo.png" alt="Oltre la Bottega" height="26"></header>
+
+<main class="wrap q-main" id="contenuto">
+
+  <section class="hero q-hero" id="q-inizio">
+    <p class="cap">Quiz di due minuti</p>
+    <h1>Quanto tieni a <span class="hl">mente?</span></h1>
+    <p class="lead">Sette domande per capire quanto la tua bottega dipende dalla tua memoria. Alla fine ricevi in regalo un foglio da stampare. Non ti chiedo nessun dato.</p>
+    <button class="btn btn-esp" type="button" id="q-start">Comincia il quiz</button>
+    <noscript><p class="q-noscript">Per fare il quiz serve JavaScript attivo nel browser.</p></noscript>
+  </section>
+
+  <section class="q-card" id="q-domanda" hidden>
+    <p class="q-prog" id="q-prog"></p>
+    <h2 id="q-testo" tabindex="-1"></h2>
+    <div class="q-ans" id="q-ans"></div>
+  </section>
+
+  <section class="q-card" id="q-risultato" hidden>
+    <p class="cap">Il tuo risultato</p>
+    <h2 id="r-nome" tabindex="-1"></h2>
+    <p id="r-intro" class="q-intro"></p>
+    <ul class="q-list" id="r-consigli"></ul>
+
+    <div class="q-gift">
+      <p class="cap">Il tuo regalo</p>
+      <h3 id="r-regalo-titolo"></h3>
+      <p id="r-regalo-testo"></p>
+      <a class="btn btn-amber" id="r-regalo-link" href="#" target="_blank" rel="noopener noreferrer">Apri</a>
+    </div>
+
+    <div class="q-invito">
+      <p>Se vuoi che invece di scriverlo a mano lo faccia un'app, ti faccio vedere come.</p>
+      <div class="btns">
+        <a class="btn btn-esp" id="r-wa" href="#" target="_blank" rel="noopener noreferrer" hidden>Scrivimi su WhatsApp</a>
+        <button class="btn btn-line" type="button" id="r-ripeti">Rifai il quiz</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap foot">
+  <div class="foot-row">
+    <span>© <span data-year>2026</span> Oltre la Bottega · <span data-site="datiLegali">Dati legali in aggiornamento</span></span>
+    <span><a href="/privacy">Privacy</a></span>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+<script src="quiz-data.js"></script>
+<script src="quiz.js"></script>
+</body>
+</html>
