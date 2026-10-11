@@ -66,9 +66,9 @@ p { margin: 0; }
 
 /* hero */
 .hero { padding-block: 64px 56px; }
-.hero h1 { font-size: clamp(44px, 8vw, 92px); line-height: 0.98; font-weight: 800; letter-spacing: -0.05em; margin: 18px 0 28px; }
+.hero h1 { font-size: clamp(36px, 5.5vw, 64px); line-height: 1.02; font-weight: 800; letter-spacing: -0.05em; margin: 18px 0 28px; }
 .hero .hl { background: linear-gradient(transparent 62%, var(--honey) 62%); }
-.hero .lead { font-size: 21px; color: var(--bark); max-width: 30ch; margin-bottom: 30px; }
+.hero .lead { font-size: 20px; color: var(--bark); max-width: 44ch; margin-bottom: 30px; }
 .hero--foto { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; }
 .foto { margin: 0; }
 .foto img { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--linen); box-shadow: 0 10px 30px rgba(59, 39, 22, 0.14); }
