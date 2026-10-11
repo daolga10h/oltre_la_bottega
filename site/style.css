@@ -88,7 +88,7 @@ h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 700; line-height: 1.12; }
 .storia .foto { margin-top: 28px; }
 
 /* funzioni (riproduzioni dell'app) */
-.app-intro { max-width: 60ch; margin-bottom: 8px; }
+.app-intro { max-width: 70ch; margin-bottom: 8px; }
 .app-intro p { font-size: 18px; color: var(--bark); margin-top: 12px; }
 .feature { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; padding-block: 24px; }
 .feature-txt { padding-top: 12px; }
