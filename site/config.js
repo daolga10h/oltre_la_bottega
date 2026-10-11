@@ -21,7 +21,7 @@ window.SITE = {
   // Piè di pagina e privacy: ragione sociale, P.IVA, sede, PEC (una riga)
   datiLegali: "Centro Laser Viterbese - P.IVA 01816580565 - Via della Pila 24/L, Viterbo",
 
-  // Episodio che ha fatto nascere l'idea, due righe con le parole di Olga.
-  // Finché è vuoto la frase non compare nella pagina.
-  episodio: ""
+  // Episodio che ha fatto nascere l'idea, con le parole di Olga.
+  // Una riga vuota (\n\n) separa i paragrafi. Finché è vuoto non compare nella pagina.
+  episodio: "In negozio passavo continuamente da un lavoro a un cliente, da una telefonata a una consegna.\n\nAvevo preparato dei moduli per segnare gli ordini, ma bastava che un foglio finisse sotto gli altri per dimenticarmi un lavoro. Oppure arrivava una telefonata mentre seguivo un cliente: «Lo segno appena ho finito», pensavo. Poi succedeva qualcos’altro e me ne dimenticavo.\n\nFinché il cliente richiamava: «È pronto?». E lì mi ricordavo dell’ordine che non avevo nemmeno iniziato.\n\nCi tenevo a fare bene il mio lavoro, e ritrovarmi in queste situazioni mi pesava. Avevo sempre la testa piena: cosa consegnare, chi richiamare, cosa mancava.\n\nHo creato l’app perché avevo bisogno di vedere cosa c’era da fare, senza dovermi ricordare tutto."
 };

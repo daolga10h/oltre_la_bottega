@@ -7,8 +7,18 @@
   for (var i = 0; i < nodes.length; i++) {
     var value = cfg[nodes[i].getAttribute("data-site")];
     if (typeof value === "string" && value.replace(/\s/g, "") !== "") {
-      nodes[i].textContent = value;
+      var parts = value.split("\n\n");
+      nodes[i].textContent = parts[0];
       nodes[i].removeAttribute("hidden");
+      // Testo su più paragrafi: gli altri seguono come <p> separati
+      var last = nodes[i];
+      for (var k = 1; k < parts.length; k++) {
+        var extra = last.cloneNode(false);
+        extra.removeAttribute("data-site");
+        extra.textContent = parts[k];
+        last.parentNode.insertBefore(extra, last.nextSibling);
+        last = extra;
+      }
     }
   }
 
