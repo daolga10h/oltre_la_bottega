@@ -205,8 +205,8 @@ h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 700; line-height: 1.12; }
 .board-scroll { padding-bottom: 8px; }
 /* Chrome ignora le regole ::-webkit-scrollbar se sono impostati anche scrollbar-width/scrollbar-color: li uso solo dove il motore non le conosce (Firefox) */
 @supports not selector(::-webkit-scrollbar) { .board-scroll { scrollbar-width: thin; scrollbar-color: #b9b0a4 #e8e2d8; } }
-.scroll-hint { display: none; font-size: 12px; font-weight: 600; color: var(--drift); }
-@media (max-width: 820px) { .scroll-hint { display: inline; } .mock h4.with-hint { display: flex; justify-content: space-between; align-items: baseline; } }
+.scroll-hint { display: none; font-size: 13px; font-weight: 600; color: var(--bark); margin: -4px 0 10px; }
+@media (max-width: 820px) { .scroll-hint { display: block; } }
 .board-scroll::-webkit-scrollbar { height: 8px; }
 .board-scroll::-webkit-scrollbar-track { background: #e8e2d8; border-radius: 4px; }
 .board-scroll::-webkit-scrollbar-thumb { background: #b9b0a4; border-radius: 4px; }
