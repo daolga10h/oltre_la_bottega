@@ -103,7 +103,7 @@ h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 700; line-height: 1.12; }
 .feature--wide { grid-template-columns: 1fr; gap: 28px; }
 .feature.feature--wide .feature-txt { order: 0; }
 .feature h3 { font-size: 24px; font-weight: 700; margin-bottom: 10px; }
-.feature p { color: var(--bark); font-size: 17px; max-width: 40ch; }
+.feature p { color: var(--bark); font-size: 17px; max-width: 60ch; }
 .feature .mockcap { font-size: 12px; color: var(--drift); margin-top: 10px; }
 
 .mock { background: var(--cream); border: 1px solid var(--linen); border-radius: 12px; box-shadow: 0 18px 40px rgba(59, 39, 22, 0.14); overflow: hidden; font-size: 13px; letter-spacing: -0.005em; }
@@ -159,7 +159,7 @@ h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 700; line-height: 1.12; }
 .steps li { background: var(--paper); border: 1px solid var(--linen); border-radius: 8px; padding: 20px; box-shadow: var(--shadow); }
 .steps b { display: block; font-size: 17px; margin-bottom: 6px; }
 .steps span { color: var(--bark); font-size: 15px; }
-.prezzi { margin-top: 32px; max-width: 62ch; }
+.prezzi { margin-top: 32px; max-width: 80ch; }
 .prezzi h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
 .prezzi p { color: var(--bark); font-size: 17px; }
 
@@ -168,7 +168,7 @@ h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 700; line-height: 1.12; }
 .faq-list details { border-top: 1px solid var(--linen); padding: 16px 0; }
 .faq-list details:last-child { border-bottom: 1px solid var(--linen); }
 .faq-list summary { font-weight: 600; font-size: 17px; cursor: pointer; }
-.faq-list details p { color: var(--bark); margin-top: 10px; max-width: 60ch; }
+.faq-list details p { color: var(--bark); margin-top: 10px; max-width: 80ch; }
 
 /* contatti */
 .contatti { text-align: center; }
@@ -197,3 +197,6 @@ h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 700; line-height: 1.12; }
   .kpi { padding: 10px 8px; }
   .kpi small { letter-spacing: 0.06em; }
 }
+
+/* frasi senza parole sole a fine riga */
+.hero-sub, .feature p, .steps span { text-wrap: balance; }
