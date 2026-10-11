@@ -6,7 +6,9 @@ import { mkdirSync } from "node:fs"
 import path from "node:path"
 import { chromium, type Page } from "@playwright/test"
 import { SCHERMATE_RU, type SchermataId } from "../../src/lib/demo/schermate"
+import { traduciRu as tr } from "../../src/lib/demo/traduzioneRu"
 import { OVERLAY_SCRIPT } from "../demo-video/overlay"
+import { traduttoreScript } from "../demo-video/traduttore"
 import {
   ALTEZZA,
   BASE_URL,
@@ -64,7 +66,7 @@ async function scattaTutte(page: Page): Promise<void> {
   await suggerimento.click()
   await attendi(800)
   const riga = page.locator("div.rounded-lg.border-border.p-3").first()
-  await riga.getByPlaceholder("Es. targa plexiglass, timbro, portachiavi inciso...").fill("Targa per condominio")
+  await riga.getByPlaceholder(tr("Es. targa plexiglass, timbro, portachiavi inciso...")).fill(tr("Targa per condominio"))
   await riga.locator('input[type="number"]').nth(1).fill("30")
   await attendi(500)
   await scatta(page, "nuovo-ordine")
@@ -77,10 +79,10 @@ async function scattaTutte(page: Page): Promise<void> {
 
   // 4. Avvisa il cliente: scheda di Anna Bellini con l'anteprima del messaggio WhatsApp
   const schedaAnna = page.locator("div.rounded-lg.space-y-2").filter({ hasText: "Anna Bellini" })
-  const indirizzoScheda = await schedaAnna.getByRole("link", { name: "Scheda" }).getAttribute("href")
+  const indirizzoScheda = await schedaAnna.getByRole("link", { name: tr("Scheda") }).getAttribute("href")
   if (!indirizzoScheda) throw new Error("Link alla scheda di Anna Bellini non trovato.")
   await vai(page, indirizzoScheda)
-  const box = page.locator("div.flex-wrap").filter({ hasText: "Avvisa il cliente:" })
+  const box = page.locator("div.flex-wrap").filter({ hasText: tr("Avvisa il cliente:") })
   await box.waitFor()
   await box.scrollIntoViewIfNeeded()
   const indirizzoWa = await box.getByRole("link", { name: "WhatsApp" }).getAttribute("href")
@@ -97,7 +99,7 @@ async function scattaTutte(page: Page): Promise<void> {
   await attendi(400)
 
   // 5. Foglio lavoro, aperto nella stessa scheda
-  const indirizzoFoglio = await page.getByRole("link", { name: "Foglio lavoro" }).getAttribute("href")
+  const indirizzoFoglio = await page.getByRole("link", { name: tr("Foglio lavoro") }).getAttribute("href")
   if (!indirizzoFoglio) throw new Error("Link al foglio lavoro non trovato.")
   await vai(page, indirizzoFoglio)
   await page.getByTestId("foglio-lavoro").waitFor()
@@ -127,18 +129,19 @@ async function main() {
     costruisciApp(env)
     server = await avviaServer(env)
 
-    browser = await chromium.launch()
+    browser = await chromium.launch({ args: ["--lang=ru-RU"] })
     const sessione = await accedi(browser, demo)
 
     console.log("→ Schermate…")
     mkdirSync(CARTELLA_IMG, { recursive: true })
     const context = await browser.newContext({
       baseURL: BASE_URL,
-      locale: "it-IT",
+      locale: "ru-RU",
       viewport: { width: LARGHEZZA, height: ALTEZZA },
       deviceScaleFactor: 2,
       storageState: sessione,
     })
+    await context.addInitScript(traduttoreScript())
     await context.addInitScript(OVERLAY_SCRIPT)
     const page = await context.newPage()
     await scattaTutte(page)

@@ -108,7 +108,7 @@ export const SCENE_RU: Scena[] = [
   },
   {
     id: "bacheca",
-    didascalie: [{ testo: "«Bacheca» — моя рабочая доска: каждая колонка — один этап работы.", secondiExtra: 12 }],
+    didascalie: [{ testo: "«Доска» — как рабочая доска в мастерской: каждая колонка — один этап работы.", secondiExtra: 12 }],
   },
   {
     id: "avvisa",

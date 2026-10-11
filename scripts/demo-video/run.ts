@@ -26,7 +26,9 @@ import {
   rimuoviConReprove,
   rinfrescaDemo,
 } from "../demo-common"
+import { traduciRu } from "../../src/lib/demo/traduzioneRu"
 import { OVERLAY_SCRIPT } from "./overlay"
+import { traduttoreScript } from "./traduttore"
 
 const CARTELLA_VIDEO = path.join(radice, "video")
 const CARTELLA_TMP_RIPRESE = path.join(radice, ".demo-video-tmp")
@@ -52,6 +54,13 @@ async function conDidascalia(page: Page, scena: Scena, indice: number, azioni: (
 }
 
 let sceneAttive: Scena[] = scenePerLingua("it")
+
+/**
+ * Nome con cui l'app mostra un testo nella lingua delle riprese: in russo i testi
+ * della pagina vengono tradotti (traduttore.ts), quindi anche i pulsanti e i
+ * campi vanno cercati con il nome tradotto.
+ */
+let tr = (testo: string): string => testo
 
 function scena(id: Scena["id"]): Scena {
   const s = sceneAttive.find((x) => x.id === id)
@@ -97,7 +106,7 @@ async function gira(page: Page): Promise<void> {
   // 3. Nuovo ordine per un cliente che torna
   const nuovo = scena("nuovo-ordine")
   await conDidascalia(page, nuovo, 0, async () => {
-    await regia.clicca(page.getByRole("link", { name: "Nuovo ordine" }).first())
+    await regia.clicca(page.getByRole("link", { name: tr("Nuovo ordine") }).first())
     await page.waitForURL(/\/orders\/new/)
     await page.locator("#nome").waitFor()
     await attendi(1200) // l'elenco clienti per i suggerimenti si carica all'apertura
@@ -111,7 +120,7 @@ async function gira(page: Page): Promise<void> {
   })
   await conDidascalia(page, nuovo, 1, async () => {
     const riga = page.locator("div.rounded-lg.border-border.p-3").first()
-    await regia.scrivi(riga.getByPlaceholder("Es. targa plexiglass, timbro, portachiavi inciso..."), "Targa per condominio")
+    await regia.scrivi(riga.getByPlaceholder(tr("Es. targa plexiglass, timbro, portachiavi inciso...")), tr("Targa per condominio"))
     await attendi(400)
     await regia.scrivi(riga.locator('input[type="number"]').nth(1), "30")
     await attendi(400)
@@ -120,20 +129,20 @@ async function gira(page: Page): Promise<void> {
     await data.fill(fraGiorni(7))
     await page.keyboard.press("Tab")
     await attendi(700)
-    await regia.clicca(page.getByRole("button", { name: "Crea ordine" }))
+    await regia.clicca(page.getByRole("button", { name: tr("Crea ordine") }))
     await page.waitForURL(/\/orders\/[0-9a-f-]{36}$/, { timeout: 30_000 })
     await attendi(1200)
   })
 
   // 4. Bacheca: il lavoro di Giulia Ferri (da consegnare oggi) passa da In lavorazione a Pronto
   await conDidascalia(page, scena("bacheca"), 0, async () => {
-    await regia.clicca(menu("Bacheca"))
+    await regia.clicca(menu(tr("Bacheca")))
     await page.waitForURL(/\/kanban/)
     const scheda = page.locator("div.rounded-lg.space-y-2").filter({ hasText: "Giulia Ferri" })
     await scheda.waitFor()
     await attendi(1200)
     await regia.clicca(scheda.locator('[data-slot="select-trigger"]'))
-    const pronto = page.getByRole("option", { name: "Pronto" })
+    const pronto = page.getByRole("option", { name: tr("Pronto") })
     await pronto.waitFor()
     await attendi(700)
     await regia.clicca(pronto)
@@ -151,9 +160,9 @@ async function gira(page: Page): Promise<void> {
   const avvisaScena = scena("avvisa")
   await conDidascalia(page, avvisaScena, 0, async () => {
     const scheda = page.locator("div.rounded-lg.space-y-2").filter({ hasText: "Anna Bellini" })
-    await regia.clicca(scheda.getByRole("link", { name: "Scheda" }))
+    await regia.clicca(scheda.getByRole("link", { name: tr("Scheda") }))
     await page.waitForURL(/\/orders\/[0-9a-f-]{36}$/)
-    const box = page.locator("div.flex-wrap").filter({ hasText: "Avvisa il cliente:" })
+    const box = page.locator("div.flex-wrap").filter({ hasText: tr("Avvisa il cliente:") })
     await box.waitFor()
     await attendi(800)
     await regia.puntaA(box)
@@ -174,8 +183,8 @@ async function gira(page: Page): Promise<void> {
     await attendi(500)
   })
   await conDidascalia(page, avvisaScena, 1, async () => {
-    const box = page.locator("div.flex-wrap").filter({ hasText: "Avvisa il cliente:" })
-    const email = box.getByRole("link", { name: "Email" })
+    const box = page.locator("div.flex-wrap").filter({ hasText: tr("Avvisa il cliente:") })
+    const email = box.getByRole("link", { name: tr("Email") })
     const indirizzoEmail = await email.getAttribute("href")
     if (!indirizzoEmail) throw new Error("Link Email non trovato sull'ordine di Anna Bellini.")
     const url = new URL(indirizzoEmail)
@@ -196,7 +205,7 @@ async function gira(page: Page): Promise<void> {
   await conDidascalia(page, scena("foglio"), 0, async () => {
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" }))
     await attendi(700)
-    const link = page.getByRole("link", { name: "Foglio lavoro" })
+    const link = page.getByRole("link", { name: tr("Foglio lavoro") })
     const indirizzo = await link.getAttribute("href")
     if (!indirizzo) throw new Error("Link al foglio lavoro non trovato.")
     await regia.cliccaSoloEffetto(link)
@@ -210,7 +219,7 @@ async function gira(page: Page): Promise<void> {
   await conDidascalia(page, scena("clienti"), 0, async () => {
     await page.goBack()
     await page.locator("aside").waitFor()
-    await regia.clicca(menu("Clienti"))
+    await regia.clicca(menu(tr("Clienti")))
     await page.waitForURL(/\/customers/)
     const luca = page.getByRole("link", { name: "Luca Conti" })
     await luca.waitFor()
@@ -225,7 +234,7 @@ async function gira(page: Page): Promise<void> {
   // 8. Chiusura, su Oggi
   const chiusura = scena("chiusura")
   await conDidascalia(page, chiusura, 0, async () => {
-    await regia.clicca(menu("Oggi"))
+    await regia.clicca(menu(tr("Oggi")))
     await page.waitForURL(/\/dashboard/)
     await regia.muoviA(900, 300, 30)
   })
@@ -270,6 +279,7 @@ function durataVideo(ffmpeg: string, file: string): string {
 async function main() {
   const lingua = parseLingua(process.argv.slice(2))
   sceneAttive = scenePerLingua(lingua)
+  tr = lingua === "ru" ? traduciRu : (testo: string) => testo
   const fileWebm = nomeFile(lingua, "webm")
   const fileMp4 = nomeFile(lingua, "mp4")
   console.log(`→ Lingua delle didascalie: ${lingua}`)
@@ -292,17 +302,18 @@ async function main() {
     costruisciApp(env)
     server = await avviaServer(env)
 
-    browser = await chromium.launch()
+    browser = await chromium.launch(lingua === "ru" ? { args: ["--lang=ru-RU"] } : {})
     const sessione = await accedi(browser, demo)
 
     console.log("→ Registrazione…")
     const context = await browser.newContext({
       baseURL: BASE_URL,
-      locale: "it-IT",
+      locale: lingua === "ru" ? "ru-RU" : "it-IT",
       viewport: { width: LARGHEZZA, height: ALTEZZA },
       storageState: sessione,
       recordVideo: { dir: cartellaRiprese, size: { width: LARGHEZZA, height: ALTEZZA } },
     })
+    if (lingua === "ru") await context.addInitScript(traduttoreScript())
     await context.addInitScript(OVERLAY_SCRIPT)
     const inizioRiprese = Date.now()
     const page = await context.newPage()
