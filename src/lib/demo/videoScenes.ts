@@ -18,7 +18,7 @@ export function conContatto(testo: string, numero: string | undefined): string {
 }
 
 export type Didascalia = {
-  /** Testo in italiano, al massimo circa 90 caratteri. */
+  /** Testo nella lingua della serie, al massimo circa 90 caratteri. */
   testo: string
   /**
    * Secondi in più oltre al tempo di lettura: il tempo in cui la scritta resta
@@ -79,6 +79,74 @@ export const SCENE: Scena[] = [
     ],
   },
 ]
+
+export type Lingua = "it" | "ru"
+
+/**
+ * Stesso copione di `SCENE` in russo, per la presentazione. Stesse scene, stesso
+ * numero di scritte e stessi `secondiExtra` (è il tempo dell'azione sullo
+ * schermo, non dipende dalla lingua). L'app nel video resta in italiano.
+ */
+export const SCENE_RU: Scena[] = [
+  {
+    id: "apertura",
+    didascalie: [
+      { testo: "Я Ольга, у меня мастерская. Я сделала приложение, чтобы не держать всё в голове.", secondiExtra: 2 },
+      { testo: "Каждое утро я открываю эту страницу и знаю, что нужно сделать сегодня.", secondiExtra: 3 },
+    ],
+  },
+  {
+    id: "oggi",
+    didascalie: [{ testo: "Выдачи на сегодня, готовые заказы для оповещения клиентов, напоминания.", secondiExtra: 12 }],
+  },
+  {
+    id: "nuovo-ordine",
+    didascalie: [
+      { testo: "Клиент вернулся: его данные заполняются сами.", secondiExtra: 12 },
+      { testo: "Новый заказ я оформляю меньше чем за минуту.", secondiExtra: 14 },
+    ],
+  },
+  {
+    id: "bacheca",
+    didascalie: [{ testo: "«Bacheca» — моя рабочая доска: каждая колонка — один этап работы.", secondiExtra: 12 }],
+  },
+  {
+    id: "avvisa",
+    didascalie: [
+      { testo: "Когда заказ готов, сообщение клиенту уже написано: отправляю его в WhatsApp…", secondiExtra: 9 },
+      { testo: "…или по электронной почте, с тем же готовым текстом.", secondiExtra: 7 },
+    ],
+  },
+  {
+    id: "foglio",
+    didascalie: [{ testo: "На обычном принтере печатаю лист, который кладу вместе с работой.", secondiExtra: 9 }],
+  },
+  {
+    id: "clienti",
+    didascalie: [{ testo: "Когда клиент возвращается, я сразу вижу всё, что он уже заказывал.", secondiExtra: 12 }],
+  },
+  {
+    id: "chiusura",
+    didascalie: [
+      { testo: "Всё просто, потому что я делала её для тех, кто работает в мастерской.", secondiExtra: 1 },
+      { testo: "Если не продлевать подписку, приложение продолжает работать.", secondiExtra: 1 },
+      { testo: `Напишите мне — покажу вживую · WhatsApp ${CONTATTO_WHATSAPP}`, secondiExtra: 5 },
+    ],
+  },
+]
+
+export function scenePerLingua(lingua: Lingua): Scena[] {
+  return lingua === "ru" ? SCENE_RU : SCENE
+}
+
+/** Legge `--lang=it|ru` dagli argomenti dello script; senza opzione vale "it". */
+export function parseLingua(argomenti: string[]): Lingua {
+  const argomento = argomenti.find((a) => a.startsWith("--lang="))
+  if (!argomento) return "it"
+  const valore = argomento.slice("--lang=".length)
+  if (valore === "it" || valore === "ru") return valore
+  throw new Error(`Lingua non supportata: "${valore}" (usare --lang=it oppure --lang=ru).`)
+}
 
 /** Secondi per leggere una scritta: circa 15 caratteri al secondo più 1,2 s di pausa, mai meno di 2,5 s. */
 export function tempoLettura(testo: string): number {

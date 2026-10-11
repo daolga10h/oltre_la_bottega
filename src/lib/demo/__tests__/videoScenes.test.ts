@@ -1,4 +1,14 @@
-import { CONTATTO_WHATSAPP, SCENE, conContatto, tempoLettura, tempoInScena, durataPianificata } from "../videoScenes"
+import {
+  CONTATTO_WHATSAPP,
+  SCENE,
+  SCENE_RU,
+  conContatto,
+  durataPianificata,
+  parseLingua,
+  scenePerLingua,
+  tempoInScena,
+  tempoLettura,
+} from "../videoScenes"
 
 const tutteLeDidascalie = () => SCENE.flatMap((s) => s.didascalie)
 
@@ -78,5 +88,63 @@ describe("conContatto", () => {
     expect(conContatto("Ciao", "111")).toBe("Ciao")
     expect(conContatto(`x ${CONTATTO_WHATSAPP}`, undefined)).toBe(`x ${CONTATTO_WHATSAPP}`)
     expect(conContatto(`x ${CONTATTO_WHATSAPP}`, "   ")).toBe(`x ${CONTATTO_WHATSAPP}`)
+  })
+})
+
+describe("scene del video in russo", () => {
+  const didascalieRu = () => SCENE_RU.flatMap((s) => s.didascalie)
+
+  it("hanno le stesse scene, nello stesso ordine, di quelle italiane", () => {
+    expect(SCENE_RU.map((s) => s.id)).toEqual(SCENE.map((s) => s.id))
+  })
+
+  it("ogni scena ha lo stesso numero di didascalie e gli stessi secondi extra", () => {
+    SCENE.forEach((scena, i) => {
+      expect(SCENE_RU[i].didascalie).toHaveLength(scena.didascalie.length)
+      SCENE_RU[i].didascalie.forEach((d, j) => expect(d.secondiExtra).toBe(scena.didascalie[j].secondiExtra))
+    })
+  })
+
+  it("ogni didascalia è non vuota, in cirillico e non più lunga di 95 caratteri", () => {
+    for (const d of didascalieRu()) {
+      expect(d.testo.trim().length).toBeGreaterThan(0)
+      expect(d.testo.length).toBeLessThanOrEqual(95)
+      expect(d.testo).toMatch(/[Ѐ-ӿ]/)
+    }
+  })
+
+  it("il numero WhatsApp compare solo nell'ultima didascalia", () => {
+    const didascalie = didascalieRu()
+    expect(didascalie[didascalie.length - 1].testo).toContain(CONTATTO_WHATSAPP)
+    for (const d of didascalie.slice(0, -1)) expect(d.testo).not.toContain(CONTATTO_WHATSAPP)
+  })
+
+  it("la durata pianificata sta tra 120 e 200 secondi", () => {
+    const totale = durataPianificata(SCENE_RU)
+    expect(totale).toBeGreaterThanOrEqual(120)
+    expect(totale).toBeLessThanOrEqual(200)
+  })
+})
+
+describe("scenePerLingua", () => {
+  it("restituisce la serie della lingua richiesta", () => {
+    expect(scenePerLingua("it")).toBe(SCENE)
+    expect(scenePerLingua("ru")).toBe(SCENE_RU)
+  })
+})
+
+describe("parseLingua", () => {
+  it("senza opzione sceglie l'italiano", () => {
+    expect(parseLingua([])).toBe("it")
+    expect(parseLingua(["--altro"])).toBe("it")
+  })
+
+  it("legge --lang=ru e --lang=it", () => {
+    expect(parseLingua(["--lang=ru"])).toBe("ru")
+    expect(parseLingua(["x", "--lang=it"])).toBe("it")
+  })
+
+  it("rifiuta una lingua non supportata", () => {
+    expect(() => parseLingua(["--lang=fr"])).toThrow(/Lingua non supportata/)
   })
 })
