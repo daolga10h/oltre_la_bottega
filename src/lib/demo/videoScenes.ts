@@ -128,7 +128,7 @@ export const SCENE_RU: Scena[] = [
   {
     id: "chiusura",
     didascalie: [
-      { testo: "Всё просто, потому что я делала её для тех, кто работает в мастерской.", secondiExtra: 1 },
+      { testo: "Всё просто, потому что я сделала его для тех, кто работает в мастерской.", secondiExtra: 1 },
       { testo: "Если не продлевать подписку, приложение продолжает работать.", secondiExtra: 1 },
       { testo: `Напишите мне — покажу вживую · WhatsApp ${CONTATTO_WHATSAPP}`, secondiExtra: 5 },
     ],

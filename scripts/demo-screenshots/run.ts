@@ -11,6 +11,7 @@ import {
   ALTEZZA,
   BASE_URL,
   LARGHEZZA,
+  PORTA,
   accedi,
   ambienteApp,
   attendi,
@@ -115,7 +116,7 @@ async function scattaTutte(page: Page): Promise<void> {
 
 async function main() {
   const demo = leggiDemo()
-  if (!(await portaLibera())) throw new Error("La porta 3300 è già occupata: chiudere il programma che la usa (per esempio il video).")
+  if (!(await portaLibera())) throw new Error(`La porta ${PORTA} è già occupata: chiudere il programma che la usa (per esempio il video).`)
 
   rinfrescaDemo()
 

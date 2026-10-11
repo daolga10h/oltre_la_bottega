@@ -57,7 +57,7 @@ export function leggiDemo() {
 /**
  * Ambiente per build e server: le variabili passate qui vincono sul `.env.local`
  * del progetto (quello della bottega vera). Le chiavi segrete che l'app legge da
- * lì vengono coperte con valori inutilizzabili, così il server del video non ha
+ * lì vengono coperte con valori inutilizzabili, così il server dello script non ha
  * mai in mano le chiavi vere.
  */
 export function ambienteApp(demo: ReturnType<typeof leggiDemo>): NodeJS.ProcessEnv {

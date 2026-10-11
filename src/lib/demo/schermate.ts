@@ -13,7 +13,7 @@ export type Schermata = {
 export const SCHERMATE_RU: Schermata[] = [
   { id: "oggi", didascalia: "Страница «Oggi»: выдачи, готовые заказы и напоминания — на одном экране" },
   { id: "nuovo-ordine", didascalia: "Новый заказ меньше чем за минуту: данные вернувшегося клиента заполняются сами" },
-  { id: "bacheca", didascalia: "«Bacheca»: каждая колонка — этап работы, заказ переносится одним касанием" },
+  { id: "bacheca", didascalia: "«Bacheca»: каждая колонка — этап работы, статус заказа меняется в пару касаний" },
   { id: "avvisa", didascalia: "Готово? Сообщение клиенту уже написано — WhatsApp или e-mail в один клик" },
   { id: "foglio", didascalia: "Рабочий лист для обычного принтера: кладётся вместе с работой" },
   { id: "cliente", didascalia: "Карточка клиента: вся история его заказов перед глазами" },
