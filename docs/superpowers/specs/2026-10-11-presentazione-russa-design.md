@@ -66,7 +66,7 @@ il futuro.
   didascalia russa): "Dopo" → Oggi; "Il cliente che hai già dimenticato" →
   scheda cliente; Voce 03 → nuovo ordine; Voce 04 → avviso al cliente. Layout:
   su schermo largo testo e immagine affiancati, su schermo stretto sotto il
-  testo; l'immagine non supera il 45% dell'altezza della pagina, così ogni
+  testo; l'immagine non supera il 60% dell'altezza della pagina, così ogni
   pagina resta una schermata intera.
 - Le immagini sono incorporate nel file con percorso relativo a
   `presentazione-img/`; il PDF (`docs/presentazione-commerciale-ru.pdf`) si
