@@ -200,3 +200,9 @@ h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 700; line-height: 1.12; }
 
 /* frasi senza parole sole a fine riga */
 .hero-sub, .feature p, .steps span { text-wrap: balance; }
+
+/* barra di scorrimento sempre visibile sulla bacheca (su telefono altrimenti non si capisce che scorre) */
+.board-scroll { padding-bottom: 8px; scrollbar-width: thin; scrollbar-color: #b9b0a4 #e8e2d8; }
+.board-scroll::-webkit-scrollbar { height: 8px; }
+.board-scroll::-webkit-scrollbar-track { background: #e8e2d8; border-radius: 4px; }
+.board-scroll::-webkit-scrollbar-thumb { background: #b9b0a4; border-radius: 4px; }
