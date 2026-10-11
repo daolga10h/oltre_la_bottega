@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oltre la Bottega</title>
+<style>
+  /* Runway is the live app's fixed warm-paper identity (see DESIGN.md) —
+     the product itself has no dark variant, so this deck stays single-theme
+     to match it exactly. Background and every color are still set explicitly. */
+  :root{
+    --cream:#f8f7f5;
+    --paper:#ffffff;
+    --linen:#e3dfd5;
+    --stone:#d5d2cd;
+    --warm-ash:#aca89f;
+    --driftwood:#8f897e;
+    --bark:#61594a;
+    --espresso:#3b2716;
+    --amber:#f9a600;
+    --gold:#e89b01;
+    --terracotta:#f0624f;
+    --sage:#c8dab8;
+    --sage-ink:#3a5a2e;
+    --ledger-rule: rgba(59,39,22,0.06);
+    --ledger-margin: rgba(240,98,79,0.32);
+    --shadow: rgba(59,39,22,0.10);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--espresso);
+    font-family:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,p,blockquote,ul{margin:0;}
+  h1,h2,h3{text-wrap:balance;}
+
+  /* Fixed paper texture behind every page, like a PDF viewer's canvas */
+  .ruled-bg{
+    position:fixed; inset:0;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 37px,
+      var(--ledger-rule) 37px,
+      var(--ledger-rule) 38px
+    );
+    pointer-events:none;
+    z-index:0;
+  }
+  .margin-rule{
+    position:fixed; top:0; bottom:0; left:clamp(28px,6vw,88px);
+    width:1px;
+    background:var(--ledger-margin);
+    pointer-events:none;
+    z-index:0;
+  }
+  .lamp-glow{
+    position:fixed; top:-20%; left:-10%;
+    width:70vw; height:70vw;
+    background:radial-gradient(circle, rgba(249,166,0,0.16) 0%, rgba(249,166,0,0) 65%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  /* Document: pages stacked top to bottom, snapped like flipping a PDF */
+  .deck{
+    position:relative;
+    width:100vw;
+    height:100vh;
+    height:100dvh;
+    overflow-y:auto;
+    overflow-x:hidden;
+    scroll-snap-type:y mandatory;
+    z-index:1;
+  }
+
+  .page{
+    position:relative;
+    width:100%;
+    min-height:100vh;
+    min-height:100dvh;
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding: clamp(32px,8vh,96px) clamp(28px,10vw,160px) clamp(72px,10vh,120px) clamp(64px,12vw,200px);
+  }
+
+  .eyebrow{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:18px;
+  }
+
+  .page-content{ max-width:760px; position:relative; }
+
+  /* Page 1 — title */
+  .page-title h1{
+    font-size:clamp(40px,7vw,88px);
+    font-weight:800;
+    letter-spacing:-0.03em;
+    line-height:1.02;
+  }
+  .page-title .subtitle{
+    font-size:clamp(18px,2.4vw,26px);
+    font-weight:500;
+    color:var(--bark);
+    margin-top:16px;
+  }
+  .page-title p.lede{
+    font-size:16px;
+    line-height:1.65;
+    color:var(--bark);
+    max-width:56ch;
+    margin-top:28px;
+  }
+
+  .ob-mark{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:28px; height:28px;
+    background:var(--espresso);
+    color:var(--cream);
+    border-radius:6px;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.02em;
+    flex-shrink:0;
+  }
+  .brand-corner{
+    position:absolute;
+    left:clamp(28px,10vw,160px);
+    bottom:clamp(28px,6vh,56px);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:var(--driftwood);
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.04em;
+  }
+
+  /* Page 2 — perché esiste */
+  blockquote.big-quote{
+    font-size:clamp(30px,5vw,56px);
+    font-weight:800;
+    letter-spacing:-0.02em;
+    line-height:1.08;
+    margin-bottom:34px;
+  }
+  .mini-label{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .mini-label.prima{ color:var(--driftwood); }
+  .mini-label.dopo{ color:var(--gold); }
+  p.resolution{
+    font-size:19px;
+    line-height:1.6;
+    color:var(--espresso);
+    font-weight:500;
+    max-width:58ch;
+  }
+
+  /* Prima pages — one recognizable frustration + its real consequence */
+  .page-prima h2{
+    font-size:clamp(26px,4vw,40px);
+    font-weight:800;
+    letter-spacing:-0.02em;
+    line-height:1.14;
+    margin-bottom:20px;
+    max-width:18ch;
+  }
+  .page-prima p{
+    font-size:17px;
+    line-height:1.68;
+    color:var(--bark);
+    max-width:58ch;
+  }
+  p.consequence{
+    margin-top:20px;
+    padding:16px 20px;
+    background:var(--paper);
+    border:1px solid var(--linen);
+    border-left:3px solid var(--terracotta);
+    border-radius:8px;
+    box-shadow:0 4px 8px var(--shadow);
+    font-size:16px;
+    font-weight:600;
+    color:var(--espresso);
+    max-width:56ch;
+  }
+
+  /* Ledger-entry pages (the five differentiators) */
+  .page-entry{ position:relative; }
+  .entry-watermark{
+    position:absolute;
+    top:clamp(-10px,-2vh,10px);
+    left:clamp(-6px,-1vw,6px);
+    font-size:clamp(120px,20vw,220px);
+    font-weight:800;
+    color:var(--gold);
+    opacity:.10;
+    line-height:1;
+    pointer-events:none;
+    user-select:none;
+  }
+  .entry-eyebrow{
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:20px;
+    position:relative;
+  }
+  .page-entry h2{
+    font-size:clamp(28px,4vw,44px);
+    font-weight:800;
+    letter-spacing:-0.02em;
+    line-height:1.08;
+    margin-bottom:22px;
+    position:relative;
+    max-width:16ch;
+  }
+  .page-entry p{
+    font-size:18px;
+    line-height:1.68;
+    color:var(--bark);
+    max-width:60ch;
+    position:relative;
+  }
+  .page-entry .caption{
+    margin-top:22px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--driftwood);
+    font-style:italic;
+  }
+
+  .who-heading{
+    font-size:clamp(28px,4vw,44px);
+    font-weight:800;
+    letter-spacing:-0.02em;
+  }
+  .who-body{
+    font-size:18px;
+    line-height:1.68;
+    color:var(--bark);
+    max-width:58ch;
+    margin-top:20px;
+  }
+  .highlight-line{
+    margin-top:26px;
+    padding:18px 22px;
+    background:var(--paper);
+    border:1px solid var(--linen);
+    border-left:3px solid var(--amber);
+    border-radius:8px;
+    box-shadow:0 4px 8px var(--shadow);
+    font-size:17px;
+    font-weight:600;
+    color:var(--espresso);
+    max-width:56ch;
+  }
+
+  /* Closing */
+  .page-closing h2{
+    font-size:clamp(30px,5vw,54px);
+    font-weight:800;
+    letter-spacing:-0.02em;
+    max-width:14ch;
+    margin-bottom:34px;
+  }
+  .stamp{
+    display:inline-flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    width:96px; height:96px;
+    border-radius:50%;
+    border:2px solid var(--amber);
+    color:var(--espresso);
+    transform:rotate(-8deg);
+    background:rgba(249,166,0,0.06);
+  }
+  .stamp .mark{ font-size:22px; font-weight:800; letter-spacing:.02em; }
+  .stamp .word{ font-size:8px; font-weight:700; letter-spacing:.12em; margin-top:2px; color:var(--gold); }
+  .closing-note{
+    margin-top:22px;
+    font-size:15px;
+    color:var(--driftwood);
+    font-weight:500;
+  }
+
+  /* Viewer chrome, like a PDF reader's toolbar */
+  .deck-nav{
+    position:fixed;
+    left:0; right:0; bottom:clamp(18px,4vh,32px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:18px;
+    z-index:5;
+  }
+  .dots{ display:flex; gap:8px; }
+  .dot{
+    width:7px; height:7px;
+    border-radius:50%;
+    background:var(--stone);
+    border:none;
+    padding:0;
+    cursor:pointer;
+    transition:background .25s ease, transform .25s ease;
+  }
+  .dot:hover{ background:var(--warm-ash); }
+  .dot.active{ background:var(--gold); transform:scale(1.35); }
+  .dot:focus-visible{ outline:2px solid var(--amber); outline-offset:3px; }
+
+  .nav-arrow{
+    width:38px; height:38px;
+    border-radius:50%;
+    border:1px solid var(--linen);
+    background:var(--paper);
+    color:var(--espresso);
+    font-size:17px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    box-shadow:0 2px 6px var(--shadow);
+  }
+  .nav-arrow:hover{ background:var(--linen); }
+  .nav-arrow:disabled{ opacity:.3; cursor:default; box-shadow:none; }
+  .nav-arrow:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+
+  .folio{
+    position:fixed;
+    right:clamp(20px,6vw,64px);
+    bottom:clamp(20px,5vh,40px);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.12em;
+    color:var(--driftwood);
+    font-variant-numeric:tabular-nums;
+    z-index:5;
+  }
+
+  /* Pagine con una schermata dell'app accanto al testo */
+  .page-with-shot .page-content{
+    max-width:none;
+    display:grid;
+    grid-template-columns:minmax(0,0.9fr) minmax(0,1.1fr);
+    gap:clamp(24px,4vw,56px);
+    align-items:center;
+  }
+  .page-with-shot .text{ position:relative; }
+  figure.shot{ margin:0; }
+  figure.shot img{
+    display:block;
+    width:100%;
+    max-height:60vh;
+    object-fit:contain;
+    object-position:center;
+    border-radius:10px;
+    border:1px solid var(--linen);
+    box-shadow:0 8px 24px var(--shadow);
+    background:var(--paper);
+  }
+  @media (max-width:900px){
+    .page-with-shot .page-content{ grid-template-columns:1fr; }
+    figure.shot img{ max-height:40vh; }
+  }
+
+  @media (max-width:640px){
+    .stamp{ width:80px; height:80px; }
+  }
+
+  @media print{
+    .deck-nav, .folio{ display:none !important; }
+    .deck{ overflow:visible; height:auto; }
+    .ruled-bg, .margin-rule, .lamp-glow{ position:absolute; }
+    .page{
+      break-after:page; page-break-after:always;
+      min-height:100vh; height:100vh;
+    }
+    .page:last-child{ break-after:auto; page-break-after:auto; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<div class="ruled-bg" aria-hidden="true"></div>
+<div class="margin-rule" aria-hidden="true"></div>
+<div class="lamp-glow" aria-hidden="true"></div>
+
+<div class="deck" id="deck">
+
+  <section class="page page-title">
+    <div class="page-content">
+      <p class="eyebrow">Настоящая история, а не демо</p>
+      <h1>Oltre la Bottega</h1>
+      <p class="subtitle">Создано в мастерской, чтобы меньше чем за минуту отвечать на один вопрос: что мне нужно сделать сегодня?</p>
+      <p class="lede">Это не очередная CRM из каталога управленческого ПО. Это инструмент, который я создала для своей мастерской — для прилавка, клиента, который ждёт, и рук, ещё занятых предыдущей работой. А не для письменного стола.</p>
+    </div>
+    <div class="brand-corner"><span class="ob-mark">OB</span> Oltre la Bottega</div>
+  </section>
+
+  <section class="page">
+    <div class="page-content">
+      <p class="eyebrow">Каждый день, до девяти утра</p>
+      <blockquote class="big-quote">Что мне нужно сделать сегодня?</blockquote>
+      <p class="resolution" style="margin-top:28px;">За этим вопросом всегда стоят одни и те же три мысли.</p>
+    </div>
+  </section>
+
+  <section class="page page-prima">
+    <div class="page-content">
+      <p class="mini-label prima">Раньше — 1 из 3</p>
+      <h2>Сколько заказов у вас сейчас в голове?</h2>
+      <p>Клиент сказал «в следующий четверг» — это помните вы, а не система. Вы записали это на листке, который оказался под другими листками, или в тетради, открытой не на той странице. Это работает, пока работает — пока срок не всплывает только потому, что клиент сам звонит и спрашивает.</p>
+      <p class="consequence">Это не просто досадная неожиданность: это невыполненное обещание перед человеком, который его прекрасно помнил.</p>
+    </div>
+  </section>
+
+  <section class="page page-prima page-with-shot">
+    <div class="page-content">
+      <div class="text">
+        <p class="mini-label prima">Раньше — 2 из 3</p>
+        <h2>Клиент, которого вы уже забыли</h2>
+        <p>К прилавку подходит клиент, которого вы знаете в лицо. Что он заказывал в прошлый раз? Вы уже просили у него отзыв? Осталось ли что-то незавершённое? Всё это должно быть в голове — но в голове всё теряется, особенно в напряжённые дни.</p>
+        <p class="consequence">Клиент не скажет этого вслух, но почувствует: если вас не помнят, значит, вы недостаточно важны, чтобы вас запомнить. И в следующий раз он, возможно, не вернётся.</p>
+      </div>
+      <figure class="shot"><img src="../presentazione-img/06-cliente.png" alt="Карточка клиента с историей его заказов"></figure>
+    </div>
+  </section>
+
+  <section class="page page-prima">
+    <div class="page-content">
+      <p class="mini-label prima">Раньше — 3 из 3</p>
+      <h2>Дела, которые вечно откладываются</h2>
+      <p>Попросить отзыв, перезвонить поставщику, сообщить тем, кто ждёт: вы знаете, что всё это нужно сделать, — но в нужный момент, у прилавка, при клиенте, свободной минуты нет. Это не лень: настоящая работа всегда на первом месте.</p>
+      <p class="consequence">В итоге мастерская работает хорошо, но за её стенами остаётся незаметной — а тот, кто работает хуже вас, зато всегда просит отзыв, заметен больше.</p>
+    </div>
+  </section>
+
+  <section class="page page-with-shot">
+    <div class="page-content">
+      <div class="text">
+        <p class="mini-label dopo">После</p>
+        <blockquote class="big-quote" style="font-size:clamp(26px,4vw,44px);">Что мне нужно сделать сегодня?</blockquote>
+        <p class="resolution">Oltre la Bottega отвечает на этот вопрос меньше чем за минуту. Обещания остаются записанными, клиенты не теряются из виду, а просьба об отзыве превращается в один клик вместо лишней мысли. Приложение не управляет компанией на 50 сотрудников — оно управляет вашим днём.</p>
+      </div>
+      <figure class="shot"><img src="../presentazione-img/01-oggi.png" alt="Страница «Oggi» со всеми делами на сегодня"></figure>
+    </div>
+  </section>
+
+  <section class="page page-entry">
+    <span class="entry-watermark" aria-hidden="true">01</span>
+    <div class="page-content">
+      <p class="entry-eyebrow">Пункт 01</p>
+      <h2>Рождено из реальной проблемы, а не из списка функций</h2>
+      <p>Каждая функция — от «кто принял заказ» до напоминания о материале, которого не хватает у поставщика, и кнопки для просьбы об отзыве — появилась из того, что действительно случилось у прилавка, а не на мозговом штурме за столом. Из-за заказа без сохранённого номера телефона нельзя было отправить сообщение «готово к выдаче»: теперь телефон — обязательное поле. Отзывы никто не просил — не из лени, а потому что в момент выдачи нет свободной минуты: теперь достаточно одной кнопки, которая сама готовит сообщение в WhatsApp.</p>
+      <p class="caption">Детали, которые замечает только тот, кто действительно работает в мастерской.</p>
+    </div>
+  </section>
+
+  <section class="page page-entry">
+    <span class="entry-watermark" aria-hidden="true">02</span>
+    <div class="page-content">
+      <p class="entry-eyebrow">Пункт 02</p>
+      <h2>Ваши данные остаются вашими</h2>
+      <p>Вы не делите пространство с тысячей других предприятий: у вашей мастерской свой отдельный уголок, и никто не может изменить правила игры в один день или лишить вас доступа к вашим данным.</p>
+    </div>
+  </section>
+
+  <section class="page page-entry page-with-shot">
+    <span class="entry-watermark" aria-hidden="true">03</span>
+    <div class="page-content">
+      <div class="text">
+        <p class="entry-eyebrow">Пункт 03</p>
+        <h2>Один вопрос на экран: что делать сегодня</h2>
+        <p>Не десятки меню, которые нужно выучить наизусть. Любое частое действие — новый заказ, смена статуса — требует не больше 3–4 шагов.</p>
+      </div>
+      <figure class="shot"><img src="../presentazione-img/02-nuovo-ordine.png" alt="Новый заказ: данные вернувшегося клиента заполняются сами"></figure>
+    </div>
+  </section>
+
+  <section class="page page-entry page-with-shot">
+    <span class="entry-watermark" aria-hidden="true">04</span>
+    <div class="page-content">
+      <div class="text">
+        <p class="entry-eyebrow">Пункт 04</p>
+        <h2>Говорит на языке мастерской, а не офиса</h2>
+        <p>Готовые сообщения для WhatsApp, этикетки с QR-кодом, которые клеятся прямо на изделия, и планшет на прилавке — а не стол с двумя мониторами.</p>
+      </div>
+      <figure class="shot"><img src="../presentazione-img/04-avvisa.png" alt="Готовое сообщение клиенту в WhatsApp"></figure>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="page-content">
+      <p class="eyebrow">Кому это нужно</p>
+      <h2 class="who-heading">Для кого</h2>
+      <p class="who-body">Ремесленные мастерские и микробизнес от 1 до 5 человек, которые сегодня ведут заказы вручную или с помощью инструментов, созданных совсем для другого.</p>
+      <p class="highlight-line">Если вы узнаёте себя в вопросе «что мне нужно сделать сегодня?», этот инструмент создан именно для вас.</p>
+    </div>
+  </section>
+
+  <section class="page page-closing">
+    <div class="page-content">
+      <h2>Он создан,<br>потому что нужен был мне.</h2>
+      <div class="stamp">
+        <span class="mark">OB</span>
+        <span class="word">Oltre la Bottega</span>
+      </div>
+      <p class="closing-note">Давайте поговорим, когда вам удобно.</p>
+    </div>
+  </section>
+
+</div>
+
+<nav class="deck-nav" aria-label="Навигация по страницам">
+  <button class="nav-arrow prev" aria-label="Предыдущая страница" id="prevBtn">‹</button>
+  <div class="dots" id="dots"></div>
+  <button class="nav-arrow next" aria-label="Следующая страница" id="nextBtn">›</button>
+</nav>
+
+<div class="folio" id="folio">01 / 12</div>
+
+<script>
+(function(){
+  var deckEl = document.getElementById('deck');
+  var pages = Array.prototype.slice.call(document.querySelectorAll('.page'));
+  var dotsWrap = document.getElementById('dots');
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+  var folio = document.getElementById('folio');
+  var total = pages.length;
+  var current = 0;
+  var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  pages.forEach(function(_, i){
+    var b = document.createElement('button');
+    b.className = 'dot';
+    b.setAttribute('aria-label', 'Перейти на страницу ' + (i+1));
+    b.addEventListener('click', function(){ goTo(i); });
+    dotsWrap.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.querySelectorAll('.dot'));
+
+  function pad(n){ return n < 10 ? '0'+n : ''+n; }
+
+  function setCurrent(i){
+    current = i;
+    dots.forEach(function(d, idx){
+      d.classList.toggle('active', idx === current);
+      d.setAttribute('aria-current', idx === current ? 'true' : 'false');
+    });
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === total - 1;
+    folio.textContent = pad(current+1) + ' / ' + pad(total);
+  }
+
+  function goTo(i){
+    i = Math.max(0, Math.min(total - 1, i));
+    pages[i].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  }
+
+  prevBtn.addEventListener('click', function(){ goTo(current - 1); });
+  nextBtn.addEventListener('click', function(){ goTo(current + 1); });
+
+  window.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') { goTo(current + 1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') { goTo(current - 1); e.preventDefault(); }
+    else if (e.key === 'Home') { goTo(0); }
+    else if (e.key === 'End') { goTo(total - 1); }
+  });
+
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.55) {
+          setCurrent(pages.indexOf(entry.target));
+        }
+      });
+    }, { root: deckEl, threshold: [0.55] });
+    pages.forEach(function(p){ observer.observe(p); });
+  }
+
+  setCurrent(0);
+})();
+</script>
