@@ -88,9 +88,10 @@ h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 700; line-height: 1.12; }
 .storia .foto { margin-top: 28px; }
 
 /* funzioni (riproduzioni dell'app) */
-.app-intro { max-width: 60ch; margin-bottom: 40px; }
+.app-intro { max-width: 60ch; margin-bottom: 8px; }
 .app-intro p { font-size: 18px; color: var(--bark); margin-top: 12px; }
-.feature { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; padding-block: 28px; }
+.feature { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; padding-block: 24px; }
+.feature-txt { padding-top: 12px; }
 .feature > div { min-width: 0; }
 .feature:nth-of-type(odd) .feature-txt { order: 2; }
 .feature--wide { grid-template-columns: 1fr; gap: 28px; }
