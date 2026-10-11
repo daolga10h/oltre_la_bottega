@@ -1,4 +1,4 @@
-// Video dimostrativo automatico, muto con didascalie in italiano.
+// Video dimostrativo automatico, muto con didascalie in italiano o in russo (--lang=ru).
 // Uso: npm run demo:video   (serve una volta: npm install --no-save ffmpeg-static)
 // Design: docs/superpowers/specs/2026-09-26-video-automatico-design.md
 import { spawnSync, type ChildProcess } from "node:child_process"
@@ -6,7 +6,7 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, statSync } from "node
 import { createRequire } from "node:module"
 import path from "node:path"
 import { chromium, type Browser, type Page } from "@playwright/test"
-import { SCENE, conContatto, tempoInScena, type Scena } from "../../src/lib/demo/videoScenes"
+import { conContatto, parseLingua, scenePerLingua, tempoInScena, type Lingua, type Scena } from "../../src/lib/demo/videoScenes"
 import {
   ALTEZZA,
   BASE_URL,
@@ -30,9 +30,11 @@ import { OVERLAY_SCRIPT } from "./overlay"
 
 const CARTELLA_VIDEO = path.join(radice, "video")
 const CARTELLA_TMP_RIPRESE = path.join(radice, ".demo-video-tmp")
-const FILE_WEBM = path.join(CARTELLA_VIDEO, "oltre-la-bottega-demo.webm")
-const FILE_MP4 = path.join(CARTELLA_VIDEO, "oltre-la-bottega-demo.mp4")
 
+
+/** Il video italiano mantiene il nome di sempre; quello russo ha il suffisso -ru. */
+const nomeFile = (lingua: Lingua, estensione: "webm" | "mp4") =>
+  path.join(CARTELLA_VIDEO, `oltre-la-bottega-demo${lingua === "it" ? "" : `-${lingua}`}.${estensione}`)
 /** Numero WhatsApp da mostrare nell'ultima scritta (da `.env.demo.local`, mai dal codice). */
 let contattoWhatsApp: string | undefined
 
@@ -49,8 +51,10 @@ async function conDidascalia(page: Page, scena: Scena, indice: number, azioni: (
   if (resto > 0) await attendi(resto)
 }
 
+let sceneAttive: Scena[] = scenePerLingua("it")
+
 function scena(id: Scena["id"]): Scena {
-  const s = SCENE.find((x) => x.id === id)
+  const s = sceneAttive.find((x) => x.id === id)
   if (!s) throw new Error(`Scena mancante: ${id}`)
   return s
 }
@@ -240,16 +244,16 @@ function percorsoFfmpeg(): string {
   throw new Error("ffmpeg non trovato: installarlo una volta con  npm install --no-save ffmpeg-static")
 }
 
-function convertiInMp4(ffmpeg: string, tagliaSecondi: number): void {
+function convertiInMp4(ffmpeg: string, tagliaSecondi: number, fileWebm: string, fileMp4: string): void {
   console.log("→ Conversione in MP4…")
   const esito = spawnSync(
     ffmpeg,
     [
       "-y", "-hide_banner", "-loglevel", "error",
-      "-ss", tagliaSecondi.toFixed(2), "-i", FILE_WEBM,
+      "-ss", tagliaSecondi.toFixed(2), "-i", fileWebm,
       "-an", "-c:v", "libx264", "-preset", "slow", "-crf", "22",
       "-pix_fmt", "yuv420p", "-r", "25", "-movflags", "+faststart",
-      FILE_MP4,
+      fileMp4,
     ],
     { stdio: "inherit" }
   )
@@ -264,6 +268,11 @@ function durataVideo(ffmpeg: string, file: string): string {
 // --------------------------------------------------------------------- main
 
 async function main() {
+  const lingua = parseLingua(process.argv.slice(2))
+  sceneAttive = scenePerLingua(lingua)
+  const fileWebm = nomeFile(lingua, "webm")
+  const fileMp4 = nomeFile(lingua, "mp4")
+  console.log(`→ Lingua delle didascalie: ${lingua}`)
   const ffmpeg = percorsoFfmpeg()
   const demo = leggiDemo()
   contattoWhatsApp = demo.contatto
@@ -310,13 +319,13 @@ async function main() {
     if (!video) throw new Error("Nessun video registrato.")
 
     mkdirSync(CARTELLA_VIDEO, { recursive: true })
-    copyFileSync(await video.path(), FILE_WEBM)
-    convertiInMp4(ffmpeg, taglio)
+    copyFileSync(await video.path(), fileWebm)
+    convertiInMp4(ffmpeg, taglio, fileWebm, fileMp4)
 
-    const mb = (statSync(FILE_MP4).size / 1024 / 1024).toFixed(1)
+    const mb = (statSync(fileMp4).size / 1024 / 1024).toFixed(1)
     console.log("\nVideo pronto:")
-    console.log(`  ${FILE_MP4}`)
-    console.log(`  durata ${durataVideo(ffmpeg, FILE_MP4)}, ${mb} MB (anche il WebM originale: ${FILE_WEBM})`)
+    console.log(`  ${fileMp4}`)
+    console.log(`  durata ${durataVideo(ffmpeg, fileMp4)}, ${mb} MB (anche il WebM originale: ${fileWebm})`)
   } finally {
     await browser?.close().catch(() => {})
     fermaServer(server)

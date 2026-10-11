@@ -13,7 +13,10 @@
     "test": "jest",
     "demo:schema": "node scripts/demo-schema.mjs",
     "demo:reset": "tsx scripts/demo-reset.ts",
-    "demo:video": "tsx scripts/demo-video/run.ts"
+    "demo:video": "tsx scripts/demo-video/run.ts",
+    "demo:video:ru": "tsx scripts/demo-video/run.ts --lang=ru",
+    "demo:screenshots": "tsx scripts/demo-screenshots/run.ts",
+    "presentazione:pdf": "tsx scripts/presentazione/pdf.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
