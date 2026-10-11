@@ -126,7 +126,7 @@ h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 700; line-height: 1.12; }
 .t-sage { background: var(--sage); color: var(--sagetx); }
 .t-lin { background: var(--linen); color: var(--bark); }
 
-.board { display: grid; grid-template-columns: repeat(5, minmax(120px, 1fr)); gap: 8px; min-width: 640px; }
+.board { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 8px; min-width: 520px; }
 .board-scroll { overflow-x: auto; }
 .col-h { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--drift); margin-bottom: 6px; }
 .card { background: var(--paper); border: 1px solid var(--linen); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; box-shadow: var(--shadow); }
