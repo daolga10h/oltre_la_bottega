@@ -16,6 +16,7 @@
     "demo:video": "tsx scripts/demo-video/run.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0",
     "@base-ui/react": "^1.6.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
