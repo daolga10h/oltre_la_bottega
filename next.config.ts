@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
     // in produzione.
     position: "bottom-right",
   },
+  experimental: {
+    // Il caricamento di un documento del fornitore (PDF o foto ridotta) passa da una
+    // server action: il limite predefinito di 1 MB è troppo basso. 4 MB resta sotto
+    // il tetto di 4,5 MB delle richieste Vercel.
+    serverActions: { bodySizeLimit: "4mb" },
+  },
 };
 
 export default nextConfig;
