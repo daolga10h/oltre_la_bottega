@@ -15,8 +15,8 @@ describe("parseExtraction", () => {
     fornitore: "F.B. s.n.c. di Busato Martino e Matteo",
     data: "2025-10-29",
     righe: [
-      { codice: "003553", nome: "Targa 003 Tutta Silver 20x15", unita: "Nr.", quantita: 10, prezzo: 14.38, importo: 143.8 },
-      { codice: "011502", nome: "Targa 011 Silver 17x12 cm", unita: "Nr.", quantita: 5, prezzo: 10.86, importo: 54.3 },
+      { codice: "003553", nome: "Targa 003 Tutta Silver 20x15", unita: "Nr.", quantita: 10, prezzo: 14.38, sconti: [], importo: 143.8 },
+      { codice: "011502", nome: "Targa 011 Silver 17x12 cm", unita: "Nr.", quantita: 5, prezzo: 10.86, sconti: [], importo: 54.3 },
     ],
   }
 
@@ -43,12 +43,29 @@ describe("parseExtraction", () => {
 
   it("trasforma campi mancanti o vuoti in null", () => {
     const r = parseExtraction({ fornitore: "X", data: null, righe: [{ nome: "A", prezzo: 1, codice: "  ", unita: "" }] })
-    expect(r.righe[0]).toEqual({ codice: null, nome: "A", unita: null, quantita: null, prezzo: 1, importo: null })
+    expect(r.righe[0]).toEqual({ codice: null, nome: "A", unita: null, quantita: null, prezzo: 1, sconti: [], importo: null })
   })
 
   it("accetta un codice scritto come numero", () => {
     const r = parseExtraction({ fornitore: "X", righe: [{ nome: "A", prezzo: 1, codice: 3553 }] })
     expect(r.righe[0].codice).toBe("3553")
+  })
+
+  it("legge gli sconti a cascata come elenco di percentuali", () => {
+    const r = parseExtraction({ fornitore: "X", righe: [{ nome: "A", prezzo: 22.02, sconti: [50, 20], importo: 88.08 }] })
+    expect(r.righe[0].sconti).toEqual([50, 20])
+  })
+
+  it("scarta gli sconti non validi o a zero e senza sconti dà un elenco vuoto", () => {
+    const r = parseExtraction({
+      fornitore: "X",
+      righe: [
+        { nome: "A", prezzo: 1, sconti: [50, "x", -5, 120, 0, null, 20] },
+        { nome: "B", prezzo: 1, sconti: "50" },
+        { nome: "C", prezzo: 1 },
+      ],
+    })
+    expect(r.righe.map((x) => x.sconti)).toEqual([[50, 20], [], []])
   })
 
   it("data non valida diventa null", () => {

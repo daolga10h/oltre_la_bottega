@@ -25,6 +25,12 @@ export type RigaDocumento = {
   importo: number | null
 }
 
+/**
+ * Riga letta dal documento. Qui `prezzo` è il prezzo di LISTINO, prima degli sconti
+ * a cascata (SC.1%, SC.2%…); il costo vero (`netPrice`) è quello che si salva.
+ */
+export type RigaLetta = RigaDocumento & { sconti: number[] }
+
 export type StatoRiga =
   | { tipo: "nuovo" }
   | { tipo: "invariato" }
@@ -125,6 +131,38 @@ export function classifyRow(
   if (!m) return { tipo: "nuovo" }
   if (stessoPrezzo(riga.prezzo, m.prezzo_attuale)) return { tipo: "invariato" }
   return { tipo: "variato", era: m.prezzo_attuale }
+}
+
+/** Prezzo dopo gli sconti a cascata: ogni sconto si applica al prezzo già scontato (50 poi 20 = ×0,5 ×0,8). */
+export function netPrice(listino: number, sconti: number[]): number {
+  return sconti.reduce((prezzo, sconto) => prezzo * (1 - sconto / 100), listino)
+}
+
+/** Arrotonda a 3 decimali, come si salvano i prezzi. */
+export function round3(value: number): number {
+  return Math.round(value * 1000) / 1000
+}
+
+/**
+ * Legge gli sconti scritti da una persona: "50", "50+20", "50 20", "50/20", "12,5".
+ * La virgola è il decimale. Vuoto = nessuno sconto; null se qualcosa non è una
+ * percentuale tra 0 e 100. Gli sconti a zero si ignorano.
+ */
+export function parseDiscounts(value: string): number[] | null {
+  const testo = value.replace(/%/g, " ").trim()
+  if (!testo) return []
+  const sconti: number[] = []
+  for (const parte of testo.split(/[+/;\s]+/).filter(Boolean)) {
+    const n = Number(parte.replace(",", "."))
+    if (!Number.isFinite(n) || n < 0 || n > 100) return null
+    if (n > 0) sconti.push(n)
+  }
+  return sconti
+}
+
+/** 50 + 20 · 12,5 */
+export function formatDiscounts(sconti: number[]): string {
+  return sconti.map((s) => String(s).replace(".", ",")).join(" + ")
 }
 
 /** Legge un prezzo scritto da una persona ("14,380", "1.234,56", "€ 14.38"). null se non valido. */

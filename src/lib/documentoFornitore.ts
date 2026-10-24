@@ -1,4 +1,4 @@
-import { isValidIsoDate, type RigaDocumento } from "@/lib/materiali"
+import { isValidIsoDate, type RigaLetta } from "@/lib/materiali"
 
 export const SUPPORTED_MEDIA_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp"] as const
 export type SupportedMediaType = (typeof SUPPORTED_MEDIA_TYPES)[number]
@@ -9,11 +9,17 @@ export const MAX_FILE_BYTES = 4_000_000
 export type DocumentoLetto = {
   fornitore: string
   data: string | null // AAAA-MM-GG
-  righe: RigaDocumento[]
+  righe: RigaLetta[]
 }
 
 function toNumberOrNull(v: unknown): number | null {
   return typeof v === "number" && Number.isFinite(v) ? v : null
+}
+
+// Sconti a cascata in percentuale (SC.1, SC.2, SC.3): si tengono solo numeri tra 0 (escluso) e 100.
+function toDiscounts(v: unknown): number[] {
+  if (!Array.isArray(v)) return []
+  return v.filter((s): s is number => typeof s === "number" && Number.isFinite(s) && s > 0 && s <= 100)
 }
 
 function toTextOrNull(v: unknown): string | null {
@@ -32,7 +38,7 @@ export function parseExtraction(raw: unknown): DocumentoLetto {
   if (!raw || typeof raw !== "object") return vuoto
   const r = raw as Record<string, unknown>
 
-  const righe: RigaDocumento[] = []
+  const righe: RigaLetta[] = []
   if (Array.isArray(r.righe)) {
     for (const item of r.righe) {
       if (!item || typeof item !== "object") continue
@@ -46,6 +52,7 @@ export function parseExtraction(raw: unknown): DocumentoLetto {
         unita: toTextOrNull(i.unita),
         quantita: toNumberOrNull(i.quantita),
         prezzo,
+        sconti: toDiscounts(i.sconti),
         importo: toNumberOrNull(i.importo),
       })
     }

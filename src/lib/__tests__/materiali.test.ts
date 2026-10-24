@@ -10,6 +10,10 @@ import {
   matchesSearch,
   isValidIsoDate,
   todayIso,
+  netPrice,
+  round3,
+  parseDiscounts,
+  formatDiscounts,
   type Materiale,
 } from "../materiali"
 
@@ -243,5 +247,79 @@ describe("todayIso", () => {
     // 22:30 UTC del 24 ottobre 2026 = 00:30 del 25 a Roma (ora legale ancora attiva)
     expect(todayIso(new Date("2026-10-24T22:30:00Z"))).toBe("2026-10-25")
     expect(todayIso(new Date("2026-10-24T12:00:00Z"))).toBe("2026-10-24")
+  })
+})
+
+describe("netPrice", () => {
+  it("senza sconti il netto è il listino", () => {
+    expect(netPrice(22.02, [])).toBeCloseTo(22.02, 6)
+  })
+
+  it("applica gli sconti a cascata (foglio Munari: 50% poi 20%)", () => {
+    expect(netPrice(22.02, [50, 20])).toBeCloseTo(8.808, 6)
+    expect(netPrice(32.58, [50, 20])).toBeCloseTo(13.032, 6)
+    expect(netPrice(49.87, [50, 20])).toBeCloseTo(19.948, 6)
+  })
+
+  it("lo sconto singolo e quello in più voci di uguale effetto danno lo stesso netto", () => {
+    expect(netPrice(100, [10, 10])).toBeCloseTo(81, 6)
+    expect(netPrice(100, [19])).toBeCloseTo(81, 6)
+  })
+
+  it("con il netto i conti tornano sul foglio Munari", () => {
+    expect(checkRow({ quantita: 10, prezzo: netPrice(22.02, [50, 20]), importo: 88.08 })).toBe(true)
+    expect(checkRow({ quantita: 2, prezzo: netPrice(32.58, [50, 20]), importo: 26.06 })).toBe(true)
+    expect(checkRow({ quantita: 2, prezzo: netPrice(65.72, [50, 20]), importo: 52.58 })).toBe(true)
+    expect(checkRow({ quantita: 2, prezzo: netPrice(44.65, [50, 20]), importo: 35.72 })).toBe(true)
+    expect(checkRow({ quantita: 2, prezzo: netPrice(49.87, [50, 20]), importo: 39.9 })).toBe(true)
+  })
+})
+
+describe("round3", () => {
+  it("arrotonda a tre decimali", () => {
+    expect(round3(8.8080001)).toBe(8.808)
+    expect(round3(19.9484)).toBe(19.948)
+    expect(round3(19.9486)).toBe(19.949)
+  })
+})
+
+describe("parseDiscounts", () => {
+  it("vuoto: nessuno sconto", () => {
+    expect(parseDiscounts("")).toEqual([])
+    expect(parseDiscounts("   ")).toEqual([])
+  })
+
+  it("legge uno o più sconti separati da +, /, ; o spazi", () => {
+    expect(parseDiscounts("50")).toEqual([50])
+    expect(parseDiscounts("50+20")).toEqual([50, 20])
+    expect(parseDiscounts("50 + 20")).toEqual([50, 20])
+    expect(parseDiscounts("50 20")).toEqual([50, 20])
+    expect(parseDiscounts("50/20")).toEqual([50, 20])
+  })
+
+  it("la virgola è il decimale, non un separatore", () => {
+    expect(parseDiscounts("12,5")).toEqual([12.5])
+    expect(parseDiscounts("12,5+10")).toEqual([12.5, 10])
+  })
+
+  it("ignora il simbolo % e gli sconti a zero", () => {
+    expect(parseDiscounts("50% + 20%")).toEqual([50, 20])
+    expect(parseDiscounts("0")).toEqual([])
+  })
+
+  it("null se qualcosa non è un numero tra 0 e 100", () => {
+    expect(parseDiscounts("abc")).toBeNull()
+    expect(parseDiscounts("50+x")).toBeNull()
+    expect(parseDiscounts("-5")).toBeNull()
+    expect(parseDiscounts("120")).toBeNull()
+  })
+})
+
+describe("formatDiscounts", () => {
+  it("scrive gli sconti separati da + con la virgola decimale", () => {
+    expect(formatDiscounts([])).toBe("")
+    expect(formatDiscounts([50])).toBe("50")
+    expect(formatDiscounts([50, 20])).toBe("50 + 20")
+    expect(formatDiscounts([12.5, 10])).toBe("12,5 + 10")
   })
 })

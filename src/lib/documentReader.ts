@@ -11,8 +11,9 @@ Regole:
 - "fornitore" è chi EMETTE il documento (l'intestazione in alto), non il destinatario.
 - "data" è la data del documento in formato AAAA-MM-GG, non la data di un ordine richiamato nel testo. Se non la leggi, null.
 - Una riga per ogni articolo. Includi tutte le righe di merce o servizio, comprese eventuali spese (trasporto, imballo): le toglierà una persona.
-- "prezzo" è il prezzo unitario SENZA IVA, in euro, come numero con il punto decimale (14.380 → 14.38). Se il prezzo unitario non c'è, la riga va comunque registrata solo se puoi ricavarlo con certezza da importo e quantità.
-- "importo" è l'importo di riga senza IVA, come scritto sul documento. "quantita" è la quantità.
+- "prezzo" è il prezzo unitario di LISTINO senza IVA, in euro, PRIMA di qualsiasi sconto, come numero con il punto decimale (14.380 → 14.38). Se il prezzo unitario non c'è, la riga va comunque registrata solo se puoi ricavarlo con certezza da importo e quantità.
+- "sconti" sono le percentuali di sconto della riga nell'ordine delle colonne (SC.1%, SC.2%, SC.3%…), come numeri (50, 20): sono sconti a cascata. Ometti le colonne vuote o a zero; senza sconti, elenco vuoto. Uno sconto espresso in euro non va qui.
+- "importo" è l'importo di riga senza IVA, come scritto sul documento (di solito l'importo netto, già scontato). "quantita" è la quantità.
 - Non inventare nulla: se un dato non si legge, usa null. Non calcolare totali del documento.`
 
 const TOOL: Anthropic.Tool = {
@@ -32,7 +33,12 @@ const TOOL: Anthropic.Tool = {
             nome: { type: "string", description: "Descrizione dell'articolo" },
             unita: { type: ["string", "null"], description: "Unità di misura (Nr., pz, m, kg…)" },
             quantita: { type: ["number", "null"] },
-            prezzo: { type: "number", description: "Prezzo unitario senza IVA, in euro" },
+            prezzo: { type: "number", description: "Prezzo unitario di listino senza IVA, in euro, prima degli sconti" },
+            sconti: {
+              type: "array",
+              items: { type: "number" },
+              description: "Percentuali di sconto a cascata (SC.1, SC.2, SC.3…), nell'ordine del documento; vuoto se non ce ne sono",
+            },
             importo: { type: ["number", "null"], description: "Importo di riga senza IVA" },
           },
           required: ["nome", "prezzo"],

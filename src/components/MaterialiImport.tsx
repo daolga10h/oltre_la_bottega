@@ -14,8 +14,12 @@ import { MAX_FILE_BYTES } from "@/lib/documentoFornitore"
 import {
   checkRow,
   classifyRow,
+  formatDiscounts,
   formatPrezzo,
+  netPrice,
+  parseDiscounts,
   parsePrice,
+  round3,
   todayIso,
   type Materiale,
   type RigaDocumento,
@@ -28,7 +32,8 @@ type RigaForm = {
   nome: string
   unita: string
   quantita: number | null // solo per il controllo, non si salva
-  prezzo: string
+  prezzo: string // listino, prima degli sconti
+  sconti: string // "50 + 20": sconti a cascata in percentuale
   importo: number | null // solo per il controllo, non si salva
 }
 
@@ -49,7 +54,7 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
   const [salvataggio, setSalvataggio] = useState(false)
 
   function nuovaRiga(): RigaForm {
-    return { key: prossimaChiave.current++, codice: "", nome: "", unita: "", quantita: null, prezzo: "", importo: null }
+    return { key: prossimaChiave.current++, codice: "", nome: "", unita: "", quantita: null, prezzo: "", sconti: "", importo: null }
   }
 
   function apriControllo(opzioni: { fornitore?: string; data?: string; righe?: RigaForm[]; errore?: string | null }) {
@@ -91,6 +96,7 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
         unita: r.unita ?? "",
         quantita: r.quantita,
         prezzo: formatPrezzo(r.prezzo),
+        sconti: formatDiscounts(r.sconti),
         importo: r.importo,
       }))
       apriControllo({
@@ -108,17 +114,28 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
     setRighe((rs) => rs.map((r) => (r.key === key ? { ...r, [campo]: valore } : r)))
   }
 
-  function toRigaDocumento(r: RigaForm): RigaDocumento | null {
-    const prezzo = parsePrice(r.prezzo)
-    if (prezzo === null || !r.nome.trim()) return null
+  // Il prezzo che si salva è il NETTO (listino meno gli sconti a cascata): è il costo vero.
+  // Il controllo "quantità × prezzo = importo" usa il netto non arrotondato.
+  function calcola(r: RigaForm): { riga: RigaDocumento; nettoEsatto: number } | null {
+    const listino = parsePrice(r.prezzo)
+    const sconti = parseDiscounts(r.sconti)
+    if (listino === null || sconti === null || !r.nome.trim()) return null
+    const nettoEsatto = netPrice(listino, sconti)
     return {
-      codice: r.codice.trim() || null,
-      nome: r.nome.trim(),
-      unita: r.unita.trim() || null,
-      quantita: r.quantita,
-      prezzo,
-      importo: r.importo,
+      nettoEsatto,
+      riga: {
+        codice: r.codice.trim() || null,
+        nome: r.nome.trim(),
+        unita: r.unita.trim() || null,
+        quantita: r.quantita,
+        prezzo: round3(nettoEsatto),
+        importo: r.importo,
+      },
     }
+  }
+
+  function toRigaDocumento(r: RigaForm): RigaDocumento | null {
+    return calcola(r)?.riga ?? null
   }
 
   async function conferma() {
@@ -129,7 +146,7 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
     }
     const nonValide = righe.some((r) => !rigaVuota(r) && toRigaDocumento(r) === null)
     if (nonValide) {
-      setErrore("Alcune righe non hanno un nome o un prezzo valido: correggile o toglile.")
+      setErrore("Alcune righe non hanno nome, prezzo o sconti validi: correggile o toglile.")
       return
     }
     const daSalvare = righe.flatMap((r) => {
@@ -206,22 +223,25 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
               <th className="px-2 py-2">Codice</th>
               <th className="px-2 py-2">Materiale</th>
               <th className="px-2 py-2">Unità</th>
-              <th className="px-2 py-2">Prezzo € (senza IVA)</th>
+              <th className="px-2 py-2">Listino € (senza IVA)</th>
+              <th className="px-2 py-2">Sconti %</th>
+              <th className="px-2 py-2" title="Costo dopo gli sconti: è il prezzo che si salva">Netto €</th>
               <th className="px-2 py-2">Controllo</th>
               <th className="px-2 py-2" />
             </tr>
           </thead>
           <tbody>
             {righe.map((r) => {
-              const riga = toRigaDocumento(r)
+              const calcolo = calcola(r)
+              const riga = calcolo?.riga ?? null
               const stato = riga ? classifyRow(esistenti, fornitore, riga) : null
-              const torna = riga ? checkRow(riga) : true
+              const torna = riga && calcolo ? checkRow({ quantita: riga.quantita, prezzo: calcolo.nettoEsatto, importo: riga.importo }) : true
               return (
                 <tr key={r.key} className="border-b last:border-0 align-top">
-                  <td className="px-2 py-2 w-28">
+                  <td className="px-2 py-2 w-40">
                     <Input value={r.codice} onChange={(e) => aggiorna(r.key, "codice", e.target.value)} aria-label="Codice" />
                   </td>
-                  <td className="px-2 py-2 min-w-48">
+                  <td className="px-2 py-2 min-w-72">
                     <Input value={r.nome} onChange={(e) => aggiorna(r.key, "nome", e.target.value)} aria-label="Materiale" />
                   </td>
                   <td className="px-2 py-2 w-20">
@@ -235,6 +255,17 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
                       aria-label="Prezzo"
                     />
                   </td>
+                  <td className="px-2 py-2 w-28">
+                    <Input
+                      value={r.sconti}
+                      onChange={(e) => aggiorna(r.key, "sconti", e.target.value)}
+                      placeholder="es. 50 + 20"
+                      aria-label="Sconti"
+                    />
+                  </td>
+                  <td className="px-2 py-2 w-24 whitespace-nowrap font-semibold">
+                    {riga ? formatPrezzo(riga.prezzo) : "—"}
+                  </td>
                   <td className="px-2 py-2">
                     <div className="flex flex-col items-start gap-1">
                       {stato?.tipo === "nuovo" && <Etichetta className="bg-linen text-bark">Nuovo</Etichetta>}
@@ -243,7 +274,7 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
                         <Etichetta className="bg-linen text-espresso font-semibold">Variato (era {formatPrezzo(stato.era)})</Etichetta>
                       )}
                       {!riga && !rigaVuota(r) && (
-                        <Etichetta className="bg-honey text-espresso">Manca nome o prezzo valido</Etichetta>
+                        <Etichetta className="bg-honey text-espresso">Nome, prezzo o sconti non validi</Etichetta>
                       )}
                       {!torna && (
                         <Etichetta className="bg-honey text-espresso">
@@ -286,7 +317,7 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
 
 // Una riga è vuota se non c'è scritto nulla: si ignora senza segnalare errori
 function rigaVuota(r: RigaForm): boolean {
-  return !r.codice.trim() && !r.nome.trim() && !r.unita.trim() && !r.prezzo.trim()
+  return !r.codice.trim() && !r.nome.trim() && !r.unita.trim() && !r.prezzo.trim() && !r.sconti.trim()
 }
 
 function Etichetta({ className, children }: { className?: string; children: React.ReactNode }) {
