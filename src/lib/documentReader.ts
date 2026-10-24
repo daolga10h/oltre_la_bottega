@@ -48,8 +48,9 @@ export async function readSupplierDocument(
   base64: string,
   mediaType: SupportedMediaType
 ): Promise<DocumentoLetto> {
-  // Timeout sotto i 60 s di maxDuration della pagina Materiali.
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 55_000, maxRetries: 1 })
+  // Timeout sotto i 60 s di maxDuration della pagina Materiali; nessun nuovo tentativo,
+  // perché un secondo giro supererebbe comunque i 60 s.
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 55_000, maxRetries: 0 })
 
   const fileBlock: Anthropic.ContentBlockParam =
     mediaType === "application/pdf"
@@ -63,6 +64,11 @@ export async function readSupplierDocument(
     tool_choice: { type: "tool", name: TOOL.name },
     messages: [{ role: "user", content: [fileBlock, { type: "text", text: PROMPT }] }],
   })
+
+  // Risposta tagliata: mancherebbero righe senza che si veda
+  if (response.stop_reason === "max_tokens") {
+    throw new Error("Lettura interrotta: documento troppo lungo")
+  }
 
   const risposta = response.content.find((b) => b.type === "tool_use")
   return parseExtraction(risposta && risposta.type === "tool_use" ? risposta.input : null)

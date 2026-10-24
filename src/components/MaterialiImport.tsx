@@ -127,6 +127,11 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
       setErrore("Scrivi il nome del fornitore.")
       return
     }
+    const nonValide = righe.some((r) => !rigaVuota(r) && toRigaDocumento(r) === null)
+    if (nonValide) {
+      setErrore("Alcune righe non hanno un nome o un prezzo valido: correggile o toglile.")
+      return
+    }
     const daSalvare = righe.flatMap((r) => {
       const riga = toRigaDocumento(r)
       return riga ? [{ codice: riga.codice, nome: riga.nome, unita: riga.unita, prezzo: riga.prezzo }] : []
@@ -237,6 +242,9 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
                       {stato?.tipo === "variato" && (
                         <Etichetta className="bg-linen text-espresso font-semibold">Variato (era {formatPrezzo(stato.era)})</Etichetta>
                       )}
+                      {!riga && !rigaVuota(r) && (
+                        <Etichetta className="bg-honey text-espresso">Manca nome o prezzo valido</Etichetta>
+                      )}
                       {!torna && (
                         <Etichetta className="bg-honey text-espresso">
                           Non torna: {riga?.quantita} × {riga ? formatPrezzo(riga.prezzo) : ""} ≠ {riga?.importo}
@@ -274,6 +282,11 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
       </div>
     </div>
   )
+}
+
+// Una riga è vuota se non c'è scritto nulla: si ignora senza segnalare errori
+function rigaVuota(r: RigaForm): boolean {
+  return !r.codice.trim() && !r.nome.trim() && !r.unita.trim() && !r.prezzo.trim()
 }
 
 function Etichetta({ className, children }: { className?: string; children: React.ReactNode }) {

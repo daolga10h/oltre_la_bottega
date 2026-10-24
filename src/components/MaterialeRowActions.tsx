@@ -20,6 +20,16 @@ export function MaterialeRowActions({ materiale }: { materiale: Materiale }) {
   const [errore, setErrore] = useState<string | null>(null)
   const [occupato, setOccupato] = useState(false)
 
+  // Rilegge i valori correnti ogni volta che si apre il modulo, così non restano dati vecchi
+  function apri() {
+    setNome(materiale.nome)
+    setUnita(materiale.unita ?? "")
+    setAttuale(formatPrezzo(materiale.prezzo_attuale))
+    setPrecedente(materiale.prezzo_precedente === null ? "" : formatPrezzo(materiale.prezzo_precedente))
+    setErrore(null)
+    setModifica(true)
+  }
+
   async function salva() {
     setErrore(null)
     const prezzoAttuale = parsePrice(attuale)
@@ -69,7 +79,7 @@ export function MaterialeRowActions({ materiale }: { materiale: Materiale }) {
   if (!modifica) {
     return (
       <div className="flex gap-1">
-        <Button variant="outline" size="sm" onClick={() => setModifica(true)}>
+        <Button variant="outline" size="sm" onClick={apri}>
           Modifica
         </Button>
         <Button variant="outline" size="sm" onClick={elimina} disabled={occupato}>
