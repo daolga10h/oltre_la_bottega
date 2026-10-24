@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { LayoutDashboard, ShoppingBag, Users, Calendar, LayoutGrid, Star, Settings, Euro, ClipboardList } from "lucide-react"
+import { LayoutDashboard, ShoppingBag, Users, Calendar, LayoutGrid, Star, Settings, Euro, ClipboardList, Package } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { hasFeature, type Feature } from "@/lib/plan"
 
@@ -19,6 +19,7 @@ const managementLinks: NavItem[] = [
   { href: "/recensioni", label: "Recensioni", icon: Star },
   { href: "/pagamenti", label: "Da incassare", icon: Euro, feature: "da_incassare" },
   { href: "/riepilogo", label: "Riepilogo", icon: ClipboardList, feature: "riepilogo" },
+  { href: "/materiali", label: "Materiali", icon: Package, feature: "materiali" },
   { href: "/customers", label: "Clienti", icon: Users },
   { href: "/impostazioni", label: "Impostazioni", icon: Settings },
 ]
