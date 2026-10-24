@@ -23,6 +23,7 @@ const ALL_FEATURES_MAP: Record<Feature, true> = {
   riepilogo: true,
   etichetta_termica: true,
   calcolatrice: true,
+  materiali: true,
 }
 const ALL_FEATURES = Object.keys(ALL_FEATURES_MAP) as Feature[]
 

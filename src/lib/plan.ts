@@ -25,6 +25,7 @@ export type Feature =
   | "riepilogo"
   | "etichetta_termica"
   | "calcolatrice"
+  | "materiali" // pagina Materiali (listino costi con lettura dei documenti del fornitore)
 
 const OFF_IN_BASE: ReadonlySet<Feature> = new Set<Feature>([
   "multi_riga",
@@ -38,6 +39,7 @@ const OFF_IN_BASE: ReadonlySet<Feature> = new Set<Feature>([
   "riepilogo",
   "etichetta_termica",
   "calcolatrice",
+  "materiali",
 ])
 
 /** Valore mancante o non riconosciuto → "completo": l'installazione esistente non deve rompersi. */
