@@ -61,7 +61,8 @@ export async function readSupplierDocument(
     model: process.env.MATERIALI_MODEL || DEFAULT_MODEL,
     max_tokens: 8000,
     tools: [TOOL],
-    tool_choice: { type: "tool", name: TOOL.name },
+    // "tool" (obbligatorio) non è accettato da tutti i modelli: con "auto" il prompt chiede comunque lo strumento.
+    tool_choice: { type: "auto" },
     messages: [{ role: "user", content: [fileBlock, { type: "text", text: PROMPT }] }],
   })
 
