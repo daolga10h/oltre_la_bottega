@@ -64,14 +64,14 @@ Nel browser la foto viene ridotta (lato lungo ~1800 px, JPEG ~0,8) prima dell'in
 
 Server action `saveMaterials({ fornitore, data, righe })`:
 - Per ogni riga confermata: `matchMaterial` poi `applyPriceUpdate` (aggiorna) oppure inserisce un materiale nuovo.
-- Tutto in un'unica operazione: o si salvano tutte le righe o nessuna.
+- Non è una transazione unica (il client Supabase non la offre: un inserimento e un aggiornamento in blocco), ma è **idempotente**: se una delle due chiamate fallisce, rilanciare lo stesso salvataggio dà "Invariato" per ciò che è già scritto e completa il resto.
 - `revalidatePath("/materiali")`.
 
-Modifica manuale dall'elenco: correzione di nome, unità e prezzi di un singolo materiale e cancellazione, con le stesse regole di storico quando cambia il prezzo attuale.
+Modifica manuale dall'elenco: **correzione diretta** di nome, unità, prezzo attuale e prezzo precedente di un singolo materiale (non registra un acquisto: nessuna logica di storico), più cancellazione.
 
 ## Schermata
 
-Pagina `src/app/(dashboard)/materiali/page.tsx`, solo livello completo (nel base `notFound()`, come `/pagamenti`), nuova voce di menu in `Sidebar.tsx`/`BottomNav.tsx` (la bottom nav arriva a 9 voci: verificare che regga, altrimenti la voce resta solo in sidebar).
+Pagina `src/app/(dashboard)/materiali/page.tsx`, solo livello completo (nel base `notFound()`, come `/pagamenti`), nuova voce di menu solo in `Sidebar.tsx` (tablet/PC). La bottom nav del telefono ha già 8 voci e non cambia.
 
 - **Elenco** con ricerca: Fornitore, Materiale, Prezzo attuale (con freccia ↑↓ e %), Data acquisto attuale, Prezzo precedente, Data acquisto precedente.
 - Due bottoni: **Carica documento** e **Aggiungi a mano**.
