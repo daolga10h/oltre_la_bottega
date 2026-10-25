@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type ComponentType } from "react"
+import { useCallback, useEffect, useState, type ComponentType } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ErrorMessage } from "@/components/ErrorMessage"
 import { toUserMessage } from "@/lib/errors"
@@ -9,6 +9,8 @@ import { deadlineLevel } from "@/lib/deadline"
 import { DeadlineDot, DEADLINE_CARD_CLASSES } from "@/components/DeadlineDot"
 import { Clock, CheckCircle2, Package } from "lucide-react"
 import Link from "next/link"
+import { OrdinatoButton } from "@/components/OrdinatoButton"
+import { formatQuantita, daysBetween, todayIso } from "@/lib/materiali"
 
 interface KPI {
   open: number
@@ -45,6 +47,16 @@ interface OrderSummary {
   data_consegna?: string | null
 }
 
+interface Riordino {
+  id: string
+  nome: string
+  fornitore: string
+  giacenza: number
+  soglia: number | null
+  stato: "da_riordinare" | "ordinato_scaduto"
+  ordinato_il: string | null
+}
+
 interface DashboardData {
   kpi: KPI
   todayOrders: TodayOrder[]
@@ -52,6 +64,7 @@ interface DashboardData {
   materialeDaOrdinare: OrderSummary[]
   materialeOrdinatoOggi: OrderSummary[]
   daAvvisare: OrderSummary[]
+  riordino: Riordino[]
   reminders: Reminder[]
 }
 
@@ -60,7 +73,7 @@ export function TodayBoard() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const carica = useCallback(() => {
     fetch("/api/dashboard/today")
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
@@ -76,6 +89,10 @@ export function TodayBoard() {
       })
   }, [])
 
+  useEffect(() => {
+    carica()
+  }, [carica])
+
   if (loading) {
     return <p className="text-sm text-muted-foreground">Caricamento…</p>
   }
@@ -83,7 +100,7 @@ export function TodayBoard() {
     return <ErrorMessage message={error} />
   }
 
-  const { kpi, todayOrders, deliveredToday, materialeDaOrdinare, materialeOrdinatoOggi, daAvvisare, reminders } = data!
+  const { kpi, todayOrders, deliveredToday, materialeDaOrdinare, materialeOrdinatoOggi, daAvvisare, riordino, reminders } = data!
 
   return (
     <div className="space-y-6">
@@ -131,6 +148,8 @@ export function TodayBoard() {
         icon={Package}
       />
 
+      <RiordinoCard items={riordino} onDone={carica} />
+
       {reminders.length > 0 && (
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
@@ -150,7 +169,7 @@ export function TodayBoard() {
         </Card>
       )}
 
-      {todayOrders.length === 0 && deliveredToday.length === 0 && materialeDaOrdinare.length === 0 && materialeOrdinatoOggi.length === 0 && daAvvisare.length === 0 && reminders.length === 0 && (
+      {todayOrders.length === 0 && deliveredToday.length === 0 && materialeDaOrdinare.length === 0 && materialeOrdinatoOggi.length === 0 && daAvvisare.length === 0 && riordino.length === 0 && reminders.length === 0 && (
         <p className="text-sm text-muted-foreground">Nessuna scadenza per oggi. Ottimo lavoro!</p>
       )}
     </div>
@@ -214,6 +233,42 @@ function DashboardListCard({
             </Link>
           )
         })}
+      </CardContent>
+    </Card>
+  )
+}
+
+function RiordinoCard({ items, onDone }: { items: Riordino[]; onDone: () => void }) {
+  if (items.length === 0) return null
+  const oggi = todayIso()
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-sm font-semibold">Da riordinare</CardTitle>
+        <span className="text-xs font-semibold rounded-full px-2.5 py-0.5 border bg-terracotta/15 border-terracotta/30 text-terracotta">
+          {items.length}
+        </span>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {items.map((m) => (
+          <div key={m.id} className="flex items-center justify-between gap-3 bg-background rounded-lg px-4 py-3">
+            <Link href={`/materiali?q=${encodeURIComponent(m.nome)}`} className="min-w-0">
+              <p className="font-semibold text-sm text-foreground">{m.nome}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{m.fornitore}</p>
+              <p className="text-xs text-muted-foreground">
+                In magazzino: {formatQuantita(m.giacenza)}
+                {m.soglia !== null && ` (minimo ${formatQuantita(m.soglia)})`}
+              </p>
+              {m.stato === "ordinato_scaduto" && m.ordinato_il && (
+                <p className="text-xs text-terracotta">
+                  Ordinato da {daysBetween(m.ordinato_il, oggi)} giorni, non è arrivato
+                </p>
+              )}
+            </Link>
+            <OrdinatoButton id={m.id} onDone={onDone} />
+          </div>
+        ))}
       </CardContent>
     </Card>
   )

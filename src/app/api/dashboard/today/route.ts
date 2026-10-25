@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { logError } from "@/lib/logger"
 import { NextResponse } from "next/server"
+import { hasFeature } from "@/lib/plan"
+import { computeStock, reorderStatus, todayIso } from "@/lib/materiali"
 
 export async function GET() {
   try {
@@ -10,7 +12,7 @@ export async function GET() {
 
     const today = new Date().toISOString().split("T")[0]
 
-    const [openRes, urgentRes, overdueRes, todayRes, deliveredRes, materialeDaOrdinareRes, materialeOrdinatoOggiRes, daAvvisareRes, remindersRes] = await Promise.all([
+    const [openRes, urgentRes, overdueRes, todayRes, deliveredRes, materialeDaOrdinareRes, materialeOrdinatoOggiRes, daAvvisareRes, remindersRes, materialiRes] = await Promise.all([
       supabase.from("orders").select("id", { count: "exact", head: true })
         .not("status", "in", '("consegnato")'),
       supabase.from("orders").select("id", { count: "exact", head: true })
@@ -29,7 +31,28 @@ export async function GET() {
         .eq("status", "pronto").eq("msg_pronto_inviato", false),
       supabase.from("reminders").select("id, title, due_at")
         .eq("status", "attivo").lte("due_at", `${today}T23:59:59Z`).order("due_at"),
+      // Materiali in magazzino per l'avviso «Da riordinare» (solo livello completo)
+      hasFeature("materiali")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? (supabase as any)
+            .from("materiali")
+            .select("id, fornitore, nome, in_magazzino, carico_totale, rettifica, soglia, ordinato_il")
+            .eq("in_magazzino", true)
+        : Promise.resolve({ data: [] }),
     ])
+
+    const oggiRoma = todayIso()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const riordino = ((materialiRes.data ?? []) as any[])
+      .flatMap((row) => {
+        const soglia = row.soglia === null || row.soglia === undefined ? null : Number(row.soglia)
+        const giacenza = computeStock({ carico_totale: Number(row.carico_totale ?? 0), rettifica: Number(row.rettifica ?? 0) })
+        const stato = reorderStatus({ in_magazzino: Boolean(row.in_magazzino), soglia, ordinato_il: row.ordinato_il ?? null }, giacenza, oggiRoma)
+        return stato === "da_riordinare" || stato === "ordinato_scaduto"
+          ? [{ id: row.id, nome: row.nome, fornitore: row.fornitore, giacenza, soglia, stato, ordinato_il: row.ordinato_il ?? null }]
+          : []
+      })
+      .sort((a, b) => a.nome.localeCompare(b.nome))
 
     return NextResponse.json({
       kpi: {
@@ -43,6 +66,7 @@ export async function GET() {
       materialeDaOrdinare: materialeDaOrdinareRes.data ?? [],
       materialeOrdinatoOggi: materialeOrdinatoOggiRes.data ?? [],
       daAvvisare: daAvvisareRes.data ?? [],
+      riordino,
       reminders: remindersRes.data ?? [],
     })
   } catch (error) {

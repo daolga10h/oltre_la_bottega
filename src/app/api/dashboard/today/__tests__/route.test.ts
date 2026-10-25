@@ -194,4 +194,63 @@ describe("avvisi ordine pronto", () => {
     expect(builder.eq).toHaveBeenCalledWith("status", "pronto")
     expect(builder.eq).toHaveBeenCalledWith("msg_pronto_inviato", false)
   })
+
+  describe("riordino materiali", () => {
+    const materiale = (over: Record<string, unknown> = {}) => ({
+      id: "m1", fornitore: "Trodat", nome: "8913 IMPRINT NERO", in_magazzino: true,
+      carico_totale: "20.000", rettifica: "-12.000", soglia: "10.000", ordinato_il: null, ...over,
+    })
+
+    function conMateriali(rows: unknown[]) {
+      const client = mockOrdersSequence({ open: 0, urgent: 0, overdue: 0 }, [], [])
+      const originale = client.from.getMockImplementation()!
+      client.from.mockImplementation((table: string) =>
+        table === "materiali" ? createSupabaseMock({ materiali: [{ data: rows, error: null }] }).from("materiali") : originale(table)
+      )
+      mockCreateClient.mockResolvedValue(client)
+    }
+
+    it("elenca i materiali con giacenza uguale o sotto la scorta minima", async () => {
+      conMateriali([materiale(), materiale({ id: "m2", nome: "Penna blu", carico_totale: "50.000", rettifica: "0.000" })])
+
+      const body = await (await GET()).json()
+
+      expect(body.riordino).toHaveLength(1)
+      expect(body.riordino[0]).toMatchObject({ id: "m1", fornitore: "Trodat", giacenza: 8, soglia: 10, stato: "da_riordinare" })
+    })
+
+    it("non elenca i materiali con «Ho già ordinato» da meno di 7 giorni", async () => {
+      const oggi = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Rome" }).format(new Date())
+      conMateriali([materiale({ ordinato_il: oggi })])
+
+      const body = await (await GET()).json()
+
+      expect(body.riordino).toEqual([])
+    })
+
+    it("rielenca un materiale ordinato da 7 giorni o più", async () => {
+      conMateriali([materiale({ ordinato_il: "2020-01-01" })])
+
+      const body = await (await GET()).json()
+
+      expect(body.riordino).toHaveLength(1)
+      expect(body.riordino[0].stato).toBe("ordinato_scaduto")
+    })
+
+    it("ignora i materiali non in magazzino o senza scorta minima", async () => {
+      conMateriali([materiale({ in_magazzino: false }), materiale({ id: "m3", soglia: null })])
+
+      const body = await (await GET()).json()
+
+      expect(body.riordino).toEqual([])
+    })
+
+    it("senza materiali la lista è vuota", async () => {
+      mockCreateClient.mockResolvedValue(mockOrdersSequence({ open: 0, urgent: 0, overdue: 0 }, [], []))
+
+      const body = await (await GET()).json()
+
+      expect(body.riordino).toEqual([])
+    })
+  })
 })
