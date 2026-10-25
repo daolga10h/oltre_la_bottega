@@ -10,8 +10,11 @@ import {
   type DocumentoLetto,
   type SupportedMediaType,
 } from "@/lib/documentoFornitore"
+import { documentFingerprint } from "@/lib/documentFingerprint"
 
-type LetturaResult = { ok: true; documento: DocumentoLetto } | { ok: false; error: string }
+type LetturaResult =
+  | { ok: true; documento: DocumentoLetto; impronta: string; giaCaricato: boolean }
+  | { ok: false; error: string }
 
 const MSG_NO_KEY = "La lettura automatica non è configurata. Puoi inserire le righe a mano."
 const MSG_NO_FILE = "Nessun file ricevuto."
@@ -37,9 +40,21 @@ export async function extractDocument(formData: FormData): Promise<LetturaResult
   try {
     const base64 = Buffer.from(await file.arrayBuffer()).toString("base64")
     const documento = await readSupplierDocument(base64, file.type as SupportedMediaType)
-    return { ok: true, documento }
+    const impronta = documentFingerprint(documento)
+    return { ok: true, documento, impronta, giaCaricato: await giaCaricato(supabase, impronta) }
   } catch (error) {
     logError("extractDocument", error)
     return { ok: false, error: MSG_READ_FAILED }
   }
+}
+
+// Un errore nel controllo non deve bloccare la lettura: nel dubbio si tratta il documento come nuovo.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function giaCaricato(supabase: any, impronta: string): Promise<boolean> {
+  const { data, error } = await supabase.from("documenti_caricati").select("id").eq("impronta", impronta)
+  if (error) {
+    logError("extractDocument.impronta", error)
+    return false
+  }
+  return Array.isArray(data) && data.length > 0
 }
