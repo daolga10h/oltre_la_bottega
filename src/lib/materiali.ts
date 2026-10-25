@@ -8,7 +8,7 @@ export type Materiale = {
   data_acquisto_attuale: string // AAAA-MM-GG
   prezzo_precedente: number | null
   data_acquisto_precedente: string | null
-}
+} & DatiMagazzino
 
 export type PrezziMateriale = Pick<
   Materiale,

@@ -33,6 +33,11 @@ const base: Materiale = {
   data_acquisto_attuale: "2025-10-29",
   prezzo_precedente: null,
   data_acquisto_precedente: null,
+  in_magazzino: false,
+  carico_totale: 0,
+  rettifica: 0,
+  soglia: null,
+  ordinato_il: null,
 }
 
 describe("normalizeText", () => {
