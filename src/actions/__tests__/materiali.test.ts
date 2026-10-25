@@ -84,7 +84,7 @@ describe("saveMaterials", () => {
     )
 
     expect(r).toEqual({ ok: true, nuovi: 2, aggiornati: 0 })
-    const inseriti = client.from.mock.results[1].value.insert.mock.calls[0][0]
+    const inseriti = client.from.mock.results[1].value.upsert.mock.calls[0][0]
     expect(inseriti).toHaveLength(2)
     expect(inseriti[0]).toMatchObject({
       fornitore: "FB Targhe",
@@ -94,7 +94,7 @@ describe("saveMaterials", () => {
       prezzo_precedente: null,
       data_acquisto_precedente: null,
     })
-    expect(inseriti[0]).not.toHaveProperty("id")
+    expect(inseriti[0]).toHaveProperty("id", expect.any(String))
   })
 
   it("aggiorna un materiale esistente con prezzo diverso e sposta l'attuale in precedente", async () => {
@@ -106,7 +106,7 @@ describe("saveMaterials", () => {
     const r = await saveMaterials(input([{ codice: "003553", nome: "Targa 003 20x15", prezzo: 15.1 }]))
 
     expect(r).toEqual({ ok: true, nuovi: 0, aggiornati: 1 })
-    expect(client.from).toHaveBeenCalledTimes(2) // lettura + upsert, nessun insert
+    expect(client.from).toHaveBeenCalledTimes(2) // lettura + un solo upsert
     const aggiornati = client.from.mock.results[1].value.upsert.mock.calls[0][0]
     expect(aggiornati).toEqual([
       expect.objectContaining({
@@ -157,7 +157,7 @@ describe("saveMaterials", () => {
     )
 
     expect(r).toEqual({ ok: true, nuovi: 1, aggiornati: 0 })
-    const inseriti = client.from.mock.results[1].value.insert.mock.calls[0][0]
+    const inseriti = client.from.mock.results[1].value.upsert.mock.calls[0][0]
     expect(inseriti).toHaveLength(1)
     expect(inseriti[0]).toMatchObject({ prezzo_attuale: 12, prezzo_precedente: 10 })
   })
@@ -270,7 +270,7 @@ describe("saveMaterials — magazzino", () => {
     const r = await saveMaterials(input([rigaMag()], { impronta: "abc123" }))
 
     expect(r).toEqual({ ok: true, nuovi: 1, aggiornati: 0 })
-    const inseriti = builderDi(client, "materiali", 1).insert.mock.calls[0][0]
+    const inseriti = builderDi(client, "materiali", 1).upsert.mock.calls[0][0]
     expect(inseriti[0]).toMatchObject({ in_magazzino: true, carico_totale: 50, rettifica: 0, soglia: null, ordinato_il: null })
     expect(builderDi(client, "documenti_caricati").insert).toHaveBeenCalledWith({ impronta: "abc123" })
   })
@@ -331,7 +331,22 @@ describe("saveMaterials — magazzino", () => {
     await saveMaterials(input([rigaMag({ magazzino: false })], { impronta: "abc123" }))
 
     expect(client.from.mock.calls.some((c) => c[0] === "documenti_caricati")).toBe(false)
-    expect(builderDi(client, "materiali", 1).insert.mock.calls[0][0][0]).toMatchObject({ in_magazzino: false, carico_totale: 0 })
+    expect(builderDi(client, "materiali", 1).upsert.mock.calls[0][0][0]).toMatchObject({ in_magazzino: false, carico_totale: 0 })
+  })
+
+  it("il caricamento non spegne mai il magazzino di un materiale che c'è già", async () => {
+    const client = createSupabaseMock({
+      materiali: [
+        { data: [riga({ codice: "111383", nome: "8913 IMPRINT NERO", in_magazzino: true, carico_totale: "20.000" })], error: null },
+        { data: null, error: null },
+      ],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await saveMaterials(input([rigaMag({ magazzino: false, prezzo: 9.9 })], { data: "2026-01-10" }))
+
+    const scritti = builderDi(client, "materiali", 1).upsert.mock.calls[0][0]
+    expect(scritti[0]).toMatchObject({ id: "m1", in_magazzino: true })
   })
 
   it("senza impronta (inserimento a mano) somma la quantità senza controllo dei doppi", async () => {
@@ -342,7 +357,7 @@ describe("saveMaterials — magazzino", () => {
 
     expect(r).toEqual({ ok: true, nuovi: 1, aggiornati: 0 })
     expect(client.from.mock.calls.some((c) => c[0] === "documenti_caricati")).toBe(false)
-    expect(builderDi(client, "materiali", 1).insert.mock.calls[0][0][0]).toMatchObject({ carico_totale: 50 })
+    expect(builderDi(client, "materiali", 1).upsert.mock.calls[0][0][0]).toMatchObject({ carico_totale: 50 })
   })
 
   it("se la scrittura dei materiali fallisce toglie l'impronta appena registrata", async () => {
@@ -369,7 +384,7 @@ describe("saveMaterials — magazzino", () => {
 
     await saveMaterials(input([rigaMag({ carica: 20 }), rigaMag({ carica: 30 })], { impronta: "abc123" }))
 
-    const inseriti = builderDi(client, "materiali", 1).insert.mock.calls[0][0]
+    const inseriti = builderDi(client, "materiali", 1).upsert.mock.calls[0][0]
     expect(inseriti).toHaveLength(1)
     expect(inseriti[0]).toMatchObject({ carico_totale: 50 })
   })
@@ -409,7 +424,7 @@ describe("setStock", () => {
 
   it("calcola la rettifica che porta la giacenza al valore contato", async () => {
     const client = createSupabaseMock({
-      materiali: [{ data: { carico_totale: "50.000" }, error: null }, { data: null, error: null }],
+      materiali: [{ data: { carico_totale: "50.000", rettifica: "0.000" }, error: null }, { data: null, error: null }],
     })
     mockCreateClient.mockResolvedValue(client)
 
@@ -418,6 +433,17 @@ describe("setStock", () => {
     expect(r).toEqual({ ok: true })
     expect(client.from.mock.results[1].value.update).toHaveBeenCalledWith({ rettifica: -3 })
     expect(client.from.mock.results[1].value.eq).toHaveBeenCalledWith("id", "m1")
+  })
+
+  it("se la giacenza corretta supera quella calcolata (merce arrivata) toglie «Ho già ordinato»", async () => {
+    const client = createSupabaseMock({
+      materiali: [{ data: { carico_totale: "50.000", rettifica: "0.000" }, error: null }, { data: null, error: null }],
+    })
+    mockCreateClient.mockResolvedValue(client)
+
+    await setStock("m1", 60)
+
+    expect(client.from.mock.results[1].value.update).toHaveBeenCalledWith({ rettifica: 10, ordinato_il: null })
   })
 
   it("errore se il materiale non si legge", async () => {

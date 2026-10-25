@@ -17,8 +17,8 @@ export function documentFingerprint(doc: DocumentoLetto): string {
   const righe = doc.righe
     .map((r) =>
       [
-        normalizeText(r.codice),
-        normalizeText(r.nome),
+        // Il nome conta solo se manca il codice: l'AI può scriverlo in modo leggermente diverso a ogni lettura.
+        normalizeText(r.codice) || normalizeText(r.nome),
         num(r.quantita),
         num(r.prezzo),
         r.sconti.map((s) => s.toFixed(3)).join("+"),

@@ -1,11 +1,13 @@
 "use server"
 
+import { randomUUID } from "node:crypto"
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { logError } from "@/lib/logger"
 import { USER_MESSAGES } from "@/lib/errors"
 import {
   applyPriceUpdate,
+  computeStock,
   isValidIsoDate,
   matchMaterial,
   rettificaPerGiacenza,
@@ -34,7 +36,6 @@ type EsitoSemplice = { ok: true } | { ok: false; error: string }
 
 const COLUMNS =
   "id, fornitore, codice, nome, unita, prezzo_attuale, data_acquisto_attuale, prezzo_precedente, data_acquisto_precedente, in_magazzino, carico_totale, rettifica, soglia, ordinato_il"
-const NUOVO_PREFIX = "nuovo-"
 const VIOLAZIONE_UNICITA = "23505"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -123,7 +124,8 @@ function uguali(a: Materiale, b: Materiale): boolean {
  * un'`impronta` si registra PRIMA di scrivere i materiali (il vincolo di unicità la rende atomica): se esiste
  * già il documento è stato caricato e le quantità si saltano, salvo `caricaComunque`. Se poi la scrittura dei
  * materiali fallisce l'impronta si toglie, così un nuovo tentativo parte pulito. I prezzi restano idempotenti.
- * Non è una transazione (un `insert` e un `upsert`): rilanciare dopo un errore completa il resto.
+ * I materiali (nuovi e aggiornati) si scrivono con un solo `upsert`: o tutto o niente. Dal caricamento la casella
+ * «magazzino» si può solo accendere, mai spegnere (si spegne dal modulo di modifica).
  */
 export async function saveMaterials(input: {
   fornitore: string
@@ -185,7 +187,7 @@ export async function saveMaterials(input: {
 
   const lavoro = new Map<string, Materiale>(esistenti.map((m) => [m.id, m]))
   const toccati = new Set<string>()
-  let contatore = 0
+  const nuoviId = new Set<string>()
 
   for (const r of input.righe) {
     const pulita = { codice: pulisci(r.codice), nome: r.nome.trim(), unita: pulisci(r.unita), prezzo: r.prezzo }
@@ -198,7 +200,7 @@ export async function saveMaterials(input: {
         ...applyPriceUpdate(trovato, { prezzo: pulita.prezzo, data: input.data }),
         codice: trovato.codice ?? pulita.codice,
         unita: trovato.unita ?? pulita.unita,
-        in_magazzino: r.magazzino ?? trovato.in_magazzino,
+        in_magazzino: trovato.in_magazzino || r.magazzino === true,
         carico_totale: round3(trovato.carico_totale + aggiungi),
         ordinato_il: aggiungi > 0 ? null : trovato.ordinato_il,
       }
@@ -207,8 +209,8 @@ export async function saveMaterials(input: {
         toccati.add(trovato.id)
       }
     } else {
-      contatore++
-      const id = `${NUOVO_PREFIX}${contatore}`
+      const id = randomUUID()
+      nuoviId.add(id)
       lavoro.set(id, {
         id,
         fornitore,
@@ -229,38 +231,23 @@ export async function saveMaterials(input: {
     }
   }
 
-  const daInserire: ReturnType<typeof campi>[] = []
-  const daAggiornare: Array<{ id: string } & ReturnType<typeof campi>> = []
-  for (const id of toccati) {
-    const m = lavoro.get(id)!
-    if (id.startsWith(NUOVO_PREFIX)) daInserire.push(campi(m))
-    else daAggiornare.push({ id: m.id, ...campi(m) })
-  }
-
-  if (daInserire.length > 0) {
+  const daScrivere = [...toccati].map((id) => ({ id, ...campi(lavoro.get(id)!) }))
+  if (daScrivere.length > 0) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from("materiali").insert(daInserire)
-    if (error) {
-      logError("saveMaterials.insert", error)
-      await annullaImpronta()
-      return { ok: false, error: USER_MESSAGES.saveFailed }
-    }
-  }
-  if (daAggiornare.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from("materiali").upsert(daAggiornare)
+    const { error } = await (supabase as any).from("materiali").upsert(daScrivere)
     if (error) {
       logError("saveMaterials.upsert", error)
       await annullaImpronta()
       return { ok: false, error: USER_MESSAGES.saveFailed }
     }
   }
+  const nuovi = daScrivere.filter((m) => nuoviId.has(m.id)).length
 
   revalidatePath("/materiali")
   return {
     ok: true,
-    nuovi: daInserire.length,
-    aggiornati: daAggiornare.length,
+    nuovi,
+    aggiornati: daScrivere.length - nuovi,
     ...(quantitaSaltate ? { quantitaSaltate: true as const } : {}),
   }
 }
@@ -328,15 +315,21 @@ export async function setStock(id: string, reale: number): Promise<EsitoSemplice
   if (!user) return { ok: false, error: USER_MESSAGES.authRequired }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error: readError } = await (supabase as any).from("materiali").select("carico_totale").eq("id", id).single()
+  const { data, error: readError } = await (supabase as any).from("materiali").select("carico_totale, rettifica").eq("id", id).single()
   if (readError || !data) {
     logError("setStock.read", readError ?? new Error("materiale non trovato"), { id })
     return { ok: false, error: USER_MESSAGES.saveFailed }
   }
 
-  const rettifica = rettificaPerGiacenza(reale, { carico_totale: Number(data.carico_totale) })
+  const carico_totale = Number(data.carico_totale)
+  const rettifica = rettificaPerGiacenza(reale, { carico_totale })
+  // Se la giacenza corretta supera quella calcolata la merce è arrivata: «Ho già ordinato» non serve più.
+  const arrivata = reale > computeStock({ carico_totale, rettifica: Number(data.rettifica ?? 0) })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).from("materiali").update({ rettifica }).eq("id", id)
+  const { error } = await (supabase as any)
+    .from("materiali")
+    .update(arrivata ? { rettifica, ordinato_il: null } : { rettifica })
+    .eq("id", id)
   if (error) {
     logError("setStock.update", error, { id })
     return { ok: false, error: USER_MESSAGES.saveFailed }
