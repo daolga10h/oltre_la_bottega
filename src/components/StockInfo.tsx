@@ -10,7 +10,7 @@ export function StockInfo({ materiale, oggi }: { materiale: Materiale; oggi: str
 
   return (
     <div className="space-y-1 text-sm">
-      <p className={cn("font-semibold", giacenza <= 0 && "text-terracotta")}>
+      <p className={cn("font-semibold", giacenza < 0 && "text-terracotta")}>
         In magazzino: {formatQuantita(giacenza)}
         {materiale.soglia !== null && (
           <span className="font-normal text-muted-foreground"> (minimo {formatQuantita(materiale.soglia)})</span>

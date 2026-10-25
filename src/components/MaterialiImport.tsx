@@ -12,12 +12,12 @@ import { saveMaterials } from "@/actions/materiali"
 import { resizeImage } from "@/lib/imageResize"
 import { MAX_FILE_BYTES } from "@/lib/documentoFornitore"
 import {
+  canonicalSupplier,
   checkRow,
   classifyRow,
   formatDiscounts,
   formatPrezzo,
   formatQuantita,
-  matchMaterial,
   netPrice,
   parseDiscounts,
   parsePrice,
@@ -37,8 +37,7 @@ type RigaForm = {
   prezzo: string // listino, prima degli sconti
   sconti: string // "50 + 20": sconti a cascata in percentuale
   importo: number | null // solo per il controllo, non si salva
-  magazzino: boolean // «Tieni in magazzino»
-  carica: string // quantità da sommare alla giacenza (solo con magazzino)
+  carica: string // quantità da sommare alla giacenza (vuoto = non caricare)
 }
 
 type Fase = "chiusa" | "lettura" | "controllo"
@@ -47,6 +46,7 @@ const MSG_LETTURA_FALLITA = "Non sono riuscito a leggere il documento. Puoi inse
 
 export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
   const router = useRouter()
+  const nomiFornitori = [...new Set(esistenti.map((m) => m.fornitore))]
   const fileRef = useRef<HTMLInputElement>(null)
   const prossimaChiave = useRef(1)
   const [fase, setFase] = useState<Fase>("chiusa")
@@ -56,7 +56,8 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
   const [data, setData] = useState(todayIso())
   const [righe, setRighe] = useState<RigaForm[]>([])
   const [salvataggio, setSalvataggio] = useState(false)
-  const [impronta, setImpronta] = useState<string | null>(null)
+  const [impronte, setImpronte] = useState<string[]>([])
+  const [notaFornitore, setNotaFornitore] = useState<string | null>(null)
   const [giaCaricato, setGiaCaricato] = useState(false)
   const [caricaComunque, setCaricaComunque] = useState(false)
 
@@ -70,7 +71,6 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
       prezzo: "",
       sconti: "",
       importo: null,
-      magazzino: false,
       carica: "",
     }
   }
@@ -80,14 +80,16 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
     data?: string
     righe?: RigaForm[]
     errore?: string | null
-    impronta?: string | null
+    impronte?: string[]
     giaCaricato?: boolean
+    notaFornitore?: string | null
   }) {
     setFornitore(opzioni.fornitore ?? "")
     setData(opzioni.data ?? todayIso())
     setRighe(opzioni.righe && opzioni.righe.length > 0 ? opzioni.righe : [nuovaRiga()])
     setErrore(opzioni.errore ?? null)
-    setImpronta(opzioni.impronta ?? null)
+    setImpronte(opzioni.impronte ?? [])
+    setNotaFornitore(opzioni.notaFornitore ?? null)
     setGiaCaricato(opzioni.giaCaricato ?? false)
     setCaricaComunque(false)
     setMessaggio(null)
@@ -126,16 +128,19 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
         prezzo: formatPrezzo(r.prezzo),
         sconti: formatDiscounts(r.sconti),
         importo: r.importo,
-        // se il materiale è già in magazzino la casella parte accesa
-        magazzino: matchMaterial(esistenti, documento.fornitore, r)?.in_magazzino ?? false,
         carica: r.quantita === null ? "" : formatQuantita(r.quantita),
       }))
+      const canonico = canonicalSupplier(documento.fornitore, nomiFornitori)
       apriControllo({
-        fornitore: documento.fornitore,
+        fornitore: canonico,
+        notaFornitore:
+          canonico !== documento.fornitore
+            ? `Fornitore già presente nell'elenco: «${canonico}» (sul documento: «${documento.fornitore}»)`
+            : null,
         data: documento.data ?? todayIso(),
         righe: lette,
         errore: lette.length === 0 ? "Non ho trovato righe nel documento. Puoi aggiungerle a mano." : null,
-        impronta: risultato.impronta,
+        impronte: risultato.impronte,
         giaCaricato: risultato.giaCaricato,
       })
     } catch {
@@ -185,14 +190,14 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
     const daSalvare = righe.flatMap((r) => {
       const riga = toRigaDocumento(r)
       if (!riga) return []
-      const carica = r.magazzino && r.carica.trim() !== "" ? parsePrice(r.carica) : null
-      return [{ codice: riga.codice, nome: riga.nome, unita: riga.unita, prezzo: riga.prezzo, magazzino: r.magazzino, carica }]
+      const carica = r.carica.trim() !== "" ? parsePrice(r.carica) : null
+      return [{ codice: riga.codice, nome: riga.nome, unita: riga.unita, prezzo: riga.prezzo, carica }]
     })
     if (daSalvare.length === 0) {
       setErrore("Aggiungi almeno un materiale con nome e prezzo.")
       return
     }
-    const caricaNonValida = righe.some((r) => r.magazzino && r.carica.trim() !== "" && parsePrice(r.carica) === null)
+    const caricaNonValida = righe.some((r) => r.carica.trim() !== "" && parsePrice(r.carica) === null)
     if (caricaNonValida) {
       setErrore("Controlla le quantità da caricare in magazzino: devono essere numeri.")
       return
@@ -204,7 +209,7 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
         fornitore,
         data,
         righe: daSalvare,
-        impronta: impronta ?? undefined,
+        impronte: impronte.length > 0 ? impronte : undefined,
         caricaComunque,
       })
       if (!esito.ok) {
@@ -266,7 +271,13 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">
           <Label htmlFor="fornitore">Fornitore</Label>
-          <Input id="fornitore" value={fornitore} onChange={(e) => setFornitore(e.target.value)} />
+          <Input id="fornitore" list="fornitori-esistenti" value={fornitore} onChange={(e) => setFornitore(e.target.value)} />
+          <datalist id="fornitori-esistenti">
+            {nomiFornitori.map((nome) => (
+              <option key={nome} value={nome} />
+            ))}
+          </datalist>
+          {notaFornitore && <p className="text-xs text-muted-foreground">{notaFornitore}</p>}
         </div>
         <div className="space-y-1">
           <Label htmlFor="data-acquisto">Data acquisto</Label>
@@ -285,8 +296,7 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
               <th className="px-2 py-2">Sconti %</th>
               <th className="px-2 py-2" title="Costo dopo gli sconti: è il prezzo che si salva">Netto €</th>
               <th className="px-2 py-2">Controllo</th>
-              <th className="px-2 py-2" title="Tieni questo materiale in magazzino">Magazzino</th>
-              <th className="px-2 py-2" title="Quantità da sommare alla giacenza">Carica</th>
+              <th className="px-2 py-2" title="Quantità da aggiungere al magazzino (vuoto = non caricare)">Carica</th>
               <th className="px-2 py-2" />
             </tr>
           </thead>
@@ -344,25 +354,12 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
                     </div>
                   </td>
                   <td className="px-2 py-2 w-24">
-                    <label className="flex items-center gap-2 text-xs">
-                      <input
-                        type="checkbox"
-                        checked={r.magazzino}
-                        onChange={(e) => aggiorna(r.key, "magazzino", e.target.checked)}
-                        aria-label="Magazzino"
-                      />
-                      Sì
-                    </label>
-                  </td>
-                  <td className="px-2 py-2 w-24">
-                    {r.magazzino && (
-                      <Input
-                        inputMode="decimal"
-                        value={r.carica}
-                        onChange={(e) => aggiorna(r.key, "carica", e.target.value)}
-                        aria-label="Carica"
-                      />
-                    )}
+                    <Input
+                      inputMode="decimal"
+                      value={r.carica}
+                      onChange={(e) => aggiorna(r.key, "carica", e.target.value)}
+                      aria-label="Carica"
+                    />
                   </td>
                   <td className="px-2 py-2">
                     <Button

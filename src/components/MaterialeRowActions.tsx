@@ -127,7 +127,7 @@ export function MaterialeRowActions({ materiale }: { materiale: Materiale }) {
       </div>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={inMagazzino} onChange={(e) => setInMagazzino(e.target.checked)} />
-        Tieni in magazzino
+        Conta i pezzi di questo materiale
       </label>
       {inMagazzino && (
         <div className="grid grid-cols-2 gap-2">
