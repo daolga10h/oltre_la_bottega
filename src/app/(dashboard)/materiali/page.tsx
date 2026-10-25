@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { formatDate, cn } from "@/lib/utils"
 import { hasFeature } from "@/lib/plan"
-import { formatPrezzo, matchesSearch, priceVariation, type Materiale } from "@/lib/materiali"
+import { StockInfo } from "@/components/StockInfo"
+import { formatPrezzo, matchesSearch, priceVariation, todayIso, type Materiale } from "@/lib/materiali"
 
 // La lettura di un documento (server action chiamata da questa pagina) può durare qualche secondo.
 export const maxDuration = 60
@@ -47,6 +48,7 @@ export default async function MaterialiPage({ searchParams }: { searchParams: Pr
     errorMsg = toUserMessage(err)
   }
   const mostrati = q ? tutti.filter((m) => matchesSearch(m, q)) : tutti
+  const oggi = todayIso()
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -101,6 +103,7 @@ export default async function MaterialiPage({ searchParams }: { searchParams: Pr
                   </p>
                 </div>
               </div>
+              <StockInfo materiale={m} oggi={oggi} />
               <MaterialeRowActions materiale={m} />
             </div>
           ))}
@@ -130,6 +133,7 @@ export default async function MaterialiPage({ searchParams }: { searchParams: Pr
                         {[m.codice, m.unita].filter(Boolean).join(" · ")}
                       </p>
                     )}
+                    <StockInfo materiale={m} oggi={oggi} />
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap font-semibold">
                     €{formatPrezzo(m.prezzo_attuale)}
