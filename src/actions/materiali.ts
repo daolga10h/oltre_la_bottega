@@ -121,10 +121,10 @@ function uguali(a: Materiale, b: Materiale): boolean {
  * Salva le righe confermate di un documento.
  *
  * Si contano i pezzi di tutti i materiali; chi è escluso (`in_magazzino` falso) non viene toccato dalle quantità.
- * Quantità in magazzino: si sommano per le righe con `carica` > 0. Se c'è
- * un'`impronta` si registra PRIMA di scrivere i materiali (il vincolo di unicità la rende atomica): se esiste
+ * Quantità in magazzino: si sommano per le righe con `carica` > 0. Se ci sono
+ * `impronte` (sempre, anche senza quantità) si registrano PRIMA di scrivere i materiali (il vincolo di unicità la rende atomica): se esiste
  * già il documento è stato caricato e le quantità si saltano, salvo `caricaComunque`. Se poi la scrittura dei
- * materiali fallisce l'impronta si toglie, così un nuovo tentativo parte pulito. I prezzi restano idempotenti.
+ * materiali fallisce le impronte si tolgono, così un nuovo tentativo parte pulito. I prezzi restano idempotenti.
  * I materiali (nuovi e aggiornati) si scrivono con un solo `upsert`: o tutto o niente. Il materiale escluso resta escluso
  * (si cambia dal modulo di modifica).
  */
@@ -132,7 +132,7 @@ export async function saveMaterials(input: {
   fornitore: string
   data: string
   righe: RigaDaSalvare[]
-  impronta?: string
+  impronte?: string[]
   caricaComunque?: boolean
 }): Promise<SalvataggioResult> {
   const fornitoreLetto = input.fornitore.trim()
@@ -169,9 +169,10 @@ export async function saveMaterials(input: {
   const daSommare = input.righe.some((r) => (r.carica ?? 0) > 0)
   let sommaQuantita = daSommare
   let improntaRegistrata = false
-  if (input.impronta && daSommare) {
+  const impronte = input.impronte ?? []
+  if (impronte.length > 0) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from("documenti_caricati").insert({ impronta: input.impronta })
+    const { error } = await (supabase as any).from("documenti_caricati").insert(impronte.map((impronta) => ({ impronta })))
     if (!error) {
       improntaRegistrata = true
     } else if (error.code === VIOLAZIONE_UNICITA) {
@@ -186,7 +187,7 @@ export async function saveMaterials(input: {
   async function annullaImpronta() {
     if (!improntaRegistrata) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from("documenti_caricati").delete().eq("impronta", input.impronta)
+    await (supabase as any).from("documenti_caricati").delete().in("impronta", impronte)
   }
 
   const lavoro = new Map<string, Materiale>(esistenti.map((m) => [m.id, m]))

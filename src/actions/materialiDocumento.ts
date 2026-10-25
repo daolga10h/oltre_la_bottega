@@ -10,10 +10,10 @@ import {
   type DocumentoLetto,
   type SupportedMediaType,
 } from "@/lib/documentoFornitore"
-import { documentFingerprint } from "@/lib/documentFingerprint"
+import { documentFingerprint, fileFingerprint } from "@/lib/documentFingerprint"
 
 type LetturaResult =
-  | { ok: true; documento: DocumentoLetto; impronta: string; giaCaricato: boolean }
+  | { ok: true; documento: DocumentoLetto; impronte: string[]; giaCaricato: boolean }
   | { ok: false; error: string }
 
 const MSG_NO_KEY = "La lettura automatica non è configurata. Puoi inserire le righe a mano."
@@ -38,10 +38,11 @@ export async function extractDocument(formData: FormData): Promise<LetturaResult
   if (file.size > MAX_FILE_BYTES) return { ok: false, error: MSG_TOO_BIG }
 
   try {
-    const base64 = Buffer.from(await file.arrayBuffer()).toString("base64")
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const base64 = buffer.toString("base64")
     const documento = await readSupplierDocument(base64, file.type as SupportedMediaType)
-    const impronta = documentFingerprint(documento)
-    return { ok: true, documento, impronta, giaCaricato: await giaCaricato(supabase, impronta) }
+    const impronte = [fileFingerprint(new Uint8Array(buffer)), documentFingerprint(documento)]
+    return { ok: true, documento, impronte, giaCaricato: await giaCaricato(supabase, impronte) }
   } catch (error) {
     logError("extractDocument", error)
     return { ok: false, error: MSG_READ_FAILED }
@@ -50,8 +51,8 @@ export async function extractDocument(formData: FormData): Promise<LetturaResult
 
 // Un errore nel controllo non deve bloccare la lettura: nel dubbio si tratta il documento come nuovo.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function giaCaricato(supabase: any, impronta: string): Promise<boolean> {
-  const { data, error } = await supabase.from("documenti_caricati").select("id").eq("impronta", impronta)
+async function giaCaricato(supabase: any, impronte: string[]): Promise<boolean> {
+  const { data, error } = await supabase.from("documenti_caricati").select("id").in("impronta", impronte)
   if (error) {
     logError("extractDocument.impronta", error)
     return false

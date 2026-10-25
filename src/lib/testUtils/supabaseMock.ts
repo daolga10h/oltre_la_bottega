@@ -7,7 +7,7 @@ export type QueryResult = { data?: unknown; error?: unknown; count?: number | nu
 
 const CHAIN_METHODS = [
   "select", "insert", "update", "delete", "upsert",
-  "eq", "neq", "or", "lt", "lte", "gte", "not", "ilike", "order",
+  "eq", "neq", "in", "or", "lt", "lte", "gte", "not", "ilike", "order",
 ] as const
 
 export function createQueryBuilder(result: QueryResult) {

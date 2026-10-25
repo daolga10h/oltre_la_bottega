@@ -67,17 +67,17 @@ describe("extractDocument", () => {
     expect(mockRead).not.toHaveBeenCalled()
   })
 
-  it("passa al lettore il file in base64 col suo tipo e restituisce documento, impronta e stato di caricamento", async () => {
+  it("passa al lettore il file in base64 col suo tipo e restituisce documento, impronte e stato di caricamento", async () => {
     const documento = { fornitore: "FB", data: "2025-10-29", righe: [] }
     mockRead.mockResolvedValue(documento)
 
     const r = await extractDocument(formDataWith(pdf()))
 
-    expect(r).toEqual({ ok: true, documento, impronta: expect.stringMatching(/^[0-9a-f]{64}$/), giaCaricato: false })
+    expect(r).toEqual({ ok: true, documento, impronte: [expect.stringMatching(/^[0-9a-f]{64}$/), expect.stringMatching(/^[0-9a-f]{64}$/)], giaCaricato: false })
     expect(mockRead).toHaveBeenCalledWith(Buffer.from("%PDF-1.4 finto").toString("base64"), "application/pdf")
   })
 
-  it("segnala un documento già caricato quando l'impronta è già registrata", async () => {
+  it("segnala un documento già caricato quando una delle impronte è già registrata", async () => {
     mockRead.mockResolvedValue({ fornitore: "FB", data: "2025-10-29", righe: [] })
     mockCreateClient.mockResolvedValue(createSupabaseMock({ documenti_caricati: [{ data: [{ id: "d1" }], error: null }] }))
 

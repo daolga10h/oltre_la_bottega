@@ -1,4 +1,4 @@
-import { documentFingerprint } from "../documentFingerprint"
+import { documentFingerprint, fileFingerprint } from "../documentFingerprint"
 import type { DocumentoLetto } from "../documentoFornitore"
 
 const doc: DocumentoLetto = {
@@ -42,18 +42,44 @@ describe("documentFingerprint", () => {
     expect(documentFingerprint(senzaCodice("Timbro A"))).not.toBe(documentFingerprint(senzaCodice("Timbro B")))
   })
 
-  it("cambia se cambia una quantità, un prezzo, uno sconto o la data", () => {
+  it("non cambia se cambiano quantità, prezzi, sconti o importi", () => {
     const base = documentFingerprint(doc)
     const conRiga = (patch: object) => ({ ...doc, righe: [{ ...doc.righe[0], ...patch }, doc.righe[1]] })
-    expect(documentFingerprint(conRiga({ quantita: 51 }))).not.toBe(base)
-    expect(documentFingerprint(conRiga({ prezzo: 4.7 }))).not.toBe(base)
-    expect(documentFingerprint(conRiga({ sconti: [10] }))).not.toBe(base)
+    expect(documentFingerprint(conRiga({ quantita: 51 }))).toBe(base)
+    expect(documentFingerprint(conRiga({ prezzo: 4.7 }))).toBe(base)
+    expect(documentFingerprint(conRiga({ sconti: [10] }))).toBe(base)
+    expect(documentFingerprint(conRiga({ importo: 999 }))).toBe(base)
+  })
+
+  it("non cambia se il fornitore è scritto più lungo", () => {
+    const corto = { ...doc, fornitore: "Munari" }
+    const lungo = { ...doc, fornitore: "Munari snc di Munari Pier Domenico & C." }
+    expect(documentFingerprint(lungo)).toBe(documentFingerprint(corto))
+  })
+
+  it("cambia se cambia la data, un codice o la prima parola del fornitore", () => {
+    const base = documentFingerprint(doc)
     expect(documentFingerprint({ ...doc, data: "2026-06-18" })).not.toBe(base)
+    expect(documentFingerprint({ ...doc, righe: [doc.righe[0]] })).not.toBe(base)
+    expect(documentFingerprint({ ...doc, righe: [...doc.righe, { ...doc.righe[0], codice: "999999" }] })).not.toBe(base)
+    expect(documentFingerprint({ ...doc, fornitore: "Altro GmbH" })).not.toBe(base)
   })
 
   it("gestisce quantità e importo mancanti e un documento senza righe", () => {
     expect(documentFingerprint({ fornitore: "X", data: null, righe: [] })).toMatch(/^[0-9a-f]{64}$/)
     const senza = { ...doc, righe: [{ ...doc.righe[0], quantita: null, importo: null }] }
     expect(documentFingerprint(senza)).toMatch(/^[0-9a-f]{64}$/)
+  })
+})
+
+describe("fileFingerprint", () => {
+  it("stessi byte, stessa impronta esadecimale di 64 caratteri", () => {
+    const a = fileFingerprint(new Uint8Array([1, 2, 3]))
+    expect(a).toMatch(/^[0-9a-f]{64}$/)
+    expect(fileFingerprint(new Uint8Array([1, 2, 3]))).toBe(a)
+  })
+
+  it("un byte diverso dà un'impronta diversa", () => {
+    expect(fileFingerprint(new Uint8Array([1, 2, 3]))).not.toBe(fileFingerprint(new Uint8Array([1, 2, 4])))
   })
 })
