@@ -36,6 +36,20 @@ export type StatoRiga =
   | { tipo: "invariato" }
   | { tipo: "variato"; era: number }
 
+/** Campi del magazzino di un materiale (vedi migration 20261025000001). */
+export type DatiMagazzino = {
+  in_magazzino: boolean
+  carico_totale: number
+  rettifica: number
+  soglia: number | null // scorta minima
+  ordinato_il: string | null // AAAA-MM-GG, data di «Ho già ordinato»
+}
+
+export type StatoScorta = "ok" | "da_riordinare" | "ordinato" | "ordinato_scaduto"
+
+/** Giorni in cui «Ho già ordinato» sospende l'avviso «Da riordinare». */
+export const GIORNI_ATTESA_ORDINE = 7
+
 const EPSILON_PREZZO = 0.0005
 
 export function normalizeText(value: string | null | undefined): string {
@@ -194,4 +208,44 @@ export function isValidIsoDate(value: string): boolean {
 /** Oggi nel calendario di Roma, come AAAA-MM-GG. */
 export function todayIso(now: Date = new Date()): string {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Rome" }).format(now)
+}
+
+/**
+ * Giacenza: non è un contatore ma si calcola ogni volta (carico + rettifica − venduto).
+ * `venduto` vale 0 finché gli ordini non sono collegati ai materiali.
+ */
+export function computeStock(m: Pick<DatiMagazzino, "carico_totale" | "rettifica">, venduto = 0): number {
+  return round3(m.carico_totale + m.rettifica - venduto)
+}
+
+/** La rettifica che, con questo carico e questo venduto, porta la giacenza al valore realmente contato. */
+export function rettificaPerGiacenza(reale: number, m: Pick<DatiMagazzino, "carico_totale">, venduto = 0): number {
+  return round3(reale - m.carico_totale + venduto)
+}
+
+/** Giorni di calendario tra due date AAAA-MM-GG. */
+export function daysBetween(da: string, a: string): number {
+  return Math.round((Date.parse(`${a}T00:00:00Z`) - Date.parse(`${da}T00:00:00Z`)) / 86_400_000)
+}
+
+/** 50 · 12,5 · 0,25 (virgola, senza zeri inutili). */
+export function formatQuantita(value: number): string {
+  return String(round3(value)).replace(".", ",")
+}
+
+/**
+ * Stato dell'avviso di riordino. `oggi` è AAAA-MM-GG (calendario di Roma, vedi `todayIso`).
+ * - ok: non in magazzino, senza scorta minima, o giacenza sopra la scorta minima;
+ * - da_riordinare: giacenza uguale o sotto la scorta minima;
+ * - ordinato: come sopra ma «Ho già ordinato» è di meno di 7 giorni fa (avviso sospeso);
+ * - ordinato_scaduto: «Ho già ordinato» da 7 giorni o più e la merce non è arrivata (l'avviso riparte).
+ */
+export function reorderStatus(
+  m: Pick<DatiMagazzino, "in_magazzino" | "soglia" | "ordinato_il">,
+  giacenza: number,
+  oggi: string
+): StatoScorta {
+  if (!m.in_magazzino || m.soglia === null || giacenza > m.soglia) return "ok"
+  if (m.ordinato_il === null) return "da_riordinare"
+  return daysBetween(m.ordinato_il, oggi) < GIORNI_ATTESA_ORDINE ? "ordinato" : "ordinato_scaduto"
 }

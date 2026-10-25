@@ -14,6 +14,12 @@ import {
   round3,
   parseDiscounts,
   formatDiscounts,
+  computeStock,
+  rettificaPerGiacenza,
+  reorderStatus,
+  daysBetween,
+  formatQuantita,
+  GIORNI_ATTESA_ORDINE,
   type Materiale,
 } from "../materiali"
 
@@ -321,5 +327,93 @@ describe("formatDiscounts", () => {
     expect(formatDiscounts([50])).toBe("50")
     expect(formatDiscounts([50, 20])).toBe("50 + 20")
     expect(formatDiscounts([12.5, 10])).toBe("12,5 + 10")
+  })
+})
+
+describe("computeStock", () => {
+  it("somma carico e rettifica", () => {
+    expect(computeStock({ carico_totale: 50, rettifica: 0 })).toBe(50)
+    expect(computeStock({ carico_totale: 50, rettifica: -3 })).toBe(47)
+  })
+
+  it("toglie il venduto quando c'è", () => {
+    expect(computeStock({ carico_totale: 50, rettifica: -3 }, 4)).toBe(43)
+  })
+
+  it("non accumula errori di virgola mobile", () => {
+    expect(computeStock({ carico_totale: 0.1, rettifica: 0.2 })).toBe(0.3)
+  })
+})
+
+describe("rettificaPerGiacenza", () => {
+  it("calcola la rettifica che porta la giacenza al valore contato", () => {
+    expect(rettificaPerGiacenza(47, { carico_totale: 50 })).toBe(-3)
+    expect(rettificaPerGiacenza(60, { carico_totale: 50 })).toBe(10)
+  })
+
+  it("tiene conto del venduto, così la giacenza risultante è quella contata", () => {
+    const rettifica = rettificaPerGiacenza(47, { carico_totale: 50 }, 4)
+    expect(rettifica).toBe(1)
+    expect(computeStock({ carico_totale: 50, rettifica }, 4)).toBe(47)
+  })
+})
+
+describe("daysBetween", () => {
+  it("conta i giorni di calendario", () => {
+    expect(daysBetween("2026-10-25", "2026-10-25")).toBe(0)
+    expect(daysBetween("2026-10-25", "2026-11-01")).toBe(7)
+  })
+
+  it("non è sfalsato dal cambio dell'ora legale", () => {
+    expect(daysBetween("2026-10-24", "2026-10-26")).toBe(2)
+  })
+})
+
+describe("formatQuantita", () => {
+  it("toglie gli zeri inutili e usa la virgola", () => {
+    expect(formatQuantita(50)).toBe("50")
+    expect(formatQuantita(12.5)).toBe("12,5")
+    expect(formatQuantita(0.25)).toBe("0,25")
+    expect(formatQuantita(0)).toBe("0")
+  })
+})
+
+describe("reorderStatus", () => {
+  const m = { in_magazzino: true, soglia: 10, ordinato_il: null as string | null }
+  const oggi = "2026-10-25"
+
+  it("ok se non è in magazzino o non ha scorta minima", () => {
+    expect(reorderStatus({ ...m, in_magazzino: false }, 0, oggi)).toBe("ok")
+    expect(reorderStatus({ ...m, soglia: null }, 0, oggi)).toBe("ok")
+  })
+
+  it("ok sopra la scorta minima", () => {
+    expect(reorderStatus(m, 11, oggi)).toBe("ok")
+  })
+
+  it("da riordinare quando è uguale o sotto la scorta minima", () => {
+    expect(reorderStatus(m, 10, oggi)).toBe("da_riordinare")
+    expect(reorderStatus(m, 5, oggi)).toBe("da_riordinare")
+    expect(reorderStatus(m, 0, oggi)).toBe("da_riordinare")
+  })
+
+  it("dopo «Ho già ordinato» l'avviso è sospeso per 7 giorni", () => {
+    const ordinato = { ...m, ordinato_il: "2026-10-25" }
+    expect(reorderStatus(ordinato, 5, "2026-10-25")).toBe("ordinato")
+    expect(reorderStatus(ordinato, 5, "2026-10-31")).toBe("ordinato")
+  })
+
+  it("dopo 7 giorni senza carico l'avviso riparte", () => {
+    const ordinato = { ...m, ordinato_il: "2026-10-25" }
+    expect(reorderStatus(ordinato, 5, "2026-11-01")).toBe("ordinato_scaduto")
+    expect(reorderStatus(ordinato, 5, "2026-11-10")).toBe("ordinato_scaduto")
+  })
+
+  it("se la giacenza è tornata sopra la scorta minima non c'è nessun avviso, anche con una data di ordine", () => {
+    expect(reorderStatus({ ...m, ordinato_il: "2026-10-25" }, 20, oggi)).toBe("ok")
+  })
+
+  it("la pausa dura 7 giorni", () => {
+    expect(GIORNI_ATTESA_ORDINE).toBe(7)
   })
 })
