@@ -78,6 +78,11 @@ describe("parseExtraction", () => {
         { nome: "Trasporto", prezzo: 8 },
         { nome: "Costo di trasporto", prezzo: 8 },
         { nome: "Contributo spese di spedizione", prezzo: 5 },
+        { nome: "Imballaggio", prezzo: 3 },
+        { nome: "IMBALLO", prezzo: 3 },
+        { nome: "Spese di imballaggio", prezzo: 3 },
+        { nome: "Contrassegno", prezzo: 2 },
+        { nome: "Commissioni di incasso", prezzo: 1 },
       ],
     })
     expect(r.righe.map((x) => x.nome)).toEqual(["8913 IMPRINT 2.0 BY TRODAT, NERO, TAMP. NERO"])

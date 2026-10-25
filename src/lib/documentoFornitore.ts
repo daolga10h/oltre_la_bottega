@@ -16,9 +16,9 @@ function toNumberOrNull(v: unknown): number | null {
   return typeof v === "number" && Number.isFinite(v) ? v : null
 }
 
-// Righe di spedizione/trasporto: non sono materiali e non vanno mai nel listino, anche se il modello
-// le registra. Si guarda solo l'inizio del nome: "Scatola per spedizione" è un articolo vero.
-const RIGA_SPEDIZIONE = /^\s*((spese|costo|costi|contributo|addebito|servizio)\s+(di\s+|per\s+)?)*(spedizion[ei]|trasport[oi])\b/i
+// Righe di spedizione, trasporto, imballaggio, contrassegno e commissioni: non sono materiali e non vanno mai nel listino, anche se il modello
+// le registra. Si guarda solo l'inizio del nome: "Scatola per spedizione" è un articolo vero. Se compare una dicitura strana, si toglie a mano.
+const RIGA_SPEDIZIONE = /^\s*((spese|costo|costi|contributo|addebito|servizio)\s+(di\s+|per\s+)?)*(spedizion[ei]|trasport[oi]|imball\w*|contrassegn\w*|commission\w*)\b/i
 
 // Sconti a cascata in percentuale (SC.1, SC.2, SC.3): si tengono solo numeri tra 0 (escluso) e 100.
 function toDiscounts(v: unknown): number[] {
