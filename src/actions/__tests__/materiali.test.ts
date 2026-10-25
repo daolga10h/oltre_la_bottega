@@ -251,7 +251,7 @@ describe("saveMaterials — magazzino", () => {
   }
 
   const rigaMag = (over: Record<string, unknown> = {}) => ({
-    codice: "111383", nome: "8913 IMPRINT NERO", unita: "PZ", prezzo: 4.65, magazzino: true, carica: 50, ...over,
+    codice: "111383", nome: "8913 IMPRINT NERO", unita: "PZ", prezzo: 4.65, carica: 50, ...over,
   })
 
   it("rifiuta una quantità da caricare negativa o non numerica", async () => {
@@ -324,29 +324,52 @@ describe("saveMaterials — magazzino", () => {
     expect(builderDi(client, "materiali", 1).upsert.mock.calls[0][0][0]).toMatchObject({ carico_totale: 100 })
   })
 
-  it("casella spenta: la riga non entra in magazzino e le quantità non si sommano", async () => {
-    const client = createSupabaseMock({ materiali: [{ data: [], error: null }, { data: null, error: null }] })
+  it("materiale escluso dall'utente (in_magazzino falso): le quantità non si sommano e resta escluso", async () => {
+    const client = createSupabaseMock({
+      materiali: [
+        { data: [riga({ codice: "111383", nome: "8913 IMPRINT NERO", in_magazzino: false, carico_totale: "0.000" })], error: null },
+        { data: null, error: null },
+      ],
+      documenti_caricati: [{ data: null, error: null }],
+    })
     mockCreateClient.mockResolvedValue(client)
 
-    await saveMaterials(input([rigaMag({ magazzino: false })], { impronta: "abc123" }))
+    await saveMaterials(input([rigaMag({ prezzo: 5.2 })], { impronta: "abc123", data: "2026-01-10" }))
 
-    expect(client.from.mock.calls.some((c) => c[0] === "documenti_caricati")).toBe(false)
     expect(builderDi(client, "materiali", 1).upsert.mock.calls[0][0][0]).toMatchObject({ in_magazzino: false, carico_totale: 0 })
   })
 
-  it("il caricamento non spegne mai il magazzino di un materiale che c'è già", async () => {
+  it("un materiale nuovo si conta sempre (in_magazzino vero) e parte dalla quantità caricata", async () => {
+    const client = createSupabaseMock({ materiali: [{ data: [], error: null }, { data: null, error: null }] })
+    mockCreateClient.mockResolvedValue(client)
+
+    await saveMaterials(input([rigaMag()]))
+
+    expect(builderDi(client, "materiali", 1).upsert.mock.calls[0][0][0]).toMatchObject({ in_magazzino: true, carico_totale: 50 })
+  })
+
+  it("se la quantità è vuota non somma nulla e non registra l'impronta", async () => {
+    const client = createSupabaseMock({ materiali: [{ data: [], error: null }, { data: null, error: null }] })
+    mockCreateClient.mockResolvedValue(client)
+
+    await saveMaterials(input([rigaMag({ carica: null })], { impronta: "abc123" }))
+
+    expect(client.from.mock.calls.some((c) => c[0] === "documenti_caricati")).toBe(false)
+    expect(builderDi(client, "materiali", 1).upsert.mock.calls[0][0][0]).toMatchObject({ carico_totale: 0 })
+  })
+
+  it("usa il nome del fornitore già in elenco: un materiale nuovo di «eljte di Morsia Carlo» va sotto «Eljte»", async () => {
     const client = createSupabaseMock({
       materiali: [
-        { data: [riga({ codice: "111383", nome: "8913 IMPRINT NERO", in_magazzino: true, carico_totale: "20.000" })], error: null },
+        { data: [riga({ fornitore: "Eljte", codice: "52079", nome: "MEDAGLIETTA" })], error: null },
         { data: null, error: null },
       ],
     })
     mockCreateClient.mockResolvedValue(client)
 
-    await saveMaterials(input([rigaMag({ magazzino: false, prezzo: 9.9 })], { data: "2026-01-10" }))
+    await saveMaterials(input([{ codice: "24079", nome: "BRACCIALE", prezzo: 2.04 }], { fornitore: "eljte di Morsia Carlo" }))
 
-    const scritti = builderDi(client, "materiali", 1).upsert.mock.calls[0][0]
-    expect(scritti[0]).toMatchObject({ id: "m1", in_magazzino: true })
+    expect(builderDi(client, "materiali", 1).upsert.mock.calls[0][0][0]).toMatchObject({ fornitore: "Eljte", codice: "24079" })
   })
 
   it("senza impronta (inserimento a mano) somma la quantità senza controllo dei doppi", async () => {

@@ -1,5 +1,8 @@
 import {
   normalizeText,
+  supplierKey,
+  sameSupplier,
+  canonicalSupplier,
   matchMaterial,
   applyPriceUpdate,
   checkRow,
@@ -420,5 +423,61 @@ describe("reorderStatus", () => {
 
   it("la pausa dura 7 giorni", () => {
     expect(GIORNI_ATTESA_ORDINE).toBe(7)
+  })
+})
+
+describe("supplierKey", () => {
+  it("toglie punti, punteggiatura, maiuscole e forme societarie", () => {
+    expect(supplierKey("CAIMI LUIGI E FIGLIO S.p.A.")).toEqual(["caimi", "luigi", "e", "figlio"])
+    expect(supplierKey("F.B. s.n.c. di Busato Martino e Matteo")).toEqual(["fb", "di", "busato", "martino", "e", "matteo"])
+    expect(supplierKey("Munari snc di Munari Pier Domenico & C.")).toEqual(["munari", "di", "munari", "pier", "domenico", "c"])
+    expect(supplierKey("Trodat GmbH")).toEqual(["trodat"])
+  })
+
+  it("gestisce valori vuoti", () => {
+    expect(supplierKey(null)).toEqual([])
+    expect(supplierKey("  ")).toEqual([])
+  })
+})
+
+describe("sameSupplier", () => {
+  it("riconosce lo stesso fornitore scritto in modi diversi", () => {
+    expect(sameSupplier("Eljte", "eljte di Morsia Carlo")).toBe(true)
+    expect(sameSupplier("Munari", "Munari snc di Munari Pier Domenico & C.")).toBe(true)
+    expect(sameSupplier("F.B.", "F.B. s.n.c. di Busato Martino e Matteo")).toBe(true)
+    expect(sameSupplier("  FB   Targhe ", "fb targhe")).toBe(true)
+    expect(sameSupplier("Trodat", "TRODAT GmbH")).toBe(true)
+  })
+
+  it("non unisce fornitori diversi", () => {
+    expect(sameSupplier("Casa di Carta", "Casa di Legno")).toBe(false)
+    expect(sameSupplier("Eljte", "Caimi")).toBe(false)
+    expect(sameSupplier("Targhe Rossi", "Rossi Targhe")).toBe(false)
+  })
+
+  it("un nome vuoto non coincide con niente", () => {
+    expect(sameSupplier("", "Eljte")).toBe(false)
+    expect(sameSupplier("   ", "   ")).toBe(false)
+  })
+})
+
+describe("canonicalSupplier", () => {
+  it("usa il nome già in elenco se il fornitore c'è già", () => {
+    expect(canonicalSupplier("eljte di Morsia Carlo", ["Caimi", "Eljte"])).toBe("Eljte")
+  })
+
+  it("tra più nomi simili sceglie il più corto", () => {
+    expect(canonicalSupplier("Eljte srl", ["eljte di Morsia Carlo", "Eljte"])).toBe("Eljte")
+  })
+
+  it("se non c'è nessun fornitore simile tiene il nome scritto, senza spazi ai lati", () => {
+    expect(canonicalSupplier("  Nuovo Fornitore ", ["Eljte"])).toBe("Nuovo Fornitore")
+  })
+})
+
+describe("matchMaterial — fornitore scritto in modo diverso", () => {
+  it("abbina un materiale anche se il nome del fornitore sul documento è più lungo", () => {
+    const m = { ...base, fornitore: "Eljte", codice: "24079" }
+    expect(matchMaterial([m], "eljte di Morsia Carlo", { codice: "24079", nome: "altro" })?.id).toBe("m1")
   })
 })

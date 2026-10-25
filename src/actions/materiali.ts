@@ -7,6 +7,7 @@ import { logError } from "@/lib/logger"
 import { USER_MESSAGES } from "@/lib/errors"
 import {
   applyPriceUpdate,
+  canonicalSupplier,
   computeStock,
   isValidIsoDate,
   matchMaterial,
@@ -24,8 +25,7 @@ type RigaDaSalvare = {
   nome: string
   unita: string | null
   prezzo: number
-  magazzino?: boolean // casella «Tieni in magazzino»; assente = non cambia
-  carica?: number | null // quantità da sommare alla giacenza (solo se magazzino)
+  carica?: number | null // quantità da sommare alla giacenza (se il materiale è contato)
 }
 
 type SalvataggioResult =
@@ -120,12 +120,13 @@ function uguali(a: Materiale, b: Materiale): boolean {
 /**
  * Salva le righe confermate di un documento.
  *
- * Quantità in magazzino: si sommano solo per le righe con `magazzino` vero e `carica` > 0. Se c'è
+ * Si contano i pezzi di tutti i materiali; chi è escluso (`in_magazzino` falso) non viene toccato dalle quantità.
+ * Quantità in magazzino: si sommano per le righe con `carica` > 0. Se c'è
  * un'`impronta` si registra PRIMA di scrivere i materiali (il vincolo di unicità la rende atomica): se esiste
  * già il documento è stato caricato e le quantità si saltano, salvo `caricaComunque`. Se poi la scrittura dei
  * materiali fallisce l'impronta si toglie, così un nuovo tentativo parte pulito. I prezzi restano idempotenti.
- * I materiali (nuovi e aggiornati) si scrivono con un solo `upsert`: o tutto o niente. Dal caricamento la casella
- * «magazzino» si può solo accendere, mai spegnere (si spegne dal modulo di modifica).
+ * I materiali (nuovi e aggiornati) si scrivono con un solo `upsert`: o tutto o niente. Il materiale escluso resta escluso
+ * (si cambia dal modulo di modifica).
  */
 export async function saveMaterials(input: {
   fornitore: string
@@ -134,9 +135,9 @@ export async function saveMaterials(input: {
   impronta?: string
   caricaComunque?: boolean
 }): Promise<SalvataggioResult> {
-  const fornitore = input.fornitore.trim()
+  const fornitoreLetto = input.fornitore.trim()
   const valido =
-    fornitore !== "" &&
+    fornitoreLetto !== "" &&
     isValidIsoDate(input.data) &&
     input.righe.length > 0 &&
     input.righe.every(
@@ -162,7 +163,10 @@ export async function saveMaterials(input: {
     return { ok: false, error: USER_MESSAGES.saveFailed }
   }
 
-  const daSommare = input.righe.some((r) => r.magazzino === true && (r.carica ?? 0) > 0)
+  // Il fornitore può essere scritto in modo diverso sul documento: si usa il nome già in elenco.
+  const fornitore = canonicalSupplier(fornitoreLetto, [...new Set(esistenti.map((m) => m.fornitore))])
+
+  const daSommare = input.righe.some((r) => (r.carica ?? 0) > 0)
   let sommaQuantita = daSommare
   let improntaRegistrata = false
   if (input.impronta && daSommare) {
@@ -191,16 +195,17 @@ export async function saveMaterials(input: {
 
   for (const r of input.righe) {
     const pulita = { codice: pulisci(r.codice), nome: r.nome.trim(), unita: pulisci(r.unita), prezzo: r.prezzo }
-    const aggiungi = sommaQuantita && r.magazzino === true ? Math.max(r.carica ?? 0, 0) : 0
+    const richiesta = sommaQuantita ? Math.max(r.carica ?? 0, 0) : 0
     const trovato = matchMaterial([...lavoro.values()], fornitore, pulita)
 
     if (trovato) {
+      const aggiungi = trovato.in_magazzino ? richiesta : 0
       const aggiornato: Materiale = {
         ...trovato,
         ...applyPriceUpdate(trovato, { prezzo: pulita.prezzo, data: input.data }),
         codice: trovato.codice ?? pulita.codice,
         unita: trovato.unita ?? pulita.unita,
-        in_magazzino: trovato.in_magazzino || r.magazzino === true,
+        in_magazzino: trovato.in_magazzino,
         carico_totale: round3(trovato.carico_totale + aggiungi),
         ordinato_il: aggiungi > 0 ? null : trovato.ordinato_il,
       }
@@ -221,8 +226,8 @@ export async function saveMaterials(input: {
         data_acquisto_attuale: input.data,
         prezzo_precedente: null,
         data_acquisto_precedente: null,
-        in_magazzino: r.magazzino === true,
-        carico_totale: round3(aggiungi),
+        in_magazzino: true,
+        carico_totale: round3(richiesta),
         rettifica: 0,
         soglia: null,
         ordinato_il: null,

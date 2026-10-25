@@ -56,6 +56,36 @@ export function normalizeText(value: string | null | undefined): string {
   return (value ?? "").trim().replace(/\s+/g, " ").toLowerCase()
 }
 
+const FORME_SOCIETARIE = new Set(["spa", "srl", "srls", "snc", "sas", "sapa", "gmbh", "ag", "ltd", "llc", "inc", "sa", "sarl", "bv"])
+
+/**
+ * Parole che identificano un fornitore, per riconoscerlo anche se sul documento è scritto in modo diverso:
+ * minuscole, punti tolti ("F.B." → "fb", "S.p.A." → "spa"), altra punteggiatura trasformata in spazio, forme societarie tolte.
+ */
+export function supplierKey(name: string | null | undefined): string[] {
+  return normalizeText(name)
+    .replace(/\./g, "")
+    .replace(/[,;:'"&()\-/]/g, " ")
+    .split(/\s+/)
+    .filter((t) => t !== "" && !FORME_SOCIETARIE.has(t))
+}
+
+/** Stesso fornitore se le parole del nome più corto sono l'inizio di quelle del più lungo («Eljte» = «eljte di Morsia Carlo»). */
+export function sameSupplier(a: string | null | undefined, b: string | null | undefined): boolean {
+  const ka = supplierKey(a)
+  const kb = supplierKey(b)
+  if (ka.length === 0 || kb.length === 0) return false
+  const [corto, lungo] = ka.length <= kb.length ? [ka, kb] : [kb, ka]
+  return corto.every((parola, i) => lungo[i] === parola)
+}
+
+/** Il nome da usare per un fornitore: quello già in elenco (il più corto, se più nomi coincidono), altrimenti quello scritto. */
+export function canonicalSupplier(name: string, esistenti: string[]): string {
+  const scritto = name.trim()
+  const simili = esistenti.filter((e) => sameSupplier(e, scritto)).sort((x, y) => supplierKey(x).length - supplierKey(y).length)
+  return simili[0] ?? scritto
+}
+
 /**
  * Trova il materiale già salvato a cui corrisponde una riga: stesso fornitore e
  * stesso codice. Se la riga ha un codice ma nessun materiale lo ha, si prova per
@@ -67,8 +97,7 @@ export function matchMaterial(
   fornitore: string,
   riga: Pick<RigaDocumento, "codice" | "nome">
 ): Materiale | null {
-  const f = normalizeText(fornitore)
-  const candidati = esistenti.filter((m) => normalizeText(m.fornitore) === f)
+  const candidati = esistenti.filter((m) => sameSupplier(m.fornitore, fornitore))
   const codice = normalizeText(riga.codice)
   const nome = normalizeText(riga.nome)
   if (codice) {
