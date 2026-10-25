@@ -10,7 +10,7 @@ in PDF o in foto, anche ruotato o storto. Leggilo e registra i dati con lo strum
 Regole:
 - "fornitore" è chi EMETTE il documento (l'intestazione in alto), non il destinatario.
 - "data" è la data del documento in formato AAAA-MM-GG, non la data di un ordine richiamato nel testo. Se non la leggi, null.
-- Una riga per ogni articolo. Includi tutte le righe di merce o servizio, comprese eventuali spese (trasporto, imballo): le toglierà una persona.
+- Una riga per ogni articolo di merce acquistata. NON registrare spese di spedizione, trasporto, imballo, contrassegno, bolli o commissioni, né sconti o totali del documento.
 - "prezzo" è il prezzo unitario di LISTINO senza IVA, in euro, PRIMA di qualsiasi sconto, come numero con il punto decimale (14.380 → 14.38). Se il prezzo unitario non c'è, la riga va comunque registrata solo se puoi ricavarlo con certezza da importo e quantità.
 - "sconti" sono le percentuali di sconto della riga nell'ordine delle colonne (SC.1%, SC.2%, SC.3%…), come numeri (50, 20): sono sconti a cascata. Ometti le colonne vuote o a zero; senza sconti, elenco vuoto. Uno sconto espresso in euro non va qui.
 - "importo" è l'importo di riga senza IVA, come scritto sul documento (di solito l'importo netto, già scontato). "quantita" è la quantità.

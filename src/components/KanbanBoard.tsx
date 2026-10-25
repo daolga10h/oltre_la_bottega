@@ -38,7 +38,7 @@ export function KanbanBoard({ orders: initialOrders }: { orders: OrderRow[] }) {
   }
 
   return (
-    <div className="overflow-x-auto pb-2">
+    <div className="scroll-visibile pb-2">
       <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(170px, 1fr))` }}>
       {columns.map((status) => {
         const colOrders = orders.filter((o) => o.status === status)

@@ -189,3 +189,29 @@
     animation: none;
   }
 }
+
+/* Scorrimento orizzontale con barra sempre visibile: sui tablet quella predefinita sparisce
+   e le colonne a destra (es. "Azioni") sembrano irraggiungibili. */
+.scroll-visibile {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.scroll-visibile::-webkit-scrollbar {
+  height: 16px;
+}
+.scroll-visibile::-webkit-scrollbar-track {
+  background: var(--color-linen);
+  border-radius: 8px;
+}
+.scroll-visibile::-webkit-scrollbar-thumb {
+  background: var(--color-driftwood);
+  border-radius: 8px;
+  border: 3px solid var(--color-linen);
+}
+/* Firefox non conosce ::-webkit-scrollbar */
+@supports not selector(::-webkit-scrollbar) {
+  .scroll-visibile {
+    scrollbar-width: auto;
+    scrollbar-color: var(--color-driftwood) var(--color-linen);
+  }
+}

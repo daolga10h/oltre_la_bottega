@@ -54,7 +54,7 @@ export default async function PagamentiPage() {
       )}
 
       {orders.length > 0 && (
-        <div className="bg-card rounded-lg border border-border overflow-x-auto">
+        <div className="bg-card rounded-lg border border-border scroll-visibile">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-background">

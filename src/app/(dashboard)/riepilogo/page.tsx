@@ -50,7 +50,7 @@ export default async function RiepilogoPage() {
             <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground border-b border-border pb-1">
               {STATUS_LABELS[status]}
             </h2>
-            <div className="bg-card rounded-lg border border-border overflow-x-auto">
+            <div className="bg-card rounded-lg border border-border scroll-visibile">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-background">

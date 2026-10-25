@@ -68,6 +68,32 @@ describe("parseExtraction", () => {
     expect(r.righe.map((x) => x.sconti)).toEqual([[50, 20], [], []])
   })
 
+  it("scarta le righe di spedizione e trasporto, anche se il modello le ha registrate", () => {
+    const r = parseExtraction({
+      fornitore: "Trodat",
+      righe: [
+        { nome: "8913 IMPRINT 2.0 BY TRODAT, NERO, TAMP. NERO", prezzo: 4.65 },
+        { nome: "Spedizione", prezzo: 11 },
+        { nome: "SPESE DI SPEDIZIONE", prezzo: 11 },
+        { nome: "Trasporto", prezzo: 8 },
+        { nome: "Costo di trasporto", prezzo: 8 },
+        { nome: "Contributo spese di spedizione", prezzo: 5 },
+      ],
+    })
+    expect(r.righe.map((x) => x.nome)).toEqual(["8913 IMPRINT 2.0 BY TRODAT, NERO, TAMP. NERO"])
+  })
+
+  it("non scarta un articolo che contiene solo la parola nel nome", () => {
+    const r = parseExtraction({
+      fornitore: "X",
+      righe: [
+        { nome: "Scatola per spedizione 30x20", prezzo: 1.2 },
+        { nome: "Cartone da trasporto", prezzo: 0.9 },
+      ],
+    })
+    expect(r.righe).toHaveLength(2)
+  })
+
   it("data non valida diventa null", () => {
     expect(parseExtraction({ ...valido, data: "29/10/2025" }).data).toBeNull()
     expect(parseExtraction({ ...valido, data: "2025-13-45" }).data).toBeNull()

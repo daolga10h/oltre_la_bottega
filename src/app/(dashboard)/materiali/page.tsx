@@ -72,7 +72,41 @@ export default async function MaterialiPage({ searchParams }: { searchParams: Pr
       )}
 
       {mostrati.length > 0 && (
-        <div className="bg-card rounded-lg border border-border overflow-x-auto">
+        <>
+        {/* Tablet e telefono (sotto i 1280 px): una scheda per materiale, senza scorrere di lato */}
+        <div className="xl:hidden space-y-3">
+          {mostrati.map((m) => (
+            <div key={m.id} className="bg-card rounded-lg border border-border p-4 space-y-3">
+              <div>
+                <p className="text-xs text-muted-foreground">{m.fornitore}</p>
+                <p className="font-semibold">{m.nome}</p>
+                {(m.codice || m.unita) && (
+                  <p className="text-xs text-muted-foreground">{[m.codice, m.unita].filter(Boolean).join(" · ")}</p>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground">Prezzo attuale</p>
+                  <p className="font-semibold">
+                    €{formatPrezzo(m.prezzo_attuale)}
+                    <Variazione attuale={m.prezzo_attuale} precedente={m.prezzo_precedente} />
+                  </p>
+                  <p className="text-xs text-muted-foreground">{formatDate(m.data_acquisto_attuale)}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground">Prezzo precedente</p>
+                  <p>{m.prezzo_precedente === null ? "—" : `€${formatPrezzo(m.prezzo_precedente)}`}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {m.data_acquisto_precedente ? formatDate(m.data_acquisto_precedente) : "—"}
+                  </p>
+                </div>
+              </div>
+              <MaterialeRowActions materiale={m} />
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden xl:block bg-card rounded-lg border border-border scroll-visibile">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-background">
@@ -116,6 +150,7 @@ export default async function MaterialiPage({ searchParams }: { searchParams: Pr
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   )

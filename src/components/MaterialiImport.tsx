@@ -216,7 +216,7 @@ export function MaterialiImport({ esistenti }: { esistenti: Materiale[] }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="scroll-visibile">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">
